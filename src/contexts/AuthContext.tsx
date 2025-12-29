@@ -38,6 +38,16 @@ const MOCK_USERS: (User & { senha: string })[] = [
     valorTotalCompras: 0,
   },
   {
+    id: 'admin-2',
+    nome: 'Allan Jones',
+    telefone: '(11) 99999-0000',
+    email: 'allanjonesms@gmail.com',
+    senha: '@Jones2028',
+    role: 'admin',
+    endereco: { rua: '', numero: '', bairro: '' },
+    valorTotalCompras: 0,
+  },
+  {
     id: 'cliente-1',
     nome: 'João Silva',
     telefone: '(11) 98888-8888',
