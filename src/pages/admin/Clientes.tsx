@@ -1,53 +1,32 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, User, Phone, Mail, MapPin, TrendingUp } from 'lucide-react';
-
-// Mock clients data
-const MOCK_CLIENTES = [
-  {
-    id: 'cliente-1',
-    nome: 'João Silva',
-    telefone: '(11) 98888-8888',
-    email: 'joao@email.com',
-    endereco: {
-      rua: 'Rua das Flores',
-      numero: '123',
-      bairro: 'Centro',
-    },
-    valorTotalCompras: 156.00,
-    totalPedidos: 8,
-  },
-  {
-    id: 'cliente-2',
-    nome: 'Maria Santos',
-    telefone: '(11) 97777-7777',
-    email: 'maria@email.com',
-    endereco: {
-      rua: 'Av. Brasil',
-      numero: '456',
-      bairro: 'Jardim América',
-    },
-    valorTotalCompras: 289.50,
-    totalPedidos: 15,
-  },
-  {
-    id: 'cliente-3',
-    nome: 'Pedro Oliveira',
-    telefone: '(11) 96666-6666',
-    email: 'pedro@email.com',
-    endereco: {
-      rua: 'Rua São Paulo',
-      numero: '789',
-      bairro: 'Vila Nova',
-    },
-    valorTotalCompras: 78.00,
-    totalPedidos: 4,
-  },
-];
+import { ArrowLeft, User, Phone, Mail, MapPin, TrendingUp, Pencil, Trash2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function AdminClientes() {
   const navigate = useNavigate();
+  const { users, deleteUser } = useAuth();
+
+  // Filter only clients
+  const clientes = users.filter(u => u.role === 'cliente');
+
+  const handleDelete = (clienteId: string, nome: string) => {
+    deleteUser(clienteId);
+    toast.success(`Cliente "${nome}" excluído com sucesso`);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -65,59 +44,108 @@ export default function AdminClientes() {
       </div>
 
       <div className="container max-w-4xl mx-auto px-4 py-6">
-        <div className="space-y-4">
-          {MOCK_CLIENTES.map((cliente) => (
-            <div
-              key={cliente.id}
-              className="bg-card rounded-xl p-4 shadow-card border border-border/50 animate-fade-in"
-            >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 gradient-acai rounded-full flex items-center justify-center">
-                    <User className="h-6 w-6 text-primary-foreground" />
+        {clientes.length === 0 ? (
+          <div className="text-center py-12">
+            <User className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">Nenhum cliente cadastrado</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {clientes.map((cliente) => (
+              <div
+                key={cliente.id}
+                className="bg-card rounded-xl p-4 shadow-card border border-border/50 animate-fade-in"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 gradient-acai rounded-full flex items-center justify-center">
+                      <User className="h-6 w-6 text-primary-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="font-display font-bold text-foreground">{cliente.nome}</h3>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-display font-bold text-foreground">{cliente.nome}</h3>
-                    <p className="text-sm text-muted-foreground">{cliente.totalPedidos} pedidos</p>
+                  <div className="text-right">
+                    <div className="flex items-center gap-1 text-tropical">
+                      <TrendingUp className="h-4 w-4" />
+                      <span className="font-bold">
+                        R$ {cliente.valorTotalCompras.toFixed(2).replace('.', ',')}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Total comprado</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="flex items-center gap-1 text-tropical">
-                    <TrendingUp className="h-4 w-4" />
-                    <span className="font-bold">
-                      R$ {cliente.valorTotalCompras.toFixed(2).replace('.', ',')}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">Total comprado</p>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Phone className="h-4 w-4" />
-                  {cliente.telefone}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm mb-4">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Phone className="h-4 w-4 flex-shrink-0" />
+                    {cliente.telefone}
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Mail className="h-4 w-4 flex-shrink-0" />
+                    {cliente.email}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Mail className="h-4 w-4" />
-                  {cliente.email}
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <MapPin className="h-4 w-4" />
-                  {cliente.endereco.bairro}
-                </div>
-              </div>
 
-              <div className="flex gap-2 mt-4 pt-4 border-t border-border">
-                <Button variant="outline" size="sm" className="flex-1">
-                  Ver Histórico
-                </Button>
-                <Button variant="ghost" size="sm">
-                  Editar
-                </Button>
+                {/* Endereço completo */}
+                <div className="bg-muted/50 rounded-lg p-3 mb-4">
+                  <div className="flex items-start gap-2 text-sm">
+                    <MapPin className="h-4 w-4 flex-shrink-0 mt-0.5 text-primary" />
+                    <div className="text-muted-foreground">
+                      <p>
+                        {cliente.endereco.rua}, {cliente.endereco.numero}
+                        {cliente.endereco.complemento && ` - ${cliente.endereco.complemento}`}
+                      </p>
+                      <p>{cliente.endereco.bairro}</p>
+                      {cliente.endereco.referencia && (
+                        <p className="text-xs mt-1">Ref: {cliente.endereco.referencia}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 pt-4 border-t border-border">
+                  <Button variant="outline" size="sm" className="flex-1">
+                    Ver Histórico
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => navigate(`/admin/clientes/${cliente.id}/editar`)}
+                  >
+                    <Pencil className="h-4 w-4 mr-1" />
+                    Editar
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Excluir cliente?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Tem certeza que deseja excluir o cliente "{cliente.nome}"? 
+                          Esta ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => handleDelete(cliente.id, cliente.nome)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Excluir
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
