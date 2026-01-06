@@ -73,6 +73,7 @@ export type Database = {
       pedido_itens: {
         Row: {
           created_at: string
+          embalagem: Database["public"]["Enums"]["tipo_embalagem"]
           id: string
           pedido_id: string
           peso: string
@@ -85,6 +86,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          embalagem?: Database["public"]["Enums"]["tipo_embalagem"]
           id?: string
           pedido_id: string
           peso: string
@@ -97,6 +99,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          embalagem?: Database["public"]["Enums"]["tipo_embalagem"]
           id?: string
           pedido_id?: string
           peso?: string
@@ -302,6 +305,7 @@ export type Database = {
         | "entregue"
       tamanho_produto: "pequeno" | "medio" | "grande" | "gg" | "mega"
       tipo_adicional: "frutas" | "doces" | "cereais"
+      tipo_embalagem: "copo" | "isopor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -441,6 +445,7 @@ export const Constants = {
       ],
       tamanho_produto: ["pequeno", "medio", "grande", "gg", "mega"],
       tipo_adicional: ["frutas", "doces", "cereais"],
+      tipo_embalagem: ["copo", "isopor"],
     },
   },
 } as const
