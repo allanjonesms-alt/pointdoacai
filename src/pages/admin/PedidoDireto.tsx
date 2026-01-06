@@ -5,7 +5,7 @@ import { useClientes } from '@/hooks/useClientes';
 import { usePedidos } from '@/contexts/PedidosContext';
 import { useProdutos } from '@/hooks/useProdutos';
 import { ProductCard } from '@/components/ProductCard';
-import { AdicionalChip } from '@/components/AdicionalChip';
+import { AdicionalQuantity } from '@/components/AdicionalQuantity';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -29,7 +29,7 @@ export default function PedidoDireto() {
   const [busca, setBusca] = useState('');
   const [step, setStep] = useState<'cliente' | 'tamanho' | 'adicionais' | 'resumo'>('cliente');
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);
-  const [adicionaisSelecionados, setAdicionaisSelecionados] = useState<string[]>([]);
+  const [adicionaisQuantidades, setAdicionaisQuantidades] = useState<Record<string, number>>({});
   const [itensCarrinho, setItensCarrinho] = useState<CarrinhoItem[]>([]);
   const [formaPagamento, setFormaPagamento] = useState<'credito' | 'debito' | 'pix' | 'dinheiro'>('dinheiro');
 
@@ -59,19 +59,35 @@ export default function PedidoDireto() {
   const handleSelectProduto = (produto: Produto) => {
     setProdutoSelecionado(produto);
     setStep('adicionais');
-    setAdicionaisSelecionados([]);
+    setAdicionaisQuantidades({});
   };
 
-  const toggleAdicional = (nome: string) => {
-    setAdicionaisSelecionados(prev =>
-      prev.includes(nome)
-        ? prev.filter(a => a !== nome)
-        : [...prev, nome]
-    );
+  const handleQuantidadeChange = (nome: string, quantidade: number) => {
+    setAdicionaisQuantidades(prev => {
+      if (quantidade <= 0) {
+        const { [nome]: _, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [nome]: quantidade };
+    });
+  };
+
+  // Calcular total de adicionais selecionados
+  const totalAdicionais = Object.values(adicionaisQuantidades).reduce((acc, qty) => acc + qty, 0);
+  
+  // Converter quantidades para array de nomes (para o carrinho)
+  const getAdicionaisArray = () => {
+    const result: string[] = [];
+    Object.entries(adicionaisQuantidades).forEach(([nome, qty]) => {
+      for (let i = 0; i < qty; i++) {
+        result.push(nome);
+      }
+    });
+    return result;
   };
 
   const calcularExtras = () => {
-    const extras = Math.max(0, adicionaisSelecionados.length - 3);
+    const extras = Math.max(0, totalAdicionais - 3);
     return extras * 2;
   };
 
@@ -82,7 +98,7 @@ export default function PedidoDireto() {
       id: `item-${Date.now()}`,
       produto: produtoSelecionado,
       quantidade: 1,
-      adicionais: adicionaisSelecionados,
+      adicionais: getAdicionaisArray(),
       valorUnitario: produtoSelecionado.preco,
       valorAdicionais: calcularExtras(),
     };
@@ -99,7 +115,7 @@ export default function PedidoDireto() {
       setStep('tamanho');
     }
     setProdutoSelecionado(null);
-    setAdicionaisSelecionados([]);
+    setAdicionaisQuantidades({});
   };
 
   const removerItem = (itemId: string) => {
@@ -334,22 +350,28 @@ export default function PedidoDireto() {
               <h3 className="font-display font-semibold text-foreground">
                 Escolha os adicionais
                 <span className="text-muted-foreground font-normal ml-2">
-                  ({adicionaisSelecionados.length} selecionados)
+                  ({totalAdicionais} selecionados)
                 </span>
               </h3>
-              <div className="grid grid-cols-2 gap-3">
-                {adicionaisAtivos.map((adicional) => {
-                  const isSelected = adicionaisSelecionados.includes(adicional.nome);
-                  const selectedIndex = adicionaisSelecionados.indexOf(adicional.nome);
-                  const isFree = selectedIndex < 3;
+              <div className="grid grid-cols-1 gap-3">
+                {adicionaisAtivos.map((adicional, index) => {
+                  const quantidade = adicionaisQuantidades[adicional.nome] || 0;
+                  // Calcular quantos adicionais gratuitos restam para este item
+                  const adicionaisAnteriores = Object.entries(adicionaisQuantidades)
+                    .filter(([nome]) => {
+                      const idx = adicionaisAtivos.findIndex(a => a.nome === nome);
+                      return idx < adicionaisAtivos.findIndex(a => a.nome === adicional.nome);
+                    })
+                    .reduce((acc, [, qty]) => acc + qty, 0);
+                  const gratuitosRestantes = Math.max(0, 3 - adicionaisAnteriores);
 
                   return (
-                    <AdicionalChip
+                    <AdicionalQuantity
                       key={adicional.id}
                       nome={adicional.nome}
-                      selected={isSelected}
-                      onToggle={() => toggleAdicional(adicional.nome)}
-                      isFree={!isSelected || isFree}
+                      quantidade={quantidade}
+                      onQuantidadeChange={(qty) => handleQuantidadeChange(adicional.nome, qty)}
+                      gratuitos={gratuitosRestantes}
                     />
                   );
                 })}
