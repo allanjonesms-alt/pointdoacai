@@ -15,11 +15,11 @@ export function Logo({ className, size = 'md' }: LogoProps) {
   };
 
   return (
-    <div className={cn('flex items-center', className)}>
+    <div className={cn('flex items-center h-[95%]', className)}>
       <img 
         src={logoAcai} 
         alt="Point do Açaí" 
-        className={cn('object-contain', sizeClasses[size])}
+        className="object-contain h-full w-auto"
       />
     </div>
   );
