@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Produto, TAMANHO_LABELS, CarrinhoItem, TipoEmbalagem, EMBALAGEM_LABELS } from '@/types';
 import { useClientes } from '@/hooks/useClientes';
 import { usePedidos } from '@/contexts/PedidosContext';
-import { useProdutos } from '@/hooks/useProdutos';
+import { useProdutos, TipoAdicional, TIPO_ADICIONAL_LABELS } from '@/hooks/useProdutos';
 import { ProductCard } from '@/components/ProductCard';
 import { AdicionalQuantity } from '@/components/AdicionalQuantity';
 import { Button } from '@/components/ui/button';
@@ -412,36 +412,50 @@ export default function PedidoDireto() {
               </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-6">
               <h3 className="font-display font-semibold text-foreground">
                 Escolha os adicionais
                 <span className="text-muted-foreground font-normal ml-2">
                   ({totalAdicionais} selecionados)
                 </span>
               </h3>
-              <div className="grid grid-cols-1 gap-3">
-                {adicionaisAtivos.map((adicional, index) => {
-                  const quantidade = adicionaisQuantidades[adicional.nome] || 0;
-                  // Calcular quantos adicionais gratuitos restam para este item
-                  const adicionaisAnteriores = Object.entries(adicionaisQuantidades)
-                    .filter(([nome]) => {
-                      const idx = adicionaisAtivos.findIndex(a => a.nome === nome);
-                      return idx < adicionaisAtivos.findIndex(a => a.nome === adicional.nome);
-                    })
-                    .reduce((acc, [, qty]) => acc + qty, 0);
-                  const gratuitosRestantes = Math.max(0, 3 - adicionaisAnteriores);
+              {(['frutas', 'doces', 'cereais'] as TipoAdicional[]).map((tipo) => {
+                const adicionaisDoTipo = adicionaisAtivos.filter(a => a.tipo === tipo);
+                if (adicionaisDoTipo.length === 0) return null;
 
-                  return (
-                    <AdicionalQuantity
-                      key={adicional.id}
-                      nome={adicional.nome}
-                      quantidade={quantidade}
-                      onQuantidadeChange={(qty) => handleQuantidadeChange(adicional.nome, qty)}
-                      gratuitos={gratuitosRestantes}
-                    />
-                  );
-                })}
-              </div>
+                const emoji = tipo === 'frutas' ? '🍓' : tipo === 'doces' ? '🍫' : '🌾';
+
+                return (
+                  <div key={tipo} className="space-y-3">
+                    <h4 className="font-semibold text-foreground flex items-center gap-2">
+                      <span>{emoji}</span>
+                      {TIPO_ADICIONAL_LABELS[tipo]}
+                    </h4>
+                    <div className="grid grid-cols-1 gap-3">
+                      {adicionaisDoTipo.map((adicional) => {
+                        const quantidade = adicionaisQuantidades[adicional.nome] || 0;
+                        const adicionaisAnteriores = Object.entries(adicionaisQuantidades)
+                          .filter(([nome]) => {
+                            const idx = adicionaisAtivos.findIndex(a => a.nome === nome);
+                            return idx < adicionaisAtivos.findIndex(a => a.nome === adicional.nome);
+                          })
+                          .reduce((acc, [, qty]) => acc + qty, 0);
+                        const gratuitosRestantes = Math.max(0, 3 - adicionaisAnteriores);
+
+                        return (
+                          <AdicionalQuantity
+                            key={adicional.id}
+                            nome={adicional.nome}
+                            quantidade={quantidade}
+                            onQuantidadeChange={(qty) => handleQuantidadeChange(adicional.nome, qty)}
+                            gratuitos={gratuitosRestantes}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
