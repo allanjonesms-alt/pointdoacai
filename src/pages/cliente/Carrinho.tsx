@@ -8,6 +8,13 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, ShoppingBag, CreditCard, Smartphone, Banknote, QrCode, Check, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { PixQRCode } from '@/components/PixQRCode';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 type FormaPagamento = 'credito' | 'debito' | 'pix' | 'dinheiro';
 
@@ -26,6 +33,8 @@ export default function Carrinho() {
   const { toast } = useToast();
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPixModal, setShowPixModal] = useState(false);
+  const [numeroPedidoAtual, setNumeroPedidoAtual] = useState<string | null>(null);
 
   const handleFinalizarPedido = async () => {
     if (!formaPagamento) {
@@ -41,9 +50,6 @@ export default function Carrinho() {
 
     setIsLoading(true);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
     const numeroPedido = criarPedido(
       user.id,
       user.nome,
@@ -53,6 +59,16 @@ export default function Carrinho() {
       total
     );
 
+    setNumeroPedidoAtual(numeroPedido);
+
+    // Se for PIX, mostrar modal com QR Code
+    if (formaPagamento === 'pix') {
+      setShowPixModal(true);
+      setIsLoading(false);
+      return;
+    }
+
+    // Para outros métodos, finaliza normalmente
     limparCarrinho();
 
     toast({
@@ -62,6 +78,22 @@ export default function Carrinho() {
 
     navigate('/meus-pedidos');
     setIsLoading(false);
+  };
+
+  const handlePixSuccess = () => {
+    setShowPixModal(false);
+    limparCarrinho();
+    
+    toast({
+      title: 'Pedido realizado!',
+      description: `Pedido #${numeroPedidoAtual} criado com sucesso. Aguardando confirmação do PIX.`,
+    });
+
+    navigate('/meus-pedidos');
+  };
+
+  const handlePixCancel = () => {
+    setShowPixModal(false);
   };
 
   if (itens.length === 0) {
@@ -214,10 +246,25 @@ export default function Carrinho() {
             onClick={handleFinalizarPedido}
             disabled={isLoading || !formaPagamento}
           >
-            {isLoading ? 'Finalizando...' : 'Finalizar Pedido'}
+          {isLoading ? 'Finalizando...' : 'Finalizar Pedido'}
           </Button>
         </div>
       </div>
+
+      {/* PIX Modal */}
+      <Dialog open={showPixModal} onOpenChange={setShowPixModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-center">Pagamento via PIX</DialogTitle>
+          </DialogHeader>
+          <PixQRCode
+            valor={total}
+            descricao={`Pedido #${numeroPedidoAtual}`}
+            onSuccess={handlePixSuccess}
+            onCancel={handlePixCancel}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
