@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PRODUTOS, ADICIONAIS, Produto, TAMANHO_LABELS, CarrinhoItem } from '@/types';
+import { Produto, TAMANHO_LABELS, CarrinhoItem } from '@/types';
 import { useClientes } from '@/hooks/useClientes';
 import { usePedidos } from '@/contexts/PedidosContext';
+import { useProdutos } from '@/hooks/useProdutos';
 import { ProductCard } from '@/components/ProductCard';
 import { AdicionalChip } from '@/components/AdicionalChip';
 import { Button } from '@/components/ui/button';
@@ -22,6 +23,7 @@ export default function PedidoDireto() {
   const { toast } = useToast();
   const { clientes, isLoading: loadingClientes } = useClientes();
   const { criarPedido } = usePedidos();
+  const { produtos, adicionais, isLoading: loadingProdutos } = useProdutos();
 
   const [clienteSelecionado, setClienteSelecionado] = useState<string>('');
   const [busca, setBusca] = useState('');
@@ -31,8 +33,8 @@ export default function PedidoDireto() {
   const [itensCarrinho, setItensCarrinho] = useState<CarrinhoItem[]>([]);
   const [formaPagamento, setFormaPagamento] = useState<'credito' | 'debito' | 'pix' | 'dinheiro'>('dinheiro');
 
-  const produtosAtivos = PRODUTOS.filter(p => p.ativo);
-  const adicionaisAtivos = ADICIONAIS.filter(a => a.ativo);
+  const produtosAtivos = produtos.filter(p => p.ativo);
+  const adicionaisAtivos = adicionais.filter(a => a.ativo);
 
   const clienteInfo = clientes.find(c => c.id === clienteSelecionado);
 
