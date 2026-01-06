@@ -14,16 +14,281 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      adicionais: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pedido_item_adicionais: {
+        Row: {
+          adicional_nome: string
+          created_at: string
+          id: string
+          pedido_item_id: string
+        }
+        Insert: {
+          adicional_nome: string
+          created_at?: string
+          id?: string
+          pedido_item_id: string
+        }
+        Update: {
+          adicional_nome?: string
+          created_at?: string
+          id?: string
+          pedido_item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedido_item_adicionais_pedido_item_id_fkey"
+            columns: ["pedido_item_id"]
+            isOneToOne: false
+            referencedRelation: "pedido_itens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pedido_itens: {
+        Row: {
+          created_at: string
+          id: string
+          pedido_id: string
+          peso: string
+          produto_id: string | null
+          produto_nome: string
+          quantidade: number
+          tamanho: Database["public"]["Enums"]["tamanho_produto"]
+          valor_adicionais: number
+          valor_unitario: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          pedido_id: string
+          peso: string
+          produto_id?: string | null
+          produto_nome: string
+          quantidade?: number
+          tamanho: Database["public"]["Enums"]["tamanho_produto"]
+          valor_adicionais?: number
+          valor_unitario: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          pedido_id?: string
+          peso?: string
+          produto_id?: string | null
+          produto_nome?: string
+          quantidade?: number
+          tamanho?: Database["public"]["Enums"]["tamanho_produto"]
+          valor_adicionais?: number
+          valor_unitario?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedido_itens_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedido_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "produtos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pedidos: {
+        Row: {
+          cliente_id: string | null
+          cliente_nome: string
+          created_at: string
+          endereco_bairro: string
+          endereco_complemento: string | null
+          endereco_numero: string
+          endereco_referencia: string | null
+          endereco_rua: string
+          forma_pagamento: Database["public"]["Enums"]["forma_pagamento"]
+          id: string
+          numero_pedido: string
+          status: Database["public"]["Enums"]["status_pedido"]
+          updated_at: string
+          valor_total: number
+        }
+        Insert: {
+          cliente_id?: string | null
+          cliente_nome: string
+          created_at?: string
+          endereco_bairro: string
+          endereco_complemento?: string | null
+          endereco_numero: string
+          endereco_referencia?: string | null
+          endereco_rua: string
+          forma_pagamento: Database["public"]["Enums"]["forma_pagamento"]
+          id?: string
+          numero_pedido: string
+          status?: Database["public"]["Enums"]["status_pedido"]
+          updated_at?: string
+          valor_total: number
+        }
+        Update: {
+          cliente_id?: string | null
+          cliente_nome?: string
+          created_at?: string
+          endereco_bairro?: string
+          endereco_complemento?: string | null
+          endereco_numero?: string
+          endereco_referencia?: string | null
+          endereco_rua?: string
+          forma_pagamento?: Database["public"]["Enums"]["forma_pagamento"]
+          id?: string
+          numero_pedido?: string
+          status?: Database["public"]["Enums"]["status_pedido"]
+          updated_at?: string
+          valor_total?: number
+        }
+        Relationships: []
+      }
+      produtos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+          peso: string
+          preco: number
+          tamanho: Database["public"]["Enums"]["tamanho_produto"]
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+          peso: string
+          preco: number
+          tamanho: Database["public"]["Enums"]["tamanho_produto"]
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+          peso?: string
+          preco?: number
+          tamanho?: Database["public"]["Enums"]["tamanho_produto"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          bairro: string
+          complemento: string | null
+          created_at: string
+          email: string
+          id: string
+          nome: string
+          numero: string
+          referencia: string | null
+          rua: string
+          telefone: string
+          updated_at: string
+          valor_total_compras: number
+        }
+        Insert: {
+          bairro?: string
+          complemento?: string | null
+          created_at?: string
+          email: string
+          id: string
+          nome: string
+          numero?: string
+          referencia?: string | null
+          rua?: string
+          telefone: string
+          updated_at?: string
+          valor_total_compras?: number
+        }
+        Update: {
+          bairro?: string
+          complemento?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          nome?: string
+          numero?: string
+          referencia?: string | null
+          rua?: string
+          telefone?: string
+          updated_at?: string
+          valor_total_compras?: number
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "cliente"
+      forma_pagamento: "credito" | "debito" | "pix" | "dinheiro"
+      status_pedido: "pendente" | "preparo" | "pronto" | "entrega"
+      tamanho_produto: "pequeno" | "medio" | "grande" | "gg" | "mega"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +415,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "cliente"],
+      forma_pagamento: ["credito", "debito", "pix", "dinheiro"],
+      status_pedido: ["pendente", "preparo", "pronto", "entrega"],
+      tamanho_produto: ["pequeno", "medio", "grande", "gg", "mega"],
+    },
   },
 } as const
