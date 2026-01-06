@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, User, Phone, Mail, MapPin, TrendingUp, Pencil, Trash2, Loader2, Leaf, Sparkles, Shield } from 'lucide-react';
+import { ArrowLeft, User, Phone, Mail, MapPin, TrendingUp, Pencil, Trash2, Loader2, Leaf, Sparkles, Shield, ArrowUpDown } from 'lucide-react';
 import { useClientes } from '@/hooks/useClientes';
 import { toast } from 'sonner';
 import { CadastroClienteModal } from '@/components/admin/CadastroClienteModal';
@@ -16,10 +16,33 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+type OrdenacaoType = 'nome' | 'total_desc' | 'total_asc';
 
 export default function AdminClientes() {
   const navigate = useNavigate();
   const { clientes, isLoading, deleteCliente, fetchClientes } = useClientes();
+  const [ordenacao, setOrdenacao] = useState<OrdenacaoType>('nome');
+
+  const clientesOrdenados = useMemo(() => {
+    const sorted = [...clientes];
+    switch (ordenacao) {
+      case 'total_desc':
+        return sorted.sort((a, b) => Number(b.valor_total_compras) - Number(a.valor_total_compras));
+      case 'total_asc':
+        return sorted.sort((a, b) => Number(a.valor_total_compras) - Number(b.valor_total_compras));
+      case 'nome':
+      default:
+        return sorted.sort((a, b) => a.nome.localeCompare(b.nome));
+    }
+  }, [clientes, ordenacao]);
 
   const handleDelete = async (clienteId: string, nome: string) => {
     const result = await deleteCliente(clienteId);
@@ -64,7 +87,22 @@ export default function AdminClientes() {
           </div>
         ) : (
           <div className="space-y-4">
-            {clientes.map((cliente) => (
+            {/* Ordenação */}
+            <div className="flex items-center justify-end gap-2">
+              <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+              <Select value={ordenacao} onValueChange={(value: OrdenacaoType) => setOrdenacao(value)}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Ordenar por" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="nome">Nome (A-Z)</SelectItem>
+                  <SelectItem value="total_desc">Maior total comprado</SelectItem>
+                  <SelectItem value="total_asc">Menor total comprado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {clientesOrdenados.map((cliente) => (
               <div
                 key={cliente.id}
                 className="bg-card rounded-xl p-4 shadow-card border border-border/50 animate-fade-in"
