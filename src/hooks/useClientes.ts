@@ -6,13 +6,14 @@ interface Profile {
   id: string;
   nome: string;
   telefone: string;
-  email: string;
+  email: string | null;
   rua: string;
   numero: string;
   bairro: string;
   complemento: string | null;
   referencia: string | null;
   valor_total_compras: number;
+  tipo_cliente: 'organico' | 'sintetico';
   created_at: string;
   updated_at: string;
 }
@@ -62,6 +63,8 @@ export function useClientes() {
           const userRole = roles?.find(r => r.user_id === profile.id);
           return {
             ...profile,
+            email: profile.email,
+            tipo_cliente: profile.tipo_cliente as 'organico' | 'sintetico',
             role: (userRole?.role as 'cliente' | 'admin') || 'cliente',
           };
         })

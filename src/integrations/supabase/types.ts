@@ -210,13 +210,14 @@ export type Database = {
           bairro: string
           complemento: string | null
           created_at: string
-          email: string
+          email: string | null
           id: string
           nome: string
           numero: string
           referencia: string | null
           rua: string
           telefone: string
+          tipo_cliente: string
           updated_at: string
           valor_total_compras: number
         }
@@ -224,13 +225,14 @@ export type Database = {
           bairro?: string
           complemento?: string | null
           created_at?: string
-          email: string
+          email?: string | null
           id: string
           nome: string
           numero?: string
           referencia?: string | null
           rua?: string
           telefone: string
+          tipo_cliente?: string
           updated_at?: string
           valor_total_compras?: number
         }
@@ -238,13 +240,14 @@ export type Database = {
           bairro?: string
           complemento?: string | null
           created_at?: string
-          email?: string
+          email?: string | null
           id?: string
           nome?: string
           numero?: string
           referencia?: string | null
           rua?: string
           telefone?: string
+          tipo_cliente?: string
           updated_at?: string
           valor_total_compras?: number
         }

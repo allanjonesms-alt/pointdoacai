@@ -1,9 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, User, Phone, Mail, MapPin, TrendingUp, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { ArrowLeft, User, Phone, Mail, MapPin, TrendingUp, Pencil, Trash2, Loader2, Leaf, Sparkles } from 'lucide-react';
 import { useClientes } from '@/hooks/useClientes';
 import { toast } from 'sonner';
+import { CadastroClienteModal } from '@/components/admin/CadastroClienteModal';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,7 +19,7 @@ import {
 
 export default function AdminClientes() {
   const navigate = useNavigate();
-  const { clientes, isLoading, deleteCliente } = useClientes();
+  const { clientes, isLoading, deleteCliente, fetchClientes } = useClientes();
 
   const handleDelete = async (clienteId: string, nome: string) => {
     const result = await deleteCliente(clienteId);
@@ -41,14 +42,17 @@ export default function AdminClientes() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="gradient-hero py-6 px-4 sticky top-0 z-10">
-        <div className="container max-w-4xl mx-auto flex items-center gap-4">
-          <button
-            onClick={() => navigate('/admin')}
-            className="flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <h1 className="font-display font-bold text-primary-foreground">Clientes</h1>
+        <div className="container max-w-4xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate('/admin')}
+              className="flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+            <h1 className="font-display font-bold text-primary-foreground">Clientes</h1>
+          </div>
+          <CadastroClienteModal onSuccess={fetchClientes} />
         </div>
       </div>
 
@@ -72,6 +76,19 @@ export default function AdminClientes() {
                     </div>
                     <div>
                       <h3 className="font-display font-bold text-foreground">{cliente.nome}</h3>
+                      <div className="flex items-center gap-1 mt-1">
+                        {cliente.tipo_cliente === 'organico' ? (
+                          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                            <Leaf className="h-3 w-3" />
+                            Orgânico
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                            <Sparkles className="h-3 w-3" />
+                            Sintético
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="text-right">
@@ -90,10 +107,12 @@ export default function AdminClientes() {
                     <Phone className="h-4 w-4 flex-shrink-0" />
                     {cliente.telefone}
                   </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Mail className="h-4 w-4 flex-shrink-0" />
-                    {cliente.email}
-                  </div>
+                  {cliente.email && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Mail className="h-4 w-4 flex-shrink-0" />
+                      {cliente.email}
+                    </div>
+                  )}
                 </div>
 
                 {/* Endereço completo */}
