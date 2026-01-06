@@ -8,6 +8,13 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Phone, Lock, Loader2 } from 'lucide-react';
 
+const formatPhone = (value: string): string => {
+  const numbers = value.replace(/\D/g, '').slice(0, 11);
+  if (numbers.length <= 2) return numbers.length ? `(${numbers}` : '';
+  if (numbers.length <= 7) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
+  return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)}-${numbers.slice(7)}`;
+};
+
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -68,7 +75,7 @@ export default function Login() {
                     placeholder="(00) 00000-0000"
                     className="pl-10"
                     value={formData.telefone}
-                    onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, telefone: formatPhone(e.target.value) })}
                     required
                   />
                 </div>
