@@ -1,28 +1,115 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PRODUTOS, ADICIONAIS, TAMANHO_LABELS } from '@/types';
+import { TAMANHO_LABELS } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, Package, Sparkles } from 'lucide-react';
+import { ArrowLeft, Package, Sparkles, Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useProdutos, ProdutoDB, AdicionalDB } from '@/hooks/useProdutos';
+import { ProdutoModal } from '@/components/admin/ProdutoModal';
+import { AdicionalModal } from '@/components/admin/AdicionalModal';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export default function AdminProdutos() {
   const navigate = useNavigate();
-  const [produtos, setProdutos] = useState(PRODUTOS);
-  const [adicionais, setAdicionais] = useState(ADICIONAIS);
+  const {
+    produtos,
+    adicionais,
+    isLoading,
+    criarProduto,
+    atualizarProduto,
+    excluirProduto,
+    toggleProdutoAtivo,
+    criarAdicional,
+    atualizarAdicional,
+    excluirAdicional,
+    toggleAdicionalAtivo,
+  } = useProdutos();
+
   const [activeTab, setActiveTab] = useState<'produtos' | 'adicionais'>('produtos');
 
-  const toggleProduto = (id: string) => {
-    setProdutos(prev => prev.map(p =>
-      p.id === id ? { ...p, ativo: !p.ativo } : p
-    ));
+  // Produto modal state
+  const [produtoModalOpen, setProdutoModalOpen] = useState(false);
+  const [produtoEditando, setProdutoEditando] = useState<ProdutoDB | null>(null);
+
+  // Adicional modal state
+  const [adicionalModalOpen, setAdicionalModalOpen] = useState(false);
+  const [adicionalEditando, setAdicionalEditando] = useState<AdicionalDB | null>(null);
+
+  // Delete confirmation state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<{ type: 'produto' | 'adicional'; id: string; nome: string } | null>(null);
+
+  const handleNovoProduto = () => {
+    setProdutoEditando(null);
+    setProdutoModalOpen(true);
   };
 
-  const toggleAdicional = (id: string) => {
-    setAdicionais(prev => prev.map(a =>
-      a.id === id ? { ...a, ativo: !a.ativo } : a
-    ));
+  const handleEditarProduto = (produto: ProdutoDB) => {
+    setProdutoEditando(produto);
+    setProdutoModalOpen(true);
   };
+
+  const handleSaveProduto = async (data: { nome: string; tamanho: ProdutoDB['tamanho']; peso: string; preco: number; ativo: boolean }) => {
+    if (produtoEditando) {
+      return atualizarProduto(produtoEditando.id, data);
+    } else {
+      return criarProduto(data);
+    }
+  };
+
+  const handleNovoAdicional = () => {
+    setAdicionalEditando(null);
+    setAdicionalModalOpen(true);
+  };
+
+  const handleEditarAdicional = (adicional: AdicionalDB) => {
+    setAdicionalEditando(adicional);
+    setAdicionalModalOpen(true);
+  };
+
+  const handleSaveAdicional = async (data: { nome: string; ativo: boolean }) => {
+    if (adicionalEditando) {
+      return atualizarAdicional(adicionalEditando.id, data);
+    } else {
+      return criarAdicional(data);
+    }
+  };
+
+  const handleDeleteClick = (type: 'produto' | 'adicional', id: string, nome: string) => {
+    setItemToDelete({ type, id, nome });
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete) return;
+
+    if (itemToDelete.type === 'produto') {
+      await excluirProduto(itemToDelete.id);
+    } else {
+      await excluirAdicional(itemToDelete.id);
+    }
+
+    setDeleteDialogOpen(false);
+    setItemToDelete(null);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -69,56 +156,151 @@ export default function AdminProdutos() {
         </div>
 
         {activeTab === 'produtos' ? (
-          <div className="space-y-3">
-            {produtos.map((produto) => (
-              <div
-                key={produto.id}
-                className={cn(
-                  'bg-card rounded-xl p-4 shadow-card border border-border/50 flex items-center gap-4 transition-opacity',
-                  !produto.ativo && 'opacity-60'
-                )}
-              >
-                <div className="w-14 h-14 bg-gradient-to-br from-acai-light to-muted rounded-xl flex items-center justify-center">
-                  <span className="text-3xl">🥣</span>
+          <div className="space-y-4">
+            {/* Add Product Button */}
+            <Button onClick={handleNovoProduto} variant="acai" className="w-full gap-2">
+              <Plus className="h-4 w-4" />
+              Cadastrar Produto
+            </Button>
+
+            {/* Products List */}
+            <div className="space-y-3">
+              {produtos.map((produto) => (
+                <div
+                  key={produto.id}
+                  className={cn(
+                    'bg-card rounded-xl p-4 shadow-card border border-border/50 flex items-center gap-4 transition-opacity',
+                    !produto.ativo && 'opacity-60'
+                  )}
+                >
+                  <div className="w-14 h-14 bg-gradient-to-br from-acai-light to-muted rounded-xl flex items-center justify-center">
+                    <span className="text-3xl">🥣</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-display font-bold text-foreground">
+                      {TAMANHO_LABELS[produto.tamanho] || produto.tamanho}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">{produto.peso}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-bold text-lg text-primary">
+                      R$ {produto.preco.toFixed(2).replace('.', ',')}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleEditarProduto(produto)}
+                      className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+                      title="Editar"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteClick('produto', produto.id, TAMANHO_LABELS[produto.tamanho] || produto.tamanho)}
+                      className="p-2 text-destructive hover:text-destructive/80 transition-colors"
+                      title="Excluir"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                    <Switch
+                      checked={produto.ativo}
+                      onCheckedChange={(checked) => toggleProdutoAtivo(produto.id, checked)}
+                    />
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <h3 className="font-display font-bold text-foreground">
-                    {TAMANHO_LABELS[produto.tamanho]}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">{produto.peso}</p>
+              ))}
+
+              {produtos.length === 0 && (
+                <div className="bg-card rounded-xl p-8 shadow-card border border-border/50 text-center">
+                  <p className="text-muted-foreground">Nenhum produto cadastrado</p>
                 </div>
-                <div className="text-right mr-4">
-                  <p className="font-bold text-lg text-primary">
-                    R$ {produto.preco.toFixed(2).replace('.', ',')}
-                  </p>
-                </div>
-                <Switch
-                  checked={produto.ativo}
-                  onCheckedChange={() => toggleProduto(produto.id)}
-                />
-              </div>
-            ))}
+              )}
+            </div>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
-            {adicionais.map((adicional) => (
-              <div
-                key={adicional.id}
-                className={cn(
-                  'bg-card rounded-xl p-4 shadow-card border border-border/50 flex items-center justify-between transition-opacity',
-                  !adicional.ativo && 'opacity-60'
-                )}
-              >
-                <span className="font-medium text-foreground">{adicional.nome}</span>
-                <Switch
-                  checked={adicional.ativo}
-                  onCheckedChange={() => toggleAdicional(adicional.id)}
-                />
-              </div>
-            ))}
+          <div className="space-y-4">
+            {/* Add Adicional Button */}
+            <Button onClick={handleNovoAdicional} variant="acai" className="w-full gap-2">
+              <Plus className="h-4 w-4" />
+              Cadastrar Adicional
+            </Button>
+
+            {/* Adicionais List */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {adicionais.map((adicional) => (
+                <div
+                  key={adicional.id}
+                  className={cn(
+                    'bg-card rounded-xl p-4 shadow-card border border-border/50 flex items-center justify-between transition-opacity',
+                    !adicional.ativo && 'opacity-60'
+                  )}
+                >
+                  <span className="font-medium text-foreground">{adicional.nome}</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleEditarAdicional(adicional)}
+                      className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+                      title="Editar"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteClick('adicional', adicional.id, adicional.nome)}
+                      className="p-2 text-destructive hover:text-destructive/80 transition-colors"
+                      title="Excluir"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                    <Switch
+                      checked={adicional.ativo}
+                      onCheckedChange={(checked) => toggleAdicionalAtivo(adicional.id, checked)}
+                    />
+                  </div>
+                </div>
+              ))}
+
+              {adicionais.length === 0 && (
+                <div className="bg-card rounded-xl p-8 shadow-card border border-border/50 text-center col-span-2">
+                  <p className="text-muted-foreground">Nenhum adicional cadastrado</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
+
+      {/* Modals */}
+      <ProdutoModal
+        open={produtoModalOpen}
+        onOpenChange={setProdutoModalOpen}
+        produto={produtoEditando}
+        onSave={handleSaveProduto}
+      />
+
+      <AdicionalModal
+        open={adicionalModalOpen}
+        onOpenChange={setAdicionalModalOpen}
+        adicional={adicionalEditando}
+        onSave={handleSaveAdicional}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir "{itemToDelete?.nome}"? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
