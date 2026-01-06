@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Mail, Lock, Loader2 } from 'lucide-react';
+import { Phone, Lock, Loader2 } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -14,7 +14,7 @@ export default function Login() {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    email: '',
+    telefone: '',
     senha: '',
   });
 
@@ -22,14 +22,13 @@ export default function Login() {
     e.preventDefault();
     setIsLoading(true);
 
-    const result = await login(formData.email, formData.senha);
+    const result = await login(formData.telefone, formData.senha);
 
     if (result.success) {
       toast({
         title: 'Bem-vindo!',
         description: 'Login realizado com sucesso.',
       });
-      // Redirect based on user role is handled by protected routes
       navigate('/');
     } else {
       toast({
@@ -60,16 +59,16 @@ export default function Login() {
           <div className="bg-card rounded-2xl shadow-float p-6 animate-fade-in-up">
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="email">E-mail</Label>
+                <Label htmlFor="telefone">Telefone</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
-                    id="email"
-                    type="email"
-                    placeholder="seu@email.com"
+                    id="telefone"
+                    type="tel"
+                    placeholder="(00) 00000-0000"
                     className="pl-10"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    value={formData.telefone}
+                    onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
                     required
                   />
                 </div>
@@ -118,11 +117,10 @@ export default function Login() {
               </p>
             </div>
 
-
             {/* Info */}
             <div className="mt-6 p-4 bg-muted rounded-xl">
               <p className="text-sm text-muted-foreground text-center">
-                Ainda não tem conta? Cadastre-se para fazer seus pedidos!
+                Use seu número de telefone e senha para entrar
               </p>
             </div>
           </div>
