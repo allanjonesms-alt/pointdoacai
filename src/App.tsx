@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CarrinhoProvider } from "@/contexts/CarrinhoContext";
 import { PedidosProvider } from "@/contexts/PedidosContext";
+import { AdminRoute } from "@/components/AdminRoute";
 
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -45,12 +46,12 @@ const App = () => (
                 <Route path="/meus-pedidos" element={<MeusPedidos />} />
                 <Route path="/perfil" element={<Perfil />} />
                 
-                {/* Admin Routes */}
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/admin/clientes" element={<AdminClientes />} />
-                <Route path="/admin/clientes/:id/editar" element={<EditarCliente />} />
-                <Route path="/admin/produtos" element={<AdminProdutos />} />
-                <Route path="/admin/pedido-direto" element={<PedidoDireto />} />
+                {/* Admin Routes - Protected with server-side role verification */}
+                <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+                <Route path="/admin/clientes" element={<AdminRoute><AdminClientes /></AdminRoute>} />
+                <Route path="/admin/clientes/:id/editar" element={<AdminRoute><EditarCliente /></AdminRoute>} />
+                <Route path="/admin/produtos" element={<AdminRoute><AdminProdutos /></AdminRoute>} />
+                <Route path="/admin/pedido-direto" element={<AdminRoute><PedidoDireto /></AdminRoute>} />
                 
                 <Route path="*" element={<NotFound />} />
               </Routes>
