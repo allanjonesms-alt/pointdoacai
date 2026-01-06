@@ -20,6 +20,7 @@ export type Database = {
           created_at: string
           id: string
           nome: string
+          tipo: Database["public"]["Enums"]["tipo_adicional"]
           updated_at: string
         }
         Insert: {
@@ -27,6 +28,7 @@ export type Database = {
           created_at?: string
           id?: string
           nome: string
+          tipo?: Database["public"]["Enums"]["tipo_adicional"]
           updated_at?: string
         }
         Update: {
@@ -34,6 +36,7 @@ export type Database = {
           created_at?: string
           id?: string
           nome?: string
+          tipo?: Database["public"]["Enums"]["tipo_adicional"]
           updated_at?: string
         }
         Relationships: []
@@ -298,6 +301,7 @@ export type Database = {
         | "entrega"
         | "entregue"
       tamanho_produto: "pequeno" | "medio" | "grande" | "gg" | "mega"
+      tipo_adicional: "frutas" | "doces" | "cereais"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -436,6 +440,7 @@ export const Constants = {
         "entregue",
       ],
       tamanho_produto: ["pequeno", "medio", "grande", "gg", "mega"],
+      tipo_adicional: ["frutas", "doces", "cereais"],
     },
   },
 } as const
