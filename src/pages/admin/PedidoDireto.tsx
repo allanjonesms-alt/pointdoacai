@@ -32,6 +32,7 @@ export default function PedidoDireto() {
   const [adicionaisQuantidades, setAdicionaisQuantidades] = useState<Record<string, number>>({});
   const [itensCarrinho, setItensCarrinho] = useState<CarrinhoItem[]>([]);
   const [formaPagamento, setFormaPagamento] = useState<'credito' | 'debito' | 'pix' | 'dinheiro'>('dinheiro');
+  const [pedidoPago, setPedidoPago] = useState<boolean>(true);
 
   const produtosAtivos = produtos.filter(p => p.ativo);
   const adicionaisAtivos = adicionais.filter(a => a.ativo);
@@ -450,6 +451,35 @@ export default function PedidoDireto() {
                   <SelectItem value="debito">Cartão de Débito</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Pedido Pago */}
+            <div className="bg-card rounded-xl p-4 shadow-card border border-border/50">
+              <label className="block text-sm font-medium text-foreground mb-3">
+                Pedido Pago?
+              </label>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setPedidoPago(true)}
+                  className={`flex-1 py-3 px-4 rounded-xl border-2 font-semibold transition-all ${
+                    pedidoPago
+                      ? 'border-green-500 bg-green-500/10 text-green-600'
+                      : 'border-border bg-card text-muted-foreground hover:border-green-500/50'
+                  }`}
+                >
+                  ✓ Sim
+                </button>
+                <button
+                  onClick={() => setPedidoPago(false)}
+                  className={`flex-1 py-3 px-4 rounded-xl border-2 font-semibold transition-all ${
+                    !pedidoPago
+                      ? 'border-amber-500 bg-amber-500/10 text-amber-600'
+                      : 'border-border bg-card text-muted-foreground hover:border-amber-500/50'
+                  }`}
+                >
+                  ✗ Não
+                </button>
+              </div>
             </div>
           </div>
         )}
