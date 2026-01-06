@@ -6,17 +6,16 @@ import { Logo } from '@/components/Logo';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
 import { StatusPedido, TAMANHO_LABELS } from '@/types';
-import { LogOut, Users, Package, Plus, ChevronRight, Clock } from 'lucide-react';
+import { LogOut, Users, Package, Plus, Clock, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
 
 const STATUS_OPTIONS: StatusPedido[] = ['pendente', 'preparo', 'pronto', 'entrega'];
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const { logout } = useAuth();
-  const { pedidos, atualizarStatus } = usePedidos();
+  const { pedidosHoje, isLoading, atualizarStatus } = usePedidos();
 
   const handleLogout = () => {
     logout();
@@ -85,17 +84,22 @@ export default function AdminDashboard() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-display font-bold text-xl text-foreground">Pedidos do Dia</h2>
             <span className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-semibold">
-              {pedidos.length} pedidos
+              {pedidosHoje.length} pedidos
             </span>
           </div>
 
           <div className="space-y-4">
-            {pedidos.length === 0 ? (
+            {isLoading ? (
+              <div className="bg-card rounded-xl p-8 shadow-card border border-border/50 flex items-center justify-center">
+                <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
+                <span className="text-muted-foreground">Carregando pedidos...</span>
+              </div>
+            ) : pedidosHoje.length === 0 ? (
               <div className="bg-card rounded-xl p-8 shadow-card border border-border/50 text-center">
-                <p className="text-muted-foreground">Nenhum pedido ainda</p>
+                <p className="text-muted-foreground">Nenhum pedido hoje</p>
               </div>
             ) : (
-              pedidos.map((pedido) => {
+              pedidosHoje.map((pedido) => {
                 const nextStatus = getNextStatus(pedido.status);
 
                 return (

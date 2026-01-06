@@ -50,7 +50,7 @@ export default function Carrinho() {
 
     setIsLoading(true);
 
-    const numeroPedido = criarPedido(
+    const numeroPedido = await criarPedido(
       user.id,
       user.nome,
       user.endereco,
@@ -58,6 +58,11 @@ export default function Carrinho() {
       itens,
       total
     );
+
+    if (!numeroPedido) {
+      setIsLoading(false);
+      return;
+    }
 
     setNumeroPedidoAtual(numeroPedido);
 
