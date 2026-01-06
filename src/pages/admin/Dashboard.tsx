@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePedidos } from '@/contexts/PedidosContext';
@@ -8,11 +8,53 @@ import { StatusPedido, TAMANHO_LABELS } from '@/types';
 import { LogOut, Users, Package, Plus, Clock, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { supabase } from '@/integrations/supabase/client';
+import { useNotificationSound } from '@/hooks/useNotificationSound';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const { logout } = useAuth();
-  const { pedidosHoje, isLoading, atualizarStatus } = usePedidos();
+  const { pedidosHoje, isLoading, atualizarStatus, refetch } = usePedidos();
+  const { playNotification } = useNotificationSound();
+
+  // Atualizar dados ao acessar a página
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
+
+  // Escutar novos pedidos em tempo real
+  useEffect(() => {
+    const channel = supabase
+      .channel('admin-pedidos-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'pedidos',
+        },
+        () => {
+          playNotification();
+          refetch();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'pedidos',
+        },
+        () => {
+          refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refetch, playNotification]);
 
   const handleLogout = () => {
     logout();
