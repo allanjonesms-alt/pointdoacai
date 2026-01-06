@@ -66,16 +66,23 @@ export default function Login() {
           <div className="bg-card rounded-2xl shadow-float p-6 animate-fade-in-up">
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="telefone">Telefone</Label>
+                <Label htmlFor="telefone">Telefone ou e-mail</Label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                   <Input
                     id="telefone"
-                    type="tel"
-                    placeholder="(00) 00000-0000"
+                    type="text"
+                    placeholder="(00) 00000-0000 ou email@dominio.com"
                     className="pl-10"
                     value={formData.telefone}
-                    onChange={(e) => setFormData({ ...formData, telefone: formatPhone(e.target.value) })}
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      const isEmailLike = /[^0-9()\s-]/.test(v);
+                      setFormData({ ...formData, telefone: isEmailLike ? v : formatPhone(v) });
+                    }}
                     required
                   />
                 </div>
@@ -127,7 +134,7 @@ export default function Login() {
             {/* Info */}
             <div className="mt-6 p-4 bg-muted rounded-xl">
               <p className="text-sm text-muted-foreground text-center">
-                Use seu número de telefone e senha para entrar
+                Use seu telefone ou e-mail e senha para entrar
               </p>
             </div>
           </div>
