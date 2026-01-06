@@ -48,7 +48,7 @@ export default function AdminDashboard() {
 
       <div className="container max-w-4xl mx-auto px-4 py-6">
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
+        <div className="grid grid-cols-3 gap-4 mb-8">
           <Link to="/admin/clientes">
             <div className="bg-card rounded-xl p-4 shadow-card border border-border/50 hover:shadow-float transition-shadow">
               <div className="w-12 h-12 bg-tropical rounded-lg flex items-center justify-center mb-3">
@@ -56,6 +56,16 @@ export default function AdminDashboard() {
               </div>
               <h3 className="font-display font-bold text-foreground">Clientes</h3>
               <p className="text-sm text-muted-foreground">Gerenciar clientes</p>
+            </div>
+          </Link>
+
+          <Link to="/admin/pedido-direto">
+            <div className="bg-card rounded-xl p-4 shadow-card border border-border/50 hover:shadow-float transition-shadow">
+              <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mb-3">
+                <Plus className="h-6 w-6 text-primary-foreground" />
+              </div>
+              <h3 className="font-display font-bold text-foreground">Criar Pedido</h3>
+              <p className="text-sm text-muted-foreground">Pedidos Diretos</p>
             </div>
           </Link>
 
