@@ -79,11 +79,14 @@ export function CadastroClienteModal({ onSuccess }: CadastroClienteModalProps) {
 
     try {
       const cleanPhone = formData.telefone.replace(/\D/g, '');
-      const email = `${cleanPhone}@acai.app`;
+      const userEmail = `${cleanPhone}@acai.app`;
+
+      // Store current session before creating new user
+      const { data: currentSession } = await supabase.auth.getSession();
 
       // Create user in auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
+        email: userEmail,
         password: formData.senha,
         options: {
           data: {
@@ -110,7 +113,7 @@ export function CadastroClienteModal({ onSuccess }: CadastroClienteModalProps) {
 
       if (authData.user) {
         // Wait for trigger to create profile, then update tipo_cliente
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
         const { error: updateError } = await supabase
           .from('profiles')
@@ -122,6 +125,14 @@ export function CadastroClienteModal({ onSuccess }: CadastroClienteModalProps) {
 
         if (updateError) {
           console.error('Error updating profile:', updateError);
+        }
+
+        // Restore admin session if it was lost
+        if (currentSession?.session) {
+          await supabase.auth.setSession({
+            access_token: currentSession.session.access_token,
+            refresh_token: currentSession.session.refresh_token,
+          });
         }
       }
 
