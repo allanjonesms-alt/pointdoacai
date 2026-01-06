@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useCarrinho } from '@/contexts/CarrinhoContext';
+import { useCarrinho, ModoEntrega } from '@/contexts/CarrinhoContext';
 import { usePedidos } from '@/contexts/PedidosContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { CarrinhoItemCard } from '@/components/CarrinhoItem';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, ShoppingBag, CreditCard, Smartphone, Banknote, QrCode, Check, MapPin } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, CreditCard, Smartphone, Banknote, QrCode, Check, MapPin, Store, Truck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PixQRCode } from '@/components/PixQRCode';
 import {
@@ -28,7 +28,7 @@ const FORMAS_PAGAMENTO: { id: FormaPagamento; label: string; icon: React.ReactNo
 export default function Carrinho() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { itens, subtotal, totalAdicionais, taxaEntrega, total, limparCarrinho } = useCarrinho();
+  const { itens, subtotal, totalAdicionais, taxaEntrega, total, limparCarrinho, modoEntrega, setModoEntrega } = useCarrinho();
   const { criarPedido } = usePedidos();
   const { toast } = useToast();
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento | null>(null);
@@ -170,8 +170,63 @@ export default function Carrinho() {
           + Adicionar mais itens
         </Button>
 
+        {/* Delivery Mode */}
+        <div className="bg-card rounded-xl p-4 shadow-card border border-border/50">
+          <h3 className="font-display font-semibold text-foreground mb-4">
+            Modo de entrega
+          </h3>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => setModoEntrega('entrega')}
+              className={cn(
+                'flex items-center gap-3 p-4 rounded-xl border-2 transition-all',
+                modoEntrega === 'entrega'
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border hover:border-primary/50'
+              )}
+            >
+              <div className={cn(
+                'w-10 h-10 rounded-lg flex items-center justify-center',
+                modoEntrega === 'entrega' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+              )}>
+                <Truck className="h-5 w-5" />
+              </div>
+              <div className="text-left">
+                <span className="font-medium text-foreground block">Entrega</span>
+                <span className="text-xs text-muted-foreground">+ R$ 1,00</span>
+              </div>
+              {modoEntrega === 'entrega' && (
+                <Check className="h-5 w-5 text-primary ml-auto" />
+              )}
+            </button>
+            <button
+              onClick={() => setModoEntrega('retirada')}
+              className={cn(
+                'flex items-center gap-3 p-4 rounded-xl border-2 transition-all',
+                modoEntrega === 'retirada'
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border hover:border-primary/50'
+              )}
+            >
+              <div className={cn(
+                'w-10 h-10 rounded-lg flex items-center justify-center',
+                modoEntrega === 'retirada' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+              )}>
+                <Store className="h-5 w-5" />
+              </div>
+              <div className="text-left">
+                <span className="font-medium text-foreground block">Retirada</span>
+                <span className="text-xs text-green-600">Grátis</span>
+              </div>
+              {modoEntrega === 'retirada' && (
+                <Check className="h-5 w-5 text-primary ml-auto" />
+              )}
+            </button>
+          </div>
+        </div>
+
         {/* Delivery Address */}
-        {user && (
+        {user && modoEntrega === 'entrega' && (
           <div className="bg-card rounded-xl p-4 shadow-card border border-border/50">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -185,6 +240,26 @@ export default function Carrinho() {
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {user.endereco.bairro}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Pickup Location */}
+        {modoEntrega === 'retirada' && (
+          <div className="bg-card rounded-xl p-4 shadow-card border border-border/50">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <Store className="h-5 w-5 text-green-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-foreground mb-1">Retirar em</h3>
+                <p className="text-sm text-muted-foreground">
+                  Point do Açaí
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Endereço da loja
                 </p>
               </div>
             </div>
@@ -240,7 +315,9 @@ export default function Carrinho() {
             )}
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Taxa de Entrega</span>
-              <span className="text-foreground">R$ {taxaEntrega.toFixed(2).replace('.', ',')}</span>
+              <span className={cn("text-foreground", modoEntrega === 'retirada' && "text-green-600")}>
+                {modoEntrega === 'retirada' ? 'Grátis' : `R$ ${taxaEntrega.toFixed(2).replace('.', ',')}`}
+              </span>
             </div>
             <div className="flex justify-between font-bold text-lg pt-2 border-t border-border">
               <span className="text-foreground">Total</span>
