@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { User, Phone, Mail, Lock, MapPin, Home, Loader2, ArrowLeft } from 'lucide-react';
+import { User, Phone, Lock, MapPin, Home, Loader2, ArrowLeft } from 'lucide-react';
 
 export default function Cadastro() {
   const navigate = useNavigate();
@@ -17,7 +17,6 @@ export default function Cadastro() {
   const [formData, setFormData] = useState({
     nome: '',
     telefone: '',
-    email: '',
     senha: '',
     confirmarSenha: '',
     rua: '',
@@ -29,7 +28,7 @@ export default function Cadastro() {
 
   const handleNext = () => {
     if (step === 1) {
-      if (!formData.nome || !formData.telefone || !formData.email || !formData.senha) {
+      if (!formData.nome || !formData.telefone || !formData.senha) {
         toast({
           title: 'Campos obrigatórios',
           description: 'Preencha todos os campos obrigatórios.',
@@ -41,6 +40,14 @@ export default function Cadastro() {
         toast({
           title: 'Senhas não coincidem',
           description: 'As senhas digitadas são diferentes.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      if (formData.senha.length < 6) {
+        toast({
+          title: 'Senha muito curta',
+          description: 'A senha deve ter pelo menos 6 caracteres.',
           variant: 'destructive',
         });
         return;
@@ -66,7 +73,6 @@ export default function Cadastro() {
     const result = await register({
       nome: formData.nome,
       telefone: formData.telefone,
-      email: formData.email,
       senha: formData.senha,
       endereco: {
         rua: formData.rua,
@@ -145,25 +151,11 @@ export default function Cadastro() {
                     <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <Input
                       id="telefone"
+                      type="tel"
                       placeholder="(00) 00000-0000"
                       className="pl-10"
                       value={formData.telefone}
                       onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email">E-mail *</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      className="pl-10"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     />
                   </div>
                 </div>
@@ -181,6 +173,7 @@ export default function Cadastro() {
                       onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
                     />
                   </div>
+                  <p className="text-xs text-muted-foreground">Mínimo de 6 caracteres</p>
                 </div>
 
                 <div className="space-y-2">

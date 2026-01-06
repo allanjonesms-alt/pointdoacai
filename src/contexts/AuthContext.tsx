@@ -31,11 +31,17 @@ interface UserWithProfile {
   valorTotalCompras: number;
 }
 
+// Helper to convert phone to email format for Supabase auth
+const phoneToEmail = (phone: string): string => {
+  const cleanPhone = phone.replace(/\D/g, '');
+  return `${cleanPhone}@acai.app`;
+};
+
 interface AuthContextType {
   user: UserWithProfile | null;
   session: Session | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (telefone: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (userData: RegisterData) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<Profile>) => Promise<{ success: boolean; error?: string }>;
@@ -44,7 +50,6 @@ interface AuthContextType {
 interface RegisterData {
   nome: string;
   telefone: string;
-  email: string;
   senha: string;
   endereco: {
     rua: string;
@@ -143,8 +148,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const login = async (telefone: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
+      const email = phoneToEmail(telefone);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -152,7 +159,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         return { success: false, error: error.message === 'Invalid login credentials' 
-          ? 'E-mail ou senha incorretos' 
+          ? 'Telefone ou senha incorretos' 
           : error.message };
       }
 
@@ -170,9 +177,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (userData: RegisterData): Promise<{ success: boolean; error?: string }> => {
     try {
       const redirectUrl = `${window.location.origin}/`;
+      const email = phoneToEmail(userData.telefone);
       
       const { data, error } = await supabase.auth.signUp({
-        email: userData.email,
+        email,
         password: userData.senha,
         options: {
           emailRedirectTo: redirectUrl,
@@ -190,7 +198,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         if (error.message.includes('already registered')) {
-          return { success: false, error: 'Este e-mail já está cadastrado' };
+          return { success: false, error: 'Este telefone já está cadastrado' };
         }
         return { success: false, error: error.message };
       }
