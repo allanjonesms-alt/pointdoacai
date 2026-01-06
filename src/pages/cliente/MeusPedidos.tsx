@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePedidos } from '@/contexts/PedidosContext';
@@ -7,14 +7,78 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, ShoppingBag, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { TAMANHO_LABELS } from '@/types';
+import { TAMANHO_LABELS, StatusPedido } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
+const STATUS_LABELS: Record<StatusPedido, string> = {
+  pendente: 'Pendente',
+  confirmado: 'Confirmado',
+  preparo: 'Em Preparo',
+  pronto: 'Pronto',
+  entrega: 'Saiu para Entrega',
+  entregue: 'Entregue',
+};
 
 export default function MeusPedidos() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { getPedidosCliente } = usePedidos();
+  const { getPedidosCliente, refetch } = usePedidos();
+  const previousStatusRef = useRef<Map<string, StatusPedido>>(new Map());
 
   const pedidos = user ? getPedidosCliente(user.id) : [];
+
+  // Store initial status for all pedidos
+  useEffect(() => {
+    pedidos.forEach(p => {
+      if (!previousStatusRef.current.has(p.id)) {
+        previousStatusRef.current.set(p.id, p.status);
+      }
+    });
+  }, [pedidos]);
+
+  // Subscribe to realtime status changes
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('pedidos-status-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'pedidos',
+          filter: `cliente_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const newStatus = payload.new.status as StatusPedido;
+          const pedidoId = payload.new.id as string;
+          const numeroPedido = payload.new.numero_pedido as string;
+          const previousStatus = previousStatusRef.current.get(pedidoId);
+
+          // Only notify if status actually changed
+          if (previousStatus && previousStatus !== newStatus) {
+            toast.success(
+              `Pedido #${numeroPedido}: ${STATUS_LABELS[newStatus]}`,
+              {
+                description: 'O status do seu pedido foi atualizado!',
+                duration: 5000,
+              }
+            );
+            previousStatusRef.current.set(pedidoId, newStatus);
+          }
+
+          // Refetch to update UI
+          refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, refetch]);
 
   return (
     <div className="min-h-screen bg-background">
