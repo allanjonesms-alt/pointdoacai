@@ -3,11 +3,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Produto, TAMANHO_LABELS } from '@/types';
 import { useCarrinho } from '@/contexts/CarrinhoContext';
 import { ProductCard } from '@/components/ProductCard';
-import { AdicionalChip } from '@/components/AdicionalChip';
+import { AdicionalQuantity } from '@/components/AdicionalQuantity';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useProdutos } from '@/hooks/useProdutos';
-import { ArrowLeft, ShoppingCart, Plus, AlertCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, ShoppingBag, AlertCircle } from 'lucide-react';
 
 export default function NovoPedido() {
   const navigate = useNavigate();
@@ -15,7 +15,7 @@ export default function NovoPedido() {
   const { toast } = useToast();
   const [step, setStep] = useState<'tamanho' | 'adicionais'>('tamanho');
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);
-  const [adicionaisSelecionados, setAdicionaisSelecionados] = useState<string[]>([]);
+  const [adicionaisQuantidades, setAdicionaisQuantidades] = useState<Record<string, number>>({});
 
   const { produtos, adicionais, isLoading } = useProdutos();
 
@@ -25,35 +25,55 @@ export default function NovoPedido() {
   const handleSelectProduto = (produto: Produto) => {
     setProdutoSelecionado(produto);
     setStep('adicionais');
-    setAdicionaisSelecionados([]);
+    setAdicionaisQuantidades({});
   };
 
-  const toggleAdicional = (nome: string) => {
-    setAdicionaisSelecionados(prev =>
-      prev.includes(nome)
-        ? prev.filter(a => a !== nome)
-        : [...prev, nome]
-    );
+  const handleQuantidadeChange = (nome: string, quantidade: number) => {
+    setAdicionaisQuantidades(prev => {
+      if (quantidade === 0) {
+        const { [nome]: _, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [nome]: quantidade };
+    });
   };
+
+  // Conta o total de adicionais (considerando quantidades)
+  const totalAdicionais = Object.values(adicionaisQuantidades).reduce((sum, qty) => sum + qty, 0);
 
   const calcularExtras = () => {
-    const extras = Math.max(0, adicionaisSelecionados.length - 3);
+    const extras = Math.max(0, totalAdicionais - 3);
     return extras * 2;
   };
 
-  const handleAddToCart = () => {
+  // Converte o objeto de quantidades para array de nomes (repetindo conforme quantidade)
+  const getAdicionaisArray = () => {
+    const result: string[] = [];
+    Object.entries(adicionaisQuantidades).forEach(([nome, quantidade]) => {
+      for (let i = 0; i < quantidade; i++) {
+        result.push(nome);
+      }
+    });
+    return result;
+  };
+
+  const handleAddToCart = (goToCart: boolean = false) => {
     if (!produtoSelecionado) return;
 
-    adicionarItem(produtoSelecionado, adicionaisSelecionados);
+    adicionarItem(produtoSelecionado, getAdicionaisArray());
     toast({
       title: 'Adicionado ao carrinho!',
       description: `Açaí ${TAMANHO_LABELS[produtoSelecionado.tamanho]} adicionado.`,
     });
 
-    // Reset for new item
-    setStep('tamanho');
-    setProdutoSelecionado(null);
-    setAdicionaisSelecionados([]);
+    if (goToCart) {
+      navigate('/carrinho');
+    } else {
+      // Reset for new item
+      setStep('tamanho');
+      setProdutoSelecionado(null);
+      setAdicionaisQuantidades({});
+    }
   };
 
   return (
@@ -130,22 +150,27 @@ export default function NovoPedido() {
               <h3 className="font-display font-semibold text-foreground">
                 Escolha seus adicionais
                 <span className="text-muted-foreground font-normal ml-2">
-                  ({adicionaisSelecionados.length} selecionados)
+                  ({totalAdicionais} selecionados)
                 </span>
               </h3>
-              <div className="grid grid-cols-2 gap-3">
-                {adicionaisAtivos.map((adicional, index) => {
-                  const isSelected = adicionaisSelecionados.includes(adicional.nome);
-                  const selectedIndex = adicionaisSelecionados.indexOf(adicional.nome);
-                  const isFree = selectedIndex < 3;
+              <div className="grid grid-cols-1 gap-3">
+                {adicionaisAtivos.map((adicional) => {
+                  const quantidade = adicionaisQuantidades[adicional.nome] || 0;
+                  // Calcula quantos gratuitos ainda restam para este adicional
+                  let gratuitosUsados = 0;
+                  for (const [nome, qty] of Object.entries(adicionaisQuantidades)) {
+                    if (nome === adicional.nome) break;
+                    gratuitosUsados += qty;
+                  }
+                  const gratuitosRestantes = Math.max(0, 3 - gratuitosUsados);
 
                   return (
-                    <AdicionalChip
+                    <AdicionalQuantity
                       key={adicional.id}
                       nome={adicional.nome}
-                      selected={isSelected}
-                      onToggle={() => toggleAdicional(adicional.nome)}
-                      isFree={!isSelected || isFree}
+                      quantidade={quantidade}
+                      onQuantidadeChange={(qty) => handleQuantidadeChange(adicional.nome, qty)}
+                      gratuitos={gratuitosRestantes}
                     />
                   );
                 })}
@@ -171,14 +196,22 @@ export default function NovoPedido() {
                   </p>
                 )}
               </div>
+            </div>
+            <div className="flex gap-3">
               <Button
-                variant="acai"
                 size="lg"
-                onClick={handleAddToCart}
-                className="gap-2"
+                onClick={() => handleAddToCart(false)}
+                className="flex-1 gap-2 bg-violet-400 hover:bg-violet-500 text-white"
               >
-                <Plus className="h-5 w-5" />
-                Adicionar
+                Continuar Comprando
+              </Button>
+              <Button
+                size="lg"
+                onClick={() => handleAddToCart(true)}
+                className="flex-1 gap-2 bg-violet-600 hover:bg-violet-700 text-white"
+              >
+                <ShoppingBag className="h-5 w-5" />
+                Finalizar Compra
               </Button>
             </div>
           </div>
