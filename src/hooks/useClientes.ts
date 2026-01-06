@@ -57,7 +57,7 @@ export function useClientes() {
         throw rolesError;
       }
 
-      // Combine profiles with roles and filter only clients
+      // Combine profiles with roles
       const clientesWithRoles: ClienteWithRole[] = (profiles || [])
         .map(profile => {
           const userRole = roles?.find(r => r.user_id === profile.id);
@@ -67,8 +67,7 @@ export function useClientes() {
             tipo_cliente: profile.tipo_cliente as 'organico' | 'sintetico',
             role: (userRole?.role as 'cliente' | 'admin') || 'cliente',
           };
-        })
-        .filter(c => c.role === 'cliente');
+        });
 
       setClientes(clientesWithRoles);
       setError(null);
