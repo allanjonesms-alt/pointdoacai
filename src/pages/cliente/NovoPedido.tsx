@@ -10,6 +10,7 @@ import { useProdutos } from '@/hooks/useProdutos';
 import { ArrowLeft, ShoppingCart, ShoppingBag, AlertCircle, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import isoporImage from '@/assets/isopor-acai.png';
+import copoImage from '@/assets/copo-acai.png';
 
 export default function NovoPedido() {
   const navigate = useNavigate();
@@ -182,7 +183,7 @@ export default function NovoPedido() {
                   )}
                 >
                   {embalagem === 'copo' ? (
-                    <span className="text-5xl">🥤</span>
+                    <img src={copoImage} alt="Copo" className="w-16 h-16 object-contain" />
                   ) : (
                     <img src={isoporImage} alt="Isopor" className="w-16 h-16 object-contain" />
                   )}
