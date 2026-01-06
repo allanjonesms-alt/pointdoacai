@@ -1,16 +1,25 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePedidos } from '@/contexts/PedidosContext';
+import { useCarrinho } from '@/contexts/CarrinhoContext';
 import { StatusBadge } from '@/components/StatusBadge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ShoppingBag, Clock } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, Clock, RefreshCw, Package } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { TAMANHO_LABELS, StatusPedido } from '@/types';
+import { TAMANHO_LABELS, EMBALAGEM_LABELS, StatusPedido, CarrinhoItem } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 const STATUS_MESSAGES: Record<StatusPedido, string> = {
   pendente: '',
@@ -25,8 +34,11 @@ export default function MeusPedidos() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { getPedidosCliente, refetch } = usePedidos();
+  const { adicionarItem } = useCarrinho();
   const previousStatusRef = useRef<Map<string, StatusPedido>>(new Map());
   const { playNotification } = useNotificationSound();
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<CarrinhoItem | null>(null);
 
   // Atualizar dados ao acessar a página
   useEffect(() => {
@@ -83,6 +95,24 @@ export default function MeusPedidos() {
     };
   }, [user, refetch]);
 
+  const handleRepetirItem = (item: CarrinhoItem) => {
+    setSelectedItem(item);
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmarPedido = () => {
+    if (!selectedItem) return;
+    
+    adicionarItem(selectedItem.produto, selectedItem.adicionais, selectedItem.embalagem);
+    setShowConfirmModal(false);
+    setSelectedItem(null);
+    navigate('/carrinho');
+  };
+
+  const calcularValorTotal = (item: CarrinhoItem) => {
+    return item.valorUnitario + item.valorAdicionais;
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -134,15 +164,26 @@ export default function MeusPedidos() {
                   <StatusBadge status={pedido.status} />
                 </div>
 
-                <div className="space-y-2 py-3 border-y border-border">
+                <div className="space-y-3 py-3 border-y border-border">
                   {pedido.itens.map((item) => (
-                    <div key={item.id} className="flex justify-between text-sm">
-                      <span className="text-foreground">
-                        {item.quantidade}x Açaí {TAMANHO_LABELS[item.produto.tamanho]}
-                      </span>
-                      <span className="text-muted-foreground">
-                        R$ {((item.valorUnitario + item.valorAdicionais) * item.quantidade).toFixed(2).replace('.', ',')}
-                      </span>
+                    <div key={item.id} className="flex items-center justify-between gap-2">
+                      <div className="flex-1 text-sm">
+                        <span className="text-foreground">
+                          {item.quantidade}x Açaí {TAMANHO_LABELS[item.produto.tamanho]}
+                        </span>
+                        <span className="text-muted-foreground ml-2">
+                          R$ {((item.valorUnitario + item.valorAdicionais) * item.quantidade).toFixed(2).replace('.', ',')}
+                        </span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-2 text-primary hover:text-primary hover:bg-primary/10"
+                        onClick={() => handleRepetirItem(item)}
+                      >
+                        <RefreshCw className="h-4 w-4 mr-1" />
+                        <span className="text-xs">Repetir</span>
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -163,6 +204,80 @@ export default function MeusPedidos() {
           </div>
         )}
       </div>
+
+      {/* Modal de Confirmação */}
+      <Dialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RefreshCw className="h-5 w-5 text-primary" />
+              Confirmar Pedido
+            </DialogTitle>
+            <DialogDescription>
+              Revise os detalhes antes de adicionar ao carrinho
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedItem && (
+            <div className="space-y-4 py-4">
+              <div className="bg-muted/50 rounded-xl p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-12 h-12 gradient-acai rounded-lg flex items-center justify-center">
+                    <Package className="h-6 w-6 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground">
+                      {selectedItem.produto.nome}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {TAMANHO_LABELS[selectedItem.produto.tamanho]} • {selectedItem.produto.peso}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Embalagem</span>
+                    <span className="font-medium">{EMBALAGEM_LABELS[selectedItem.embalagem]}</span>
+                  </div>
+                  
+                  {selectedItem.adicionais.length > 0 && (
+                    <div>
+                      <span className="text-muted-foreground">Adicionais:</span>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {selectedItem.adicionais.map((adicional, idx) => (
+                          <span 
+                            key={idx}
+                            className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full"
+                          >
+                            {adicional}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center pt-2 border-t border-border">
+                <span className="font-semibold text-foreground">Valor Total</span>
+                <span className="text-xl font-bold text-primary">
+                  R$ {calcularValorTotal(selectedItem).toFixed(2).replace('.', ',')}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowConfirmModal(false)} className="flex-1">
+              Cancelar
+            </Button>
+            <Button variant="acai" onClick={handleConfirmarPedido} className="flex-1">
+              Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
