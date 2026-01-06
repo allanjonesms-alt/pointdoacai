@@ -28,7 +28,7 @@ const FORMAS_PAGAMENTO: { id: FormaPagamento; label: string; icon: React.ReactNo
 export default function Carrinho() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { itens, subtotal, totalAdicionais, total, limparCarrinho } = useCarrinho();
+  const { itens, subtotal, totalAdicionais, taxaEntrega, total, limparCarrinho } = useCarrinho();
   const { criarPedido } = usePedidos();
   const { toast } = useToast();
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento | null>(null);
@@ -238,6 +238,10 @@ export default function Carrinho() {
                 <span className="text-foreground">R$ {totalAdicionais.toFixed(2).replace('.', ',')}</span>
               </div>
             )}
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Taxa de Entrega</span>
+              <span className="text-foreground">R$ {taxaEntrega.toFixed(2).replace('.', ',')}</span>
+            </div>
             <div className="flex justify-between font-bold text-lg pt-2 border-t border-border">
               <span className="text-foreground">Total</span>
               <span className="text-primary">R$ {total.toFixed(2).replace('.', ',')}</span>

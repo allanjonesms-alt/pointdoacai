@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { CarrinhoItem, Produto, TipoEmbalagem } from '@/types';
 
+const TAXA_ENTREGA = 1.00;
+
 interface CarrinhoContextType {
   itens: CarrinhoItem[];
   adicionarItem: (produto: Produto, adicionais: string[], embalagem: TipoEmbalagem) => void;
@@ -10,6 +12,7 @@ interface CarrinhoContextType {
   limparCarrinho: () => void;
   subtotal: number;
   totalAdicionais: number;
+  taxaEntrega: number;
   total: number;
   quantidadeTotal: number;
 }
@@ -84,7 +87,8 @@ export function CarrinhoProvider({ children }: { children: ReactNode }) {
 
   const subtotal = itens.reduce((acc, item) => acc + (item.valorUnitario * item.quantidade), 0);
   const totalAdicionais = itens.reduce((acc, item) => acc + (item.valorAdicionais * item.quantidade), 0);
-  const total = subtotal + totalAdicionais;
+  const taxaEntrega = itens.length > 0 ? TAXA_ENTREGA : 0;
+  const total = subtotal + totalAdicionais + taxaEntrega;
   const quantidadeTotal = itens.reduce((acc, item) => acc + item.quantidade, 0);
 
   return (
@@ -97,6 +101,7 @@ export function CarrinhoProvider({ children }: { children: ReactNode }) {
       limparCarrinho,
       subtotal,
       totalAdicionais,
+      taxaEntrega,
       total,
       quantidadeTotal,
     }}>
