@@ -12,6 +12,10 @@ const statusConfig: Record<StatusPedido, { label: string; className: string }> =
     label: 'Pendente',
     className: 'bg-status-pending/20 text-status-pending border-status-pending/30',
   },
+  confirmado: {
+    label: 'Confirmado',
+    className: 'bg-blue-500/20 text-blue-600 border-blue-500/30',
+  },
   preparo: {
     label: 'Em Preparo',
     className: 'bg-status-preparing/20 text-status-preparing border-status-preparing/30',
@@ -23,6 +27,10 @@ const statusConfig: Record<StatusPedido, { label: string; className: string }> =
   entrega: {
     label: 'Saiu para Entrega',
     className: 'bg-status-delivery/20 text-status-delivery border-status-delivery/30',
+  },
+  entregue: {
+    label: 'Entregue',
+    className: 'bg-green-600/20 text-green-600 border-green-600/30',
   },
 };
 

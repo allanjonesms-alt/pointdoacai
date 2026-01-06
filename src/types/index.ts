@@ -47,13 +47,13 @@ export interface Pedido {
   clienteNome: string;
   enderecoEntrega: Endereco;
   formaPagamento: 'credito' | 'debito' | 'pix' | 'dinheiro';
-  status: 'pendente' | 'preparo' | 'pronto' | 'entrega';
+  status: 'pendente' | 'confirmado' | 'preparo' | 'pronto' | 'entrega' | 'entregue';
   valorTotal: number;
   dataHora: Date;
   itens: CarrinhoItem[];
 }
 
-export type StatusPedido = 'pendente' | 'preparo' | 'pronto' | 'entrega';
+export type StatusPedido = 'pendente' | 'confirmado' | 'preparo' | 'pronto' | 'entrega' | 'entregue';
 
 export const PRODUTOS: Produto[] = [
   { id: '1', nome: 'Açaí', tamanho: 'pequeno', peso: '200g', preco: 12.00, ativo: true },
