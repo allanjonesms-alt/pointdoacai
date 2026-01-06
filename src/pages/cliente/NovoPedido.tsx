@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useProdutos } from '@/hooks/useProdutos';
 import { ArrowLeft, ShoppingCart, ShoppingBag, AlertCircle, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import isoporImage from '@/assets/isopor-acai.png';
 
 export default function NovoPedido() {
   const navigate = useNavigate();
@@ -174,15 +175,17 @@ export default function NovoPedido() {
                   key={embalagem}
                   onClick={() => handleSelectEmbalagem(embalagem)}
                   className={cn(
-                    'bg-card rounded-xl p-6 shadow-card border-2 transition-all flex flex-col items-center gap-3',
+                    'bg-card rounded-xl p-6 shadow-card border-2 transition-all flex flex-col items-center gap-3 relative',
                     embalagemSelecionada === embalagem
                       ? 'border-primary ring-2 ring-primary/20'
                       : 'border-border/50 hover:border-primary/50'
                   )}
                 >
-                  <span className="text-5xl">
-                    {embalagem === 'copo' ? '🥤' : '📦'}
-                  </span>
+                  {embalagem === 'copo' ? (
+                    <span className="text-5xl">🥤</span>
+                  ) : (
+                    <img src={isoporImage} alt="Isopor" className="w-16 h-16 object-contain" />
+                  )}
                   <span className="font-semibold text-foreground">
                     {EMBALAGEM_LABELS[embalagem]}
                   </span>
