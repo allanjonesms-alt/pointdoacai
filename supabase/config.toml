@@ -1,1 +1,4 @@
 project_id = "xleotnpiheyylvchfyhg"
+
+[functions.gerar-pix]
+verify_jwt = false
