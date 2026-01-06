@@ -10,7 +10,7 @@ import { LogOut, Users, Package, Plus, Clock, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-const STATUS_OPTIONS: StatusPedido[] = ['pendente', 'preparo', 'pronto', 'entrega'];
+const STATUS_OPTIONS: StatusPedido[] = ['pendente', 'confirmado', 'preparo', 'pronto', 'entrega', 'entregue'];
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -165,9 +165,11 @@ export default function AdminDashboard() {
                           onClick={() => atualizarStatus(pedido.id, nextStatus)}
                         >
                           Marcar como{' '}
+                          {nextStatus === 'confirmado' && 'Confirmado'}
                           {nextStatus === 'preparo' && 'Em Preparo'}
                           {nextStatus === 'pronto' && 'Pronto'}
                           {nextStatus === 'entrega' && 'Saiu p/ Entrega'}
+                          {nextStatus === 'entregue' && 'Entregue'}
                         </Button>
                       </div>
                     )}

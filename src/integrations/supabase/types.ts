@@ -290,7 +290,13 @@ export type Database = {
     Enums: {
       app_role: "admin" | "cliente"
       forma_pagamento: "credito" | "debito" | "pix" | "dinheiro"
-      status_pedido: "pendente" | "preparo" | "pronto" | "entrega"
+      status_pedido:
+        | "pendente"
+        | "confirmado"
+        | "preparo"
+        | "pronto"
+        | "entrega"
+        | "entregue"
       tamanho_produto: "pequeno" | "medio" | "grande" | "gg" | "mega"
     }
     CompositeTypes: {
@@ -421,7 +427,14 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "cliente"],
       forma_pagamento: ["credito", "debito", "pix", "dinheiro"],
-      status_pedido: ["pendente", "preparo", "pronto", "entrega"],
+      status_pedido: [
+        "pendente",
+        "confirmado",
+        "preparo",
+        "pronto",
+        "entrega",
+        "entregue",
+      ],
       tamanho_produto: ["pequeno", "medio", "grande", "gg", "mega"],
     },
   },
