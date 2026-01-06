@@ -1,8 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, User, Phone, Mail, MapPin, TrendingUp, Pencil, Trash2 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { ArrowLeft, User, Phone, Mail, MapPin, TrendingUp, Pencil, Trash2, Loader2 } from 'lucide-react';
+import { useClientes } from '@/hooks/useClientes';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -18,15 +18,24 @@ import {
 
 export default function AdminClientes() {
   const navigate = useNavigate();
-  const { users, deleteUser } = useAuth();
+  const { clientes, isLoading, deleteCliente } = useClientes();
 
-  // Filter only clients
-  const clientes = users.filter(u => u.role === 'cliente');
-
-  const handleDelete = (clienteId: string, nome: string) => {
-    deleteUser(clienteId);
-    toast.success(`Cliente "${nome}" excluído com sucesso`);
+  const handleDelete = async (clienteId: string, nome: string) => {
+    const result = await deleteCliente(clienteId);
+    if (result.success) {
+      toast.success(`Cliente "${nome}" excluído com sucesso`);
+    } else {
+      toast.error(result.error || 'Erro ao excluir cliente');
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -69,7 +78,7 @@ export default function AdminClientes() {
                     <div className="flex items-center gap-1 text-tropical">
                       <TrendingUp className="h-4 w-4" />
                       <span className="font-bold">
-                        R$ {cliente.valorTotalCompras.toFixed(2).replace('.', ',')}
+                        R$ {Number(cliente.valor_total_compras).toFixed(2).replace('.', ',')}
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground">Total comprado</p>
@@ -93,12 +102,12 @@ export default function AdminClientes() {
                     <MapPin className="h-4 w-4 flex-shrink-0 mt-0.5 text-primary" />
                     <div className="text-muted-foreground">
                       <p>
-                        {cliente.endereco.rua}, {cliente.endereco.numero}
-                        {cliente.endereco.complemento && ` - ${cliente.endereco.complemento}`}
+                        {cliente.rua}, {cliente.numero}
+                        {cliente.complemento && ` - ${cliente.complemento}`}
                       </p>
-                      <p>{cliente.endereco.bairro}</p>
-                      {cliente.endereco.referencia && (
-                        <p className="text-xs mt-1">Ref: {cliente.endereco.referencia}</p>
+                      <p>{cliente.bairro}</p>
+                      {cliente.referencia && (
+                        <p className="text-xs mt-1">Ref: {cliente.referencia}</p>
                       )}
                     </div>
                   </div>
