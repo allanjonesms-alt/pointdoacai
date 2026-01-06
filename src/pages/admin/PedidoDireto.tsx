@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PRODUTOS, ADICIONAIS, Produto, TAMANHO_LABELS, CarrinhoItem } from '@/types';
 import { useClientes } from '@/hooks/useClientes';
@@ -6,8 +6,9 @@ import { usePedidos } from '@/contexts/PedidosContext';
 import { ProductCard } from '@/components/ProductCard';
 import { AdicionalChip } from '@/components/AdicionalChip';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Plus, ShoppingCart, Trash2, User, Check } from 'lucide-react';
+import { ArrowLeft, Plus, ShoppingCart, Trash2, User, Check, Search, Phone } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -23,6 +24,7 @@ export default function PedidoDireto() {
   const { criarPedido } = usePedidos();
 
   const [clienteSelecionado, setClienteSelecionado] = useState<string>('');
+  const [busca, setBusca] = useState('');
   const [step, setStep] = useState<'cliente' | 'tamanho' | 'adicionais' | 'resumo'>('cliente');
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);
   const [adicionaisSelecionados, setAdicionaisSelecionados] = useState<string[]>([]);
@@ -33,6 +35,20 @@ export default function PedidoDireto() {
   const adicionaisAtivos = ADICIONAIS.filter(a => a.ativo);
 
   const clienteInfo = clientes.find(c => c.id === clienteSelecionado);
+
+  // Filter clients based on search (name or phone)
+  const clientesFiltrados = useMemo(() => {
+    if (!busca.trim()) return clientes;
+    
+    const searchTerm = busca.toLowerCase().replace(/\D/g, '');
+    const searchName = busca.toLowerCase();
+    
+    return clientes.filter(cliente => {
+      const matchNome = cliente.nome.toLowerCase().includes(searchName);
+      const matchTelefone = cliente.telefone.replace(/\D/g, '').includes(searchTerm);
+      return matchNome || matchTelefone;
+    });
+  }, [clientes, busca]);
 
   const handleSelectProduto = (produto: Produto) => {
     setProdutoSelecionado(produto);
@@ -174,29 +190,70 @@ export default function PedidoDireto() {
       <div className="container max-w-md mx-auto px-4 py-6">
         {/* Step: Cliente */}
         {step === 'cliente' && (
-          <div className="animate-fade-in space-y-6">
+          <div className="animate-fade-in space-y-4">
+            {/* Search Input */}
             <div className="bg-card rounded-xl p-4 shadow-card border border-border/50">
               <label className="block text-sm font-medium text-foreground mb-2">
-                Selecione o cliente
+                Buscar cliente
               </label>
-              <Select value={clienteSelecionado} onValueChange={setClienteSelecionado}>
-                <SelectTrigger>
-                  <SelectValue placeholder={loadingClientes ? "Carregando..." : "Escolha um cliente"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {clientes.map(cliente => (
-                    <SelectItem key={cliente.id} value={cliente.id}>
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        <span>{cliente.nome}</span>
-                        <span className="text-muted-foreground">- {cliente.telefone}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Digite o nome ou telefone..."
+                  className="pl-10"
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                  autoFocus
+                />
+              </div>
             </div>
 
+            {/* Client List */}
+            <div className="space-y-2">
+              {loadingClientes ? (
+                <div className="bg-card rounded-xl p-8 shadow-card border border-border/50 text-center">
+                  <p className="text-muted-foreground">Carregando clientes...</p>
+                </div>
+              ) : clientesFiltrados.length === 0 ? (
+                <div className="bg-card rounded-xl p-8 shadow-card border border-border/50 text-center">
+                  <p className="text-muted-foreground">
+                    {busca ? 'Nenhum cliente encontrado' : 'Nenhum cliente cadastrado'}
+                  </p>
+                </div>
+              ) : (
+                clientesFiltrados.map(cliente => (
+                  <button
+                    key={cliente.id}
+                    onClick={() => setClienteSelecionado(cliente.id)}
+                    className={`w-full text-left bg-card rounded-xl p-4 shadow-card border transition-all ${
+                      clienteSelecionado === cliente.id
+                        ? 'border-primary ring-2 ring-primary/20'
+                        : 'border-border/50 hover:border-primary/50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        clienteSelecionado === cliente.id ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                      }`}>
+                        <User className="h-5 w-5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-foreground truncate">{cliente.nome}</p>
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Phone className="h-3 w-3" />
+                          <span>{cliente.telefone}</span>
+                        </div>
+                      </div>
+                      {clienteSelecionado === cliente.id && (
+                        <Check className="h-5 w-5 text-primary" />
+                      )}
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+
+            {/* Selected Client Address */}
             {clienteInfo && (
               <div className="bg-muted rounded-xl p-4">
                 <h3 className="font-semibold text-foreground mb-2">Endereço de entrega</h3>
