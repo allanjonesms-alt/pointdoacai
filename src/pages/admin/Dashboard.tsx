@@ -3,14 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePedidos } from '@/contexts/PedidosContext';
 import { Logo } from '@/components/Logo';
-import { StatusBadge } from '@/components/StatusBadge';
-import { Button } from '@/components/ui/button';
+import { StatusProgressBar } from '@/components/StatusProgressBar';
 import { StatusPedido, TAMANHO_LABELS } from '@/types';
 import { LogOut, Users, Package, Plus, Clock, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-
-const STATUS_OPTIONS: StatusPedido[] = ['pendente', 'confirmado', 'preparo', 'pronto', 'entrega', 'entregue'];
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -20,11 +17,6 @@ export default function AdminDashboard() {
   const handleLogout = () => {
     logout();
     navigate('/login');
-  };
-
-  const getNextStatus = (current: StatusPedido): StatusPedido | null => {
-    const index = STATUS_OPTIONS.indexOf(current);
-    return index < STATUS_OPTIONS.length - 1 ? STATUS_OPTIONS[index + 1] : null;
   };
 
   return (
@@ -99,22 +91,16 @@ export default function AdminDashboard() {
                 <p className="text-muted-foreground">Nenhum pedido hoje</p>
               </div>
             ) : (
-              pedidosHoje.map((pedido) => {
-                const nextStatus = getNextStatus(pedido.status);
-
-                return (
+              pedidosHoje.map((pedido) => (
                   <div
                     key={pedido.id}
                     className="bg-card rounded-xl p-4 shadow-card border border-border/50 animate-fade-in"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-display font-bold text-lg text-foreground">
-                            #{pedido.numeroPedido}
-                          </h3>
-                          <StatusBadge status={pedido.status} />
-                        </div>
+                        <h3 className="font-display font-bold text-lg text-foreground">
+                          #{pedido.numeroPedido}
+                        </h3>
                         <p className="text-sm text-foreground mt-1">{pedido.clienteNome}</p>
                         <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
                           <Clock className="h-3 w-3" />
@@ -151,31 +137,17 @@ export default function AdminDashboard() {
                     </div>
 
                     {/* Address */}
-                    <p className="text-xs text-muted-foreground mb-3">
+                    <p className="text-xs text-muted-foreground mb-4">
                       📍 {pedido.enderecoEntrega.rua}, {pedido.enderecoEntrega.numero} - {pedido.enderecoEntrega.bairro}
                     </p>
 
-                    {/* Status Actions */}
-                    {nextStatus && (
-                      <div className="flex gap-2">
-                        <Button
-                          variant="acai"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => atualizarStatus(pedido.id, nextStatus)}
-                        >
-                          Marcar como{' '}
-                          {nextStatus === 'confirmado' && 'Confirmado'}
-                          {nextStatus === 'preparo' && 'Em Preparo'}
-                          {nextStatus === 'pronto' && 'Pronto'}
-                          {nextStatus === 'entrega' && 'Saiu p/ Entrega'}
-                          {nextStatus === 'entregue' && 'Entregue'}
-                        </Button>
-                      </div>
-                    )}
+                    {/* Status Progress Bar */}
+                    <StatusProgressBar
+                      currentStatus={pedido.status}
+                      onAdvanceStatus={(newStatus) => atualizarStatus(pedido.id, newStatus)}
+                    />
                   </div>
-                );
-              })
+                ))
             )}
           </div>
         </div>
