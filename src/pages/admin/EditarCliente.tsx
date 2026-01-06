@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, User, Phone, Mail, MapPin, Home } from 'lucide-react';
+import { ArrowLeft, Save, User, Phone, Mail, MapPin, Home, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/contexts/AuthContext';
+import { useClientes } from '@/hooks/useClientes';
 import { toast } from 'sonner';
 
 const EditarCliente = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { users, updateUser } = useAuth();
+  const { clientes, isLoading: loadingClientes, updateCliente } = useClientes();
   
-  const cliente = users.find(u => u.id === id && u.role === 'cliente');
+  const cliente = clientes.find(c => c.id === id);
 
   const [formData, setFormData] = useState({
     nome: '',
@@ -25,6 +25,7 @@ const EditarCliente = () => {
     complemento: '',
     referencia: '',
   });
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (cliente) {
@@ -32,11 +33,11 @@ const EditarCliente = () => {
         nome: cliente.nome,
         telefone: cliente.telefone,
         email: cliente.email,
-        rua: cliente.endereco.rua,
-        numero: cliente.endereco.numero,
-        bairro: cliente.endereco.bairro,
-        complemento: cliente.endereco.complemento || '',
-        referencia: cliente.endereco.referencia || '',
+        rua: cliente.rua,
+        numero: cliente.numero,
+        bairro: cliente.bairro,
+        complemento: cliente.complemento || '',
+        referencia: cliente.referencia || '',
       });
     }
   }, [cliente]);
@@ -48,10 +49,10 @@ const EditarCliente = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!cliente) return;
+    if (!cliente || !id) return;
 
     if (!formData.nome || !formData.telefone || !formData.email) {
       toast.error('Preencha todos os campos obrigatórios');
@@ -63,22 +64,36 @@ const EditarCliente = () => {
       return;
     }
 
-    updateUser(cliente.id, {
+    setIsSaving(true);
+
+    const result = await updateCliente(id, {
       nome: formData.nome,
       telefone: formData.telefone,
       email: formData.email,
-      endereco: {
-        rua: formData.rua,
-        numero: formData.numero,
-        bairro: formData.bairro,
-        complemento: formData.complemento || undefined,
-        referencia: formData.referencia || undefined,
-      },
+      rua: formData.rua,
+      numero: formData.numero,
+      bairro: formData.bairro,
+      complemento: formData.complemento || null,
+      referencia: formData.referencia || null,
     });
 
-    toast.success('Cliente atualizado com sucesso!');
-    navigate('/admin/clientes');
+    setIsSaving(false);
+
+    if (result.success) {
+      toast.success('Cliente atualizado com sucesso!');
+      navigate('/admin/clientes');
+    } else {
+      toast.error(result.error || 'Erro ao atualizar cliente');
+    }
   };
+
+  if (loadingClientes) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background to-muted flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (!cliente) {
     return (
@@ -242,9 +257,18 @@ const EditarCliente = () => {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" size="lg">
-                <Save className="w-4 h-4 mr-2" />
-                Salvar Alterações
+              <Button type="submit" className="w-full" size="lg" disabled={isSaving}>
+                {isSaving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    Salvar Alterações
+                  </>
+                )}
               </Button>
             </form>
           </CardContent>

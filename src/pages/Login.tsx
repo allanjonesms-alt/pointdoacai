@@ -118,13 +118,12 @@ export default function Login() {
               </p>
             </div>
 
-            {/* Demo Credentials */}
+
+            {/* Info */}
             <div className="mt-6 p-4 bg-muted rounded-xl">
-              <p className="text-sm font-semibold text-foreground mb-2">Credenciais de teste:</p>
-              <div className="space-y-1 text-xs text-muted-foreground">
-                <p><strong>Admin:</strong> admin@pointdoacai.com / admin123</p>
-                <p><strong>Cliente:</strong> joao@email.com / cliente123</p>
-              </div>
+              <p className="text-sm text-muted-foreground text-center">
+                Ainda não tem conta? Cadastre-se para fazer seus pedidos!
+              </p>
             </div>
           </div>
         </div>

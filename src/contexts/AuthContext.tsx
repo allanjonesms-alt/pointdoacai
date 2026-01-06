@@ -1,15 +1,44 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User } from '@/types';
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
+
+interface Profile {
+  id: string;
+  nome: string;
+  telefone: string;
+  email: string;
+  rua: string;
+  numero: string;
+  bairro: string;
+  complemento: string | null;
+  referencia: string | null;
+  valor_total_compras: number;
+}
+
+interface UserWithProfile {
+  id: string;
+  nome: string;
+  telefone: string;
+  email: string;
+  endereco: {
+    rua: string;
+    numero: string;
+    bairro: string;
+    complemento?: string;
+    referencia?: string;
+  };
+  role: 'cliente' | 'admin';
+  valorTotalCompras: number;
+}
 
 interface AuthContextType {
-  user: User | null;
-  users: User[];
+  user: UserWithProfile | null;
+  session: Session | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (userData: RegisterData) => Promise<{ success: boolean; error?: string }>;
-  logout: () => void;
-  updateUser: (userId: string, data: Partial<User>) => void;
-  deleteUser: (userId: string) => void;
+  logout: () => Promise<void>;
+  updateProfile: (data: Partial<Profile>) => Promise<{ success: boolean; error?: string }>;
 }
 
 interface RegisterData {
@@ -28,144 +57,190 @@ interface RegisterData {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Simulated users database
-const INITIAL_USERS: (User & { senha: string })[] = [
-  {
-    id: 'admin-1',
-    nome: 'Administrador',
-    telefone: '(11) 99999-9999',
-    email: 'admin@pointdoacai.com',
-    senha: 'admin123',
-    role: 'admin',
-    endereco: { rua: '', numero: '', bairro: '' },
-    valorTotalCompras: 0,
-  },
-  {
-    id: 'admin-2',
-    nome: 'Allan Jones',
-    telefone: '(11) 99999-0000',
-    email: 'allanjonesms@gmail.com',
-    senha: '@Jones2028',
-    role: 'admin',
-    endereco: { rua: '', numero: '', bairro: '' },
-    valorTotalCompras: 0,
-  },
-  {
-    id: 'cliente-1',
-    nome: 'João Silva',
-    telefone: '(11) 98888-8888',
-    email: 'joao@email.com',
-    senha: 'cliente123',
-    role: 'cliente',
-    endereco: {
-      rua: 'Rua das Flores',
-      numero: '123',
-      bairro: 'Centro',
-      complemento: 'Apto 45',
-      referencia: 'Próximo à padaria',
-    },
-    valorTotalCompras: 156.00,
-  },
-];
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [allUsers, setAllUsers] = useState<(User & { senha: string })[]>(INITIAL_USERS);
+  const [user, setUser] = useState<UserWithProfile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Check for saved session
-    const savedUser = localStorage.getItem('pointdoacai_user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    
-    // Load saved users
-    const savedUsers = localStorage.getItem('pointdoacai_users');
-    if (savedUsers) {
-      setAllUsers(JSON.parse(savedUsers));
-    }
-    
-    setIsLoading(false);
-  }, []);
+  const fetchUserProfile = async (userId: string): Promise<UserWithProfile | null> => {
+    try {
+      // Fetch profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
 
-  const saveUsers = (users: (User & { senha: string })[]) => {
-    setAllUsers(users);
-    localStorage.setItem('pointdoacai_users', JSON.stringify(users));
+      if (profileError || !profile) {
+        console.error('Error fetching profile:', profileError);
+        return null;
+      }
+
+      // Fetch role
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (roleError) {
+        console.error('Error fetching role:', roleError);
+      }
+
+      const role = (roleData?.role as 'cliente' | 'admin') || 'cliente';
+
+      return {
+        id: profile.id,
+        nome: profile.nome,
+        telefone: profile.telefone,
+        email: profile.email,
+        endereco: {
+          rua: profile.rua,
+          numero: profile.numero,
+          bairro: profile.bairro,
+          complemento: profile.complemento || undefined,
+          referencia: profile.referencia || undefined,
+        },
+        role,
+        valorTotalCompras: Number(profile.valor_total_compras) || 0,
+      };
+    } catch (error) {
+      console.error('Error in fetchUserProfile:', error);
+      return null;
+    }
   };
 
+  useEffect(() => {
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        
+        if (session?.user) {
+          // Defer Supabase calls with setTimeout to prevent deadlock
+          setTimeout(() => {
+            fetchUserProfile(session.user.id).then(setUser);
+          }, 0);
+        } else {
+          setUser(null);
+        }
+      }
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session?.user) {
+        fetchUserProfile(session.user.id).then(profile => {
+          setUser(profile);
+          setIsLoading(false);
+        });
+      } else {
+        setIsLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    await new Promise(resolve => setTimeout(resolve, 800));
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    const foundUser = allUsers.find(u => u.email === email && u.senha === password);
-    
-    if (foundUser) {
-      const { senha, ...userWithoutPassword } = foundUser;
-      setUser(userWithoutPassword);
-      localStorage.setItem('pointdoacai_user', JSON.stringify(userWithoutPassword));
+      if (error) {
+        return { success: false, error: error.message === 'Invalid login credentials' 
+          ? 'E-mail ou senha incorretos' 
+          : error.message };
+      }
+
+      if (data.user) {
+        const profile = await fetchUserProfile(data.user.id);
+        setUser(profile);
+      }
+
       return { success: true };
+    } catch (error) {
+      return { success: false, error: 'Erro ao fazer login. Tente novamente.' };
     }
-
-    return { success: false, error: 'E-mail ou senha incorretos' };
   };
 
   const register = async (userData: RegisterData): Promise<{ success: boolean; error?: string }> => {
-    await new Promise(resolve => setTimeout(resolve, 800));
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { data, error } = await supabase.auth.signUp({
+        email: userData.email,
+        password: userData.senha,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            nome: userData.nome,
+            telefone: userData.telefone,
+            rua: userData.endereco.rua,
+            numero: userData.endereco.numero,
+            bairro: userData.endereco.bairro,
+            complemento: userData.endereco.complemento,
+            referencia: userData.endereco.referencia,
+          },
+        },
+      });
 
-    const existingUser = allUsers.find(u => u.email === userData.email);
-    if (existingUser) {
-      return { success: false, error: 'Este e-mail já está cadastrado' };
+      if (error) {
+        if (error.message.includes('already registered')) {
+          return { success: false, error: 'Este e-mail já está cadastrado' };
+        }
+        return { success: false, error: error.message };
+      }
+
+      if (data.user) {
+        // Wait a moment for the trigger to create the profile
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const profile = await fetchUserProfile(data.user.id);
+        setUser(profile);
+      }
+
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: 'Erro ao criar conta. Tente novamente.' };
+    }
+  };
+
+  const updateProfile = async (data: Partial<Profile>): Promise<{ success: boolean; error?: string }> => {
+    if (!session?.user) {
+      return { success: false, error: 'Usuário não autenticado' };
     }
 
-    const newUser: User & { senha: string } = {
-      id: `cliente-${Date.now()}`,
-      nome: userData.nome,
-      telefone: userData.telefone,
-      email: userData.email,
-      senha: userData.senha,
-      role: 'cliente',
-      endereco: userData.endereco,
-      valorTotalCompras: 0,
-    };
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update(data)
+        .eq('id', session.user.id);
 
-    saveUsers([...allUsers, newUser]);
-    
-    const { senha, ...userWithoutPassword } = newUser;
-    setUser(userWithoutPassword);
-    localStorage.setItem('pointdoacai_user', JSON.stringify(userWithoutPassword));
-    return { success: true };
-  };
+      if (error) {
+        return { success: false, error: error.message };
+      }
 
-  const updateUser = (userId: string, data: Partial<User>) => {
-    const updatedUsers = allUsers.map(u => 
-      u.id === userId ? { ...u, ...data } : u
-    );
-    saveUsers(updatedUsers);
-    
-    // Update current user if it's the same
-    if (user?.id === userId) {
-      const updatedUser = { ...user, ...data };
-      setUser(updatedUser);
-      localStorage.setItem('pointdoacai_user', JSON.stringify(updatedUser));
+      // Refresh user profile
+      const profile = await fetchUserProfile(session.user.id);
+      setUser(profile);
+
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: 'Erro ao atualizar perfil' };
     }
   };
 
-  const deleteUser = (userId: string) => {
-    const filteredUsers = allUsers.filter(u => u.id !== userId);
-    saveUsers(filteredUsers);
-  };
-
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    localStorage.removeItem('pointdoacai_user');
-    localStorage.removeItem('pointdoacai_carrinho');
+    setSession(null);
   };
-
-  // Users without passwords for external use
-  const users: User[] = allUsers.map(({ senha, ...u }) => u);
 
   return (
-    <AuthContext.Provider value={{ user, users, isLoading, login, register, logout, updateUser, deleteUser }}>
+    <AuthContext.Provider value={{ user, session, isLoading, login, register, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );
