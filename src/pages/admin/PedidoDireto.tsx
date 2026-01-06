@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Produto, TAMANHO_LABELS, CarrinhoItem } from '@/types';
+import { Produto, TAMANHO_LABELS, CarrinhoItem, TipoEmbalagem, EMBALAGEM_LABELS } from '@/types';
 import { useClientes } from '@/hooks/useClientes';
 import { usePedidos } from '@/contexts/PedidosContext';
 import { useProdutos } from '@/hooks/useProdutos';
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Plus, ShoppingCart, Trash2, User, Check, Search, Phone } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import {
   Select,
   SelectContent,
@@ -27,8 +28,9 @@ export default function PedidoDireto() {
 
   const [clienteSelecionado, setClienteSelecionado] = useState<string>('');
   const [busca, setBusca] = useState('');
-  const [step, setStep] = useState<'cliente' | 'tamanho' | 'adicionais' | 'resumo'>('cliente');
+  const [step, setStep] = useState<'cliente' | 'tamanho' | 'embalagem' | 'adicionais' | 'resumo'>('cliente');
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);
+  const [embalagemSelecionada, setEmbalagemSelecionada] = useState<TipoEmbalagem | null>(null);
   const [adicionaisQuantidades, setAdicionaisQuantidades] = useState<Record<string, number>>({});
   const [itensCarrinho, setItensCarrinho] = useState<CarrinhoItem[]>([]);
   const [formaPagamento, setFormaPagamento] = useState<'credito' | 'debito' | 'pix' | 'dinheiro'>('dinheiro');
@@ -59,8 +61,14 @@ export default function PedidoDireto() {
 
   const handleSelectProduto = (produto: Produto) => {
     setProdutoSelecionado(produto);
-    setStep('adicionais');
+    setStep('embalagem');
+    setEmbalagemSelecionada(null);
     setAdicionaisQuantidades({});
+  };
+
+  const handleSelectEmbalagem = (embalagem: TipoEmbalagem) => {
+    setEmbalagemSelecionada(embalagem);
+    setStep('adicionais');
   };
 
   const handleQuantidadeChange = (nome: string, quantidade: number) => {
@@ -93,13 +101,14 @@ export default function PedidoDireto() {
   };
 
   const handleAddToCart = (goToSummary: boolean = false) => {
-    if (!produtoSelecionado) return;
+    if (!produtoSelecionado || !embalagemSelecionada) return;
 
     const novoItem: CarrinhoItem = {
       id: `item-${Date.now()}`,
       produto: produtoSelecionado,
       quantidade: 1,
       adicionais: getAdicionaisArray(),
+      embalagem: embalagemSelecionada,
       valorUnitario: produtoSelecionado.preco,
       valorAdicionais: calcularExtras(),
     };
@@ -107,7 +116,7 @@ export default function PedidoDireto() {
     setItensCarrinho(prev => [...prev, novoItem]);
     toast({
       title: 'Item adicionado!',
-      description: `Açaí ${TAMANHO_LABELS[produtoSelecionado.tamanho]} adicionado.`,
+      description: `Açaí ${TAMANHO_LABELS[produtoSelecionado.tamanho]} (${EMBALAGEM_LABELS[embalagemSelecionada]}) adicionado.`,
     });
 
     if (goToSummary) {
@@ -116,6 +125,7 @@ export default function PedidoDireto() {
       setStep('tamanho');
     }
     setProdutoSelecionado(null);
+    setEmbalagemSelecionada(null);
     setAdicionaisQuantidades({});
   };
 
@@ -149,7 +159,7 @@ export default function PedidoDireto() {
 
     toast({
       title: 'Pedido Direto criado!',
-      description: `Pedido #${numeroPedido} criado com sucesso.`,
+      description: `Pedido criado com sucesso.`,
     });
 
     navigate('/admin');
@@ -157,6 +167,8 @@ export default function PedidoDireto() {
 
   const goBack = () => {
     if (step === 'adicionais') {
+      setStep('embalagem');
+    } else if (step === 'embalagem') {
       setStep('tamanho');
       setProdutoSelecionado(null);
     } else if (step === 'tamanho') {
@@ -176,6 +188,7 @@ export default function PedidoDireto() {
     switch (step) {
       case 'cliente': return 'Selecionar Cliente';
       case 'tamanho': return 'Escolha o Tamanho';
+      case 'embalagem': return 'Escolha a Embalagem';
       case 'adicionais': return 'Adicionais';
       case 'resumo': return 'Resumo do Pedido';
     }
@@ -324,9 +337,10 @@ export default function PedidoDireto() {
           </div>
         )}
 
-        {/* Step: Adicionais */}
-        {step === 'adicionais' && produtoSelecionado && (
+        {/* Step: Embalagem */}
+        {step === 'embalagem' && produtoSelecionado && (
           <div className="animate-fade-in">
+            {/* Selected Product Summary */}
             <div className="bg-card rounded-xl p-4 shadow-card border border-border/50 mb-6 flex items-center gap-3">
               <span className="text-4xl">🥣</span>
               <div>
@@ -334,6 +348,57 @@ export default function PedidoDireto() {
                   Açaí {TAMANHO_LABELS[produtoSelecionado.tamanho]}
                 </h3>
                 <p className="text-sm text-muted-foreground">{produtoSelecionado.peso}</p>
+              </div>
+              <span className="ml-auto font-bold text-primary text-lg">
+                R$ {produtoSelecionado.preco.toFixed(2).replace('.', ',')}
+              </span>
+            </div>
+
+            {/* Embalagem Options */}
+            <h3 className="font-display font-semibold text-foreground mb-4">
+              Escolha a embalagem
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              {(['copo', 'isopor'] as TipoEmbalagem[]).map((embalagem) => (
+                <button
+                  key={embalagem}
+                  onClick={() => handleSelectEmbalagem(embalagem)}
+                  className={cn(
+                    'bg-card rounded-xl p-6 shadow-card border-2 transition-all flex flex-col items-center gap-3 relative',
+                    embalagemSelecionada === embalagem
+                      ? 'border-primary ring-2 ring-primary/20'
+                      : 'border-border/50 hover:border-primary/50'
+                  )}
+                >
+                  <span className="text-5xl">
+                    {embalagem === 'copo' ? '🥤' : '📦'}
+                  </span>
+                  <span className="font-semibold text-foreground">
+                    {EMBALAGEM_LABELS[embalagem]}
+                  </span>
+                  {embalagemSelecionada === embalagem && (
+                    <div className="absolute top-2 right-2 bg-primary rounded-full p-1">
+                      <Check className="h-3 w-3 text-primary-foreground" />
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Step: Adicionais */}
+        {step === 'adicionais' && produtoSelecionado && embalagemSelecionada && (
+          <div className="animate-fade-in">
+            <div className="bg-card rounded-xl p-4 shadow-card border border-border/50 mb-6 flex items-center gap-3">
+              <span className="text-4xl">🥣</span>
+              <div>
+                <h3 className="font-display font-bold text-foreground">
+                  Açaí {TAMANHO_LABELS[produtoSelecionado.tamanho]}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {produtoSelecionado.peso} • {EMBALAGEM_LABELS[embalagemSelecionada]}
+                </p>
               </div>
               <span className="ml-auto font-bold text-primary text-lg">
                 R$ {produtoSelecionado.preco.toFixed(2).replace('.', ',')}
@@ -414,6 +479,9 @@ export default function PedidoDireto() {
                       <h4 className="font-semibold text-foreground">
                         Açaí {TAMANHO_LABELS[item.produto.tamanho]}
                       </h4>
+                      <p className="text-xs text-muted-foreground">
+                        {EMBALAGEM_LABELS[item.embalagem]}
+                      </p>
                       {item.adicionais.length > 0 && (
                         <p className="text-xs text-muted-foreground mt-1">
                           + {item.adicionais.join(', ')}
@@ -486,7 +554,7 @@ export default function PedidoDireto() {
       </div>
 
       {/* Bottom Action Bar - Adicionais */}
-      {step === 'adicionais' && produtoSelecionado && (
+      {step === 'adicionais' && produtoSelecionado && embalagemSelecionada && (
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 shadow-float">
           <div className="container max-w-md mx-auto">
             <div className="flex flex-col gap-3">

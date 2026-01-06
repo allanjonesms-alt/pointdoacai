@@ -31,11 +31,19 @@ export interface Adicional {
   ativo: boolean;
 }
 
+export type TipoEmbalagem = 'copo' | 'isopor';
+
+export const EMBALAGEM_LABELS: Record<TipoEmbalagem, string> = {
+  copo: 'Copo',
+  isopor: 'Isopor',
+};
+
 export interface CarrinhoItem {
   id: string;
   produto: Produto;
   quantidade: number;
   adicionais: string[];
+  embalagem: TipoEmbalagem;
   valorUnitario: number;
   valorAdicionais: number;
 }

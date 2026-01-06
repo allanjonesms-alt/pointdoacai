@@ -73,6 +73,7 @@ export function PedidosProvider({ children }: { children: ReactNode }) {
           },
           quantidade: item.quantidade,
           adicionais: (item.pedido_item_adicionais || []).map((a: any) => a.adicional_nome),
+          embalagem: item.embalagem || 'copo',
           valorUnitario: Number(item.valor_unitario),
           valorAdicionais: Number(item.valor_adicionais),
         })),
@@ -147,6 +148,7 @@ export function PedidosProvider({ children }: { children: ReactNode }) {
             quantidade: item.quantidade,
             valor_unitario: item.valorUnitario,
             valor_adicionais: item.valorAdicionais,
+            embalagem: item.embalagem,
           })
           .select()
           .single();

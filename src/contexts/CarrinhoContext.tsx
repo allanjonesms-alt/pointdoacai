@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { CarrinhoItem, Produto } from '@/types';
+import { CarrinhoItem, Produto, TipoEmbalagem } from '@/types';
 
 interface CarrinhoContextType {
   itens: CarrinhoItem[];
-  adicionarItem: (produto: Produto, adicionais: string[]) => void;
+  adicionarItem: (produto: Produto, adicionais: string[], embalagem: TipoEmbalagem) => void;
   removerItem: (itemId: string) => void;
   atualizarItem: (itemId: string, adicionais: string[]) => void;
   atualizarQuantidade: (itemId: string, quantidade: number) => void;
@@ -34,13 +34,14 @@ export function CarrinhoProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('pointdoacai_carrinho', JSON.stringify(itens));
   }, [itens]);
 
-  const adicionarItem = (produto: Produto, adicionais: string[]) => {
+  const adicionarItem = (produto: Produto, adicionais: string[], embalagem: TipoEmbalagem) => {
     const valorAdicionais = calcularValorAdicionais(adicionais);
     const novoItem: CarrinhoItem = {
       id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       produto,
       quantidade: 1,
       adicionais,
+      embalagem,
       valorUnitario: produto.preco,
       valorAdicionais,
     };

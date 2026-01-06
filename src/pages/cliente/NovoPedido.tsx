@@ -1,20 +1,22 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Produto, TAMANHO_LABELS } from '@/types';
+import { Produto, TAMANHO_LABELS, TipoEmbalagem, EMBALAGEM_LABELS } from '@/types';
 import { useCarrinho } from '@/contexts/CarrinhoContext';
 import { ProductCard } from '@/components/ProductCard';
 import { AdicionalQuantity } from '@/components/AdicionalQuantity';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useProdutos } from '@/hooks/useProdutos';
-import { ArrowLeft, ShoppingCart, ShoppingBag, AlertCircle } from 'lucide-react';
+import { ArrowLeft, ShoppingCart, ShoppingBag, AlertCircle, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function NovoPedido() {
   const navigate = useNavigate();
-  const { adicionarItem, quantidadeTotal, total } = useCarrinho();
+  const { adicionarItem, quantidadeTotal } = useCarrinho();
   const { toast } = useToast();
-  const [step, setStep] = useState<'tamanho' | 'adicionais'>('tamanho');
+  const [step, setStep] = useState<'tamanho' | 'embalagem' | 'adicionais'>('tamanho');
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);
+  const [embalagemSelecionada, setEmbalagemSelecionada] = useState<TipoEmbalagem | null>(null);
   const [adicionaisQuantidades, setAdicionaisQuantidades] = useState<Record<string, number>>({});
 
   const { produtos, adicionais, isLoading } = useProdutos();
@@ -24,8 +26,14 @@ export default function NovoPedido() {
 
   const handleSelectProduto = (produto: Produto) => {
     setProdutoSelecionado(produto);
-    setStep('adicionais');
+    setStep('embalagem');
+    setEmbalagemSelecionada(null);
     setAdicionaisQuantidades({});
+  };
+
+  const handleSelectEmbalagem = (embalagem: TipoEmbalagem) => {
+    setEmbalagemSelecionada(embalagem);
+    setStep('adicionais');
   };
 
   const handleQuantidadeChange = (nome: string, quantidade: number) => {
@@ -58,12 +66,12 @@ export default function NovoPedido() {
   };
 
   const handleAddToCart = (goToCart: boolean = false) => {
-    if (!produtoSelecionado) return;
+    if (!produtoSelecionado || !embalagemSelecionada) return;
 
-    adicionarItem(produtoSelecionado, getAdicionaisArray());
+    adicionarItem(produtoSelecionado, getAdicionaisArray(), embalagemSelecionada);
     toast({
       title: 'Adicionado ao carrinho!',
-      description: `Açaí ${TAMANHO_LABELS[produtoSelecionado.tamanho]} adicionado.`,
+      description: `Açaí ${TAMANHO_LABELS[produtoSelecionado.tamanho]} (${EMBALAGEM_LABELS[embalagemSelecionada]}) adicionado.`,
     });
 
     if (goToCart) {
@@ -72,7 +80,27 @@ export default function NovoPedido() {
       // Reset for new item
       setStep('tamanho');
       setProdutoSelecionado(null);
+      setEmbalagemSelecionada(null);
       setAdicionaisQuantidades({});
+    }
+  };
+
+  const goBack = () => {
+    if (step === 'adicionais') {
+      setStep('embalagem');
+    } else if (step === 'embalagem') {
+      setStep('tamanho');
+      setProdutoSelecionado(null);
+    } else {
+      navigate('/');
+    }
+  };
+
+  const getTitle = () => {
+    switch (step) {
+      case 'tamanho': return 'Escolha o Tamanho';
+      case 'embalagem': return 'Escolha a Embalagem';
+      case 'adicionais': return 'Adicionais';
     }
   };
 
@@ -82,17 +110,17 @@ export default function NovoPedido() {
       <div className="gradient-hero py-6 px-4 sticky top-0 z-10">
         <div className="container max-w-md mx-auto flex items-center justify-between">
           <button
-            onClick={() => step === 'adicionais' ? setStep('tamanho') : navigate('/')}
+            onClick={goBack}
             className="flex items-center gap-2 text-primary-foreground/80 hover:text-primary-foreground"
           >
             <ArrowLeft className="h-5 w-5" />
             <span className="font-medium">
-              {step === 'adicionais' ? 'Tamanhos' : 'Voltar'}
+              {step === 'adicionais' ? 'Embalagem' : step === 'embalagem' ? 'Tamanhos' : 'Voltar'}
             </span>
           </button>
 
           <h1 className="font-display font-bold text-primary-foreground">
-            {step === 'tamanho' ? 'Escolha o Tamanho' : 'Adicionais'}
+            {getTitle()}
           </h1>
 
           <Link to="/carrinho" className="relative">
@@ -107,7 +135,7 @@ export default function NovoPedido() {
       </div>
 
       <div className="container max-w-md mx-auto px-4 py-6">
-        {step === 'tamanho' ? (
+        {step === 'tamanho' && (
           <div className="grid grid-cols-2 gap-4 animate-fade-in">
             {produtosAtivos.map((produto) => (
               <ProductCard
@@ -118,23 +146,74 @@ export default function NovoPedido() {
               />
             ))}
           </div>
-        ) : (
+        )}
+
+        {step === 'embalagem' && produtoSelecionado && (
           <div className="animate-fade-in">
             {/* Selected Product Summary */}
-            {produtoSelecionado && (
-              <div className="bg-card rounded-xl p-4 shadow-card border border-border/50 mb-6 flex items-center gap-3">
-                <span className="text-4xl">🥣</span>
-                <div>
-                  <h3 className="font-display font-bold text-foreground">
-                    Açaí {TAMANHO_LABELS[produtoSelecionado.tamanho]}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">{produtoSelecionado.peso}</p>
-                </div>
-                <span className="ml-auto font-bold text-primary text-lg">
-                  R$ {produtoSelecionado.preco.toFixed(2).replace('.', ',')}
-                </span>
+            <div className="bg-card rounded-xl p-4 shadow-card border border-border/50 mb-6 flex items-center gap-3">
+              <span className="text-4xl">🥣</span>
+              <div>
+                <h3 className="font-display font-bold text-foreground">
+                  Açaí {TAMANHO_LABELS[produtoSelecionado.tamanho]}
+                </h3>
+                <p className="text-sm text-muted-foreground">{produtoSelecionado.peso}</p>
               </div>
-            )}
+              <span className="ml-auto font-bold text-primary text-lg">
+                R$ {produtoSelecionado.preco.toFixed(2).replace('.', ',')}
+              </span>
+            </div>
+
+            {/* Embalagem Options */}
+            <h3 className="font-display font-semibold text-foreground mb-4">
+              Escolha a embalagem
+            </h3>
+            <div className="grid grid-cols-2 gap-4">
+              {(['copo', 'isopor'] as TipoEmbalagem[]).map((embalagem) => (
+                <button
+                  key={embalagem}
+                  onClick={() => handleSelectEmbalagem(embalagem)}
+                  className={cn(
+                    'bg-card rounded-xl p-6 shadow-card border-2 transition-all flex flex-col items-center gap-3',
+                    embalagemSelecionada === embalagem
+                      ? 'border-primary ring-2 ring-primary/20'
+                      : 'border-border/50 hover:border-primary/50'
+                  )}
+                >
+                  <span className="text-5xl">
+                    {embalagem === 'copo' ? '🥤' : '📦'}
+                  </span>
+                  <span className="font-semibold text-foreground">
+                    {EMBALAGEM_LABELS[embalagem]}
+                  </span>
+                  {embalagemSelecionada === embalagem && (
+                    <div className="absolute top-2 right-2 bg-primary rounded-full p-1">
+                      <Check className="h-3 w-3 text-primary-foreground" />
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {step === 'adicionais' && produtoSelecionado && embalagemSelecionada && (
+          <div className="animate-fade-in">
+            {/* Selected Product Summary */}
+            <div className="bg-card rounded-xl p-4 shadow-card border border-border/50 mb-6 flex items-center gap-3">
+              <span className="text-4xl">🥣</span>
+              <div>
+                <h3 className="font-display font-bold text-foreground">
+                  Açaí {TAMANHO_LABELS[produtoSelecionado.tamanho]}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {produtoSelecionado.peso} • {EMBALAGEM_LABELS[embalagemSelecionada]}
+                </p>
+              </div>
+              <span className="ml-auto font-bold text-primary text-lg">
+                R$ {produtoSelecionado.preco.toFixed(2).replace('.', ',')}
+              </span>
+            </div>
 
             {/* Free additionals info */}
             <div className="bg-tropical-light rounded-xl p-4 mb-6 flex items-start gap-3">
@@ -181,7 +260,7 @@ export default function NovoPedido() {
       </div>
 
       {/* Bottom Action Bar */}
-      {step === 'adicionais' && produtoSelecionado && (
+      {step === 'adicionais' && produtoSelecionado && embalagemSelecionada && (
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 shadow-float animate-slide-in-right">
           <div className="container max-w-md mx-auto">
             <div className="flex items-center justify-between mb-3">
