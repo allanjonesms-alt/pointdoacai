@@ -1,19 +1,50 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCarrinho } from '@/contexts/CarrinhoContext';
+import { usePedidoFavorito } from '@/hooks/usePedidoFavorito';
 import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
-import { ShoppingBag, ClipboardList, User, LogOut, ShoppingCart } from 'lucide-react';
+import { ShoppingBag, ClipboardList, User, LogOut, ShoppingCart, Heart, RefreshCw, Loader2, Package } from 'lucide-react';
+import { TAMANHO_LABELS, EMBALAGEM_LABELS } from '@/types';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 
 export default function ClienteHome() {
   const { user, logout } = useAuth();
-  const { quantidadeTotal } = useCarrinho();
+  const { quantidadeTotal, adicionarItem } = useCarrinho();
+  const { pedidoFavorito, isLoading: isLoadingFavorito } = usePedidoFavorito(user?.id);
   const navigate = useNavigate();
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handleRepetirCompra = () => {
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmarPedido = () => {
+    if (!pedidoFavorito) return;
+    
+    const { item } = pedidoFavorito;
+    adicionarItem(item.produto, item.adicionais, item.embalagem);
+    setShowConfirmModal(false);
+    navigate('/carrinho');
+  };
+
+  const calcularValorTotal = () => {
+    if (!pedidoFavorito) return 0;
+    const { item } = pedidoFavorito;
+    return item.valorUnitario + item.valorAdicionais;
   };
 
   return (
@@ -94,11 +125,144 @@ export default function ClienteHome() {
           </Link>
         </div>
 
-        {/* Fun Illustration */}
-        <div className="mt-8 text-center animate-float">
-          <span className="text-8xl">🥣</span>
+        {/* Pedido Favorito Card */}
+        <div className="mt-6">
+          {isLoadingFavorito ? (
+            <div className="bg-card rounded-2xl p-6 shadow-card border border-border/50 flex items-center justify-center">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            </div>
+          ) : pedidoFavorito ? (
+            <div className="bg-gradient-to-br from-primary/10 to-accent/10 rounded-2xl p-5 shadow-card border border-primary/20">
+              <div className="flex items-center gap-2 mb-4">
+                <Heart className="h-5 w-5 text-primary fill-primary" />
+                <h3 className="font-display font-bold text-foreground">Pedido Favorito</h3>
+                <span className="text-xs text-muted-foreground ml-auto">
+                  Pedido {pedidoFavorito.vezesComprado}x
+                </span>
+              </div>
+              
+              <div className="bg-card/80 rounded-xl p-4 mb-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-12 h-12 gradient-acai rounded-lg flex items-center justify-center">
+                    <Package className="h-6 w-6 text-primary-foreground" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-foreground">
+                      {pedidoFavorito.item.produto.nome} {TAMANHO_LABELS[pedidoFavorito.item.produto.tamanho]}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {pedidoFavorito.item.produto.peso} • {EMBALAGEM_LABELS[pedidoFavorito.item.embalagem]}
+                    </p>
+                  </div>
+                  <p className="font-bold text-primary">
+                    R$ {calcularValorTotal().toFixed(2).replace('.', ',')}
+                  </p>
+                </div>
+                
+                {pedidoFavorito.item.adicionais.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {pedidoFavorito.item.adicionais.map((adicional, idx) => (
+                      <span 
+                        key={idx}
+                        className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full"
+                      >
+                        {adicional}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <Button 
+                variant="acai" 
+                className="w-full"
+                onClick={handleRepetirCompra}
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Repetir Compra
+              </Button>
+            </div>
+          ) : (
+            <div className="text-center py-4">
+              <span className="text-6xl animate-float inline-block">🥣</span>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Modal de Confirmação */}
+      <Dialog open={showConfirmModal} onOpenChange={setShowConfirmModal}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RefreshCw className="h-5 w-5 text-primary" />
+              Confirmar Pedido
+            </DialogTitle>
+            <DialogDescription>
+              Revise os detalhes antes de adicionar ao carrinho
+            </DialogDescription>
+          </DialogHeader>
+
+          {pedidoFavorito && (
+            <div className="space-y-4 py-4">
+              <div className="bg-muted/50 rounded-xl p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-12 h-12 gradient-acai rounded-lg flex items-center justify-center">
+                    <Package className="h-6 w-6 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground">
+                      {pedidoFavorito.item.produto.nome}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {TAMANHO_LABELS[pedidoFavorito.item.produto.tamanho]} • {pedidoFavorito.item.produto.peso}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Embalagem</span>
+                    <span className="font-medium">{EMBALAGEM_LABELS[pedidoFavorito.item.embalagem]}</span>
+                  </div>
+                  
+                  {pedidoFavorito.item.adicionais.length > 0 && (
+                    <div>
+                      <span className="text-muted-foreground">Adicionais:</span>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {pedidoFavorito.item.adicionais.map((adicional, idx) => (
+                          <span 
+                            key={idx}
+                            className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full"
+                          >
+                            {adicional}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center pt-2 border-t border-border">
+                <span className="font-semibold text-foreground">Valor Total</span>
+                <span className="text-xl font-bold text-primary">
+                  R$ {calcularValorTotal().toFixed(2).replace('.', ',')}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowConfirmModal(false)} className="flex-1">
+              Cancelar
+            </Button>
+            <Button variant="acai" onClick={handleConfirmarPedido} className="flex-1">
+              Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
