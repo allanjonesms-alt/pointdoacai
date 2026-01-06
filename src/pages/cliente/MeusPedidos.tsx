@@ -11,13 +11,13 @@ import { TAMANHO_LABELS, StatusPedido } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-const STATUS_LABELS: Record<StatusPedido, string> = {
-  pendente: 'Pendente',
-  confirmado: 'Confirmado',
-  preparo: 'Em Preparo',
-  pronto: 'Pronto',
-  entrega: 'Saiu para Entrega',
-  entregue: 'Entregue',
+const STATUS_MESSAGES: Record<StatusPedido, string> = {
+  pendente: '',
+  confirmado: '🎉 Recebemos seu pedido! Já estamos preparando a magia roxa!',
+  preparo: '🍇 Seu açaí está sendo montado com muito carinho!',
+  pronto: '✨ Tá pronto! Seu açaí ficou uma obra de arte gelada!',
+  entrega: '🛵 Vrummm! Seu açaí está a caminho, segura a ansiedade!',
+  entregue: '🥄 Chegou! Agora é só aproveitar essa delícia gelada!',
 };
 
 export default function MeusPedidos() {
@@ -54,18 +54,13 @@ export default function MeusPedidos() {
         (payload) => {
           const newStatus = payload.new.status as StatusPedido;
           const pedidoId = payload.new.id as string;
-          const numeroPedido = payload.new.numero_pedido as string;
           const previousStatus = previousStatusRef.current.get(pedidoId);
 
           // Only notify if status actually changed
-          if (previousStatus && previousStatus !== newStatus) {
-            toast.success(
-              `Pedido #${numeroPedido}: ${STATUS_LABELS[newStatus]}`,
-              {
-                description: 'O status do seu pedido foi atualizado!',
-                duration: 5000,
-              }
-            );
+          if (previousStatus && previousStatus !== newStatus && STATUS_MESSAGES[newStatus]) {
+            toast.success(STATUS_MESSAGES[newStatus], {
+              duration: 5000,
+            });
             previousStatusRef.current.set(pedidoId, newStatus);
           }
 
