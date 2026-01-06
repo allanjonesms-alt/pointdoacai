@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Plus, ShoppingCart, Trash2, User, Check, Search, Phone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import isoporImage from '@/assets/isopor-acai.png';
+import copoImage from '@/assets/copo-acai.png';
 import {
   Select,
   SelectContent,
@@ -372,7 +373,7 @@ export default function PedidoDireto() {
                   )}
                 >
                   {embalagem === 'copo' ? (
-                    <span className="text-5xl">🥤</span>
+                    <img src={copoImage} alt="Copo" className="w-16 h-16 object-contain" />
                   ) : (
                     <img src={isoporImage} alt="Isopor" className="w-16 h-16 object-contain" />
                   )}
