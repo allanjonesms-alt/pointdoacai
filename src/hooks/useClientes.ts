@@ -57,7 +57,24 @@ export function useClientes() {
         throw rolesError;
       }
 
-      // Combine profiles with roles
+      // Fetch all orders to calculate total purchases per client
+      const { data: pedidos, error: pedidosError } = await supabase
+        .from('pedidos')
+        .select('cliente_id, valor_total');
+
+      if (pedidosError) {
+        throw pedidosError;
+      }
+
+      // Calculate total purchases per client
+      const totalPorCliente = (pedidos || []).reduce((acc, pedido) => {
+        if (pedido.cliente_id) {
+          acc[pedido.cliente_id] = (acc[pedido.cliente_id] || 0) + Number(pedido.valor_total);
+        }
+        return acc;
+      }, {} as Record<string, number>);
+
+      // Combine profiles with roles and calculated totals
       const clientesWithRoles: ClienteWithRole[] = (profiles || [])
         .map(profile => {
           const userRole = roles?.find(r => r.user_id === profile.id);
@@ -66,6 +83,7 @@ export function useClientes() {
             email: profile.email,
             tipo_cliente: profile.tipo_cliente as 'organico' | 'sintetico',
             role: (userRole?.role as 'cliente' | 'admin') || 'cliente',
+            valor_total_compras: totalPorCliente[profile.id] || 0,
           };
         });
 
