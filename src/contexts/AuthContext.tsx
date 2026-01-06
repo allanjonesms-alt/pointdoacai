@@ -41,7 +41,7 @@ interface AuthContextType {
   user: UserWithProfile | null;
   session: Session | null;
   isLoading: boolean;
-  login: (telefone: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (identificador: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (userData: RegisterData) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<Profile>) => Promise<{ success: boolean; error?: string }>;
@@ -148,40 +148,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (telefone: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const login = async (identificador: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const email = phoneToEmail(telefone);
-      
-      // Try phone-based email first
-      let { data, error } = await supabase.auth.signInWithPassword({
+      const raw = identificador.trim();
+      const isEmail = raw.includes('@');
+      const email = isEmail ? raw.toLowerCase() : phoneToEmail(raw);
+
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      // If failed, try to find user by phone in profiles and use their auth email
       if (error) {
-        const cleanPhone = telefone.replace(/\D/g, '');
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('email')
-          .eq('telefone', cleanPhone)
-          .maybeSingle();
-        
-        if (profile?.email && !profile.email.endsWith('@acai.app')) {
-          // Try with the actual email from profile
-          const result = await supabase.auth.signInWithPassword({
-            email: profile.email,
-            password,
-          });
-          data = result.data;
-          error = result.error;
-        }
-      }
-
-      if (error) {
-        return { success: false, error: error.message === 'Invalid login credentials' 
-          ? 'Telefone ou senha incorretos' 
-          : error.message };
+        return {
+          success: false,
+          error:
+            error.message === 'Invalid login credentials'
+              ? 'Telefone/e-mail ou senha incorretos'
+              : error.message,
+        };
       }
 
       if (data.user) {
