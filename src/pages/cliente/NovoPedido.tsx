@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { PRODUTOS, ADICIONAIS, Produto, TAMANHO_LABELS } from '@/types';
+import { Produto, TAMANHO_LABELS } from '@/types';
 import { useCarrinho } from '@/contexts/CarrinhoContext';
 import { ProductCard } from '@/components/ProductCard';
 import { AdicionalChip } from '@/components/AdicionalChip';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, ShoppingCart, Plus, AlertCircle } from 'lucide-react';
+import { useProdutos } from '@/hooks/useProdutos';
+import { ArrowLeft, ShoppingCart, Plus, AlertCircle, Loader2 } from 'lucide-react';
 
 export default function NovoPedido() {
   const navigate = useNavigate();
@@ -16,8 +17,10 @@ export default function NovoPedido() {
   const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);
   const [adicionaisSelecionados, setAdicionaisSelecionados] = useState<string[]>([]);
 
-  const produtosAtivos = PRODUTOS.filter(p => p.ativo);
-  const adicionaisAtivos = ADICIONAIS.filter(a => a.ativo);
+  const { produtos, adicionais, isLoading } = useProdutos();
+
+  const produtosAtivos = produtos.filter(p => p.ativo);
+  const adicionaisAtivos = adicionais.filter(a => a.ativo);
 
   const handleSelectProduto = (produto: Produto) => {
     setProdutoSelecionado(produto);
