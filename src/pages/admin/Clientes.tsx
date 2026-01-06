@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, User, Phone, Mail, MapPin, TrendingUp, Pencil, Trash2, Loader2, Leaf, Sparkles } from 'lucide-react';
+import { ArrowLeft, User, Phone, Mail, MapPin, TrendingUp, Pencil, Trash2, Loader2, Leaf, Sparkles, Shield } from 'lucide-react';
 import { useClientes } from '@/hooks/useClientes';
 import { toast } from 'sonner';
 import { CadastroClienteModal } from '@/components/admin/CadastroClienteModal';
@@ -77,7 +77,12 @@ export default function AdminClientes() {
                     <div>
                       <h3 className="font-display font-bold text-foreground">{cliente.nome}</h3>
                       <div className="flex items-center gap-1 mt-1">
-                        {cliente.tipo_cliente === 'organico' ? (
+                        {cliente.role === 'admin' ? (
+                          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                            <Shield className="h-3 w-3" />
+                            Admin
+                          </span>
+                        ) : cliente.tipo_cliente === 'organico' ? (
                           <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
                             <Leaf className="h-3 w-3" />
                             Orgânico
