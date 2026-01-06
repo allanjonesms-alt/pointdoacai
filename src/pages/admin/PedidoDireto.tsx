@@ -38,14 +38,18 @@ export default function PedidoDireto() {
 
   // Filter clients based on search (name or phone)
   const clientesFiltrados = useMemo(() => {
-    if (!busca.trim()) return clientes;
-    
-    const searchTerm = busca.toLowerCase().replace(/\D/g, '');
-    const searchName = busca.toLowerCase();
-    
-    return clientes.filter(cliente => {
-      const matchNome = cliente.nome.toLowerCase().includes(searchName);
-      const matchTelefone = cliente.telefone.replace(/\D/g, '').includes(searchTerm);
+    const searchName = busca.trim().toLowerCase();
+    const searchDigits = busca.replace(/\D/g, "");
+
+    if (!searchName && !searchDigits) return clientes;
+
+    return clientes.filter((cliente) => {
+      const nome = cliente.nome?.toLowerCase?.() ?? "";
+      const telefoneDigits = (cliente.telefone ?? "").replace(/\D/g, "");
+
+      const matchNome = searchName ? nome.includes(searchName) : false;
+      const matchTelefone = searchDigits ? telefoneDigits.includes(searchDigits) : false;
+
       return matchNome || matchTelefone;
     });
   }, [clientes, busca]);
