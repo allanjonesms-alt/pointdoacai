@@ -28,6 +28,11 @@ export default function MeusPedidos() {
   const previousStatusRef = useRef<Map<string, StatusPedido>>(new Map());
   const { playNotification } = useNotificationSound();
 
+  // Atualizar dados ao acessar a página
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
+
   const pedidos = user ? getPedidosCliente(user.id) : [];
 
   // Store initial status for all pedidos
