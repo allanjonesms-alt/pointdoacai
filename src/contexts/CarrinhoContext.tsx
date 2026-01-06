@@ -3,6 +3,8 @@ import { CarrinhoItem, Produto, TipoEmbalagem } from '@/types';
 
 const TAXA_ENTREGA = 1.00;
 
+export type ModoEntrega = 'entrega' | 'retirada';
+
 interface CarrinhoContextType {
   itens: CarrinhoItem[];
   adicionarItem: (produto: Produto, adicionais: string[], embalagem: TipoEmbalagem) => void;
@@ -15,6 +17,8 @@ interface CarrinhoContextType {
   taxaEntrega: number;
   total: number;
   quantidadeTotal: number;
+  modoEntrega: ModoEntrega;
+  setModoEntrega: (modo: ModoEntrega) => void;
 }
 
 const CarrinhoContext = createContext<CarrinhoContextType | undefined>(undefined);
@@ -32,6 +36,7 @@ export function CarrinhoProvider({ children }: { children: ReactNode }) {
     const saved = localStorage.getItem('pointdoacai_carrinho');
     return saved ? JSON.parse(saved) : [];
   });
+  const [modoEntrega, setModoEntrega] = useState<ModoEntrega>('entrega');
 
   useEffect(() => {
     localStorage.setItem('pointdoacai_carrinho', JSON.stringify(itens));
@@ -87,7 +92,7 @@ export function CarrinhoProvider({ children }: { children: ReactNode }) {
 
   const subtotal = itens.reduce((acc, item) => acc + (item.valorUnitario * item.quantidade), 0);
   const totalAdicionais = itens.reduce((acc, item) => acc + (item.valorAdicionais * item.quantidade), 0);
-  const taxaEntrega = itens.length > 0 ? TAXA_ENTREGA : 0;
+  const taxaEntrega = itens.length > 0 && modoEntrega === 'entrega' ? TAXA_ENTREGA : 0;
   const total = subtotal + totalAdicionais + taxaEntrega;
   const quantidadeTotal = itens.reduce((acc, item) => acc + item.quantidade, 0);
 
@@ -104,6 +109,8 @@ export function CarrinhoProvider({ children }: { children: ReactNode }) {
       taxaEntrega,
       total,
       quantidadeTotal,
+      modoEntrega,
+      setModoEntrega,
     }}>
       {children}
     </CarrinhoContext.Provider>
