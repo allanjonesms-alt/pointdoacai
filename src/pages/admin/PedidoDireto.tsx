@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Plus, ShoppingCart, Trash2, User, Check, Search, Phone } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import isoporImage from '@/assets/isopor-acai.png';
 import {
   Select,
   SelectContent,
@@ -370,9 +371,11 @@ export default function PedidoDireto() {
                       : 'border-border/50 hover:border-primary/50'
                   )}
                 >
-                  <span className="text-5xl">
-                    {embalagem === 'copo' ? '🥤' : '📦'}
-                  </span>
+                  {embalagem === 'copo' ? (
+                    <span className="text-5xl">🥤</span>
+                  ) : (
+                    <img src={isoporImage} alt="Isopor" className="w-16 h-16 object-contain" />
+                  )}
                   <span className="font-semibold text-foreground">
                     {EMBALAGEM_LABELS[embalagem]}
                   </span>
