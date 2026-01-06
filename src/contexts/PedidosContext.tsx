@@ -102,62 +102,20 @@ export function PedidosProvider({ children }: { children: ReactNode }) {
     );
   });
 
-  const gerarNumeroPedido = async (): Promise<string> => {
-    // Gerar número único: DDMM + sequencial + random
-    const hoje = new Date();
-    const dia = hoje.getDate().toString().padStart(2, '0');
-    const mes = (hoje.getMonth() + 1).toString().padStart(2, '0');
-    const prefixo = `${dia}${mes}`;
-    
-    // Buscar o último número de pedido do dia com o mesmo prefixo
-    const inicioDia = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()).toISOString();
-    
-    const { data, error } = await supabase
-      .from('pedidos')
-      .select('numero_pedido')
-      .gte('created_at', inicioDia)
-      .like('numero_pedido', `${prefixo}%`)
-      .order('numero_pedido', { ascending: false })
-      .limit(1);
-
-    if (error) {
-      console.error('Erro ao buscar último pedido:', error);
-      // Fallback: usar timestamp para garantir unicidade
-      return `${prefixo}${Date.now().toString().slice(-4)}`;
-    }
-
-    let sequencial = 1;
-    if (data && data.length > 0) {
-      // Extrair o sequencial do último número (formato: DDMM + 3 dígitos)
-      const ultimoNumero = data[0].numero_pedido;
-      const ultimoSequencial = parseInt(ultimoNumero.slice(4), 10);
-      if (!isNaN(ultimoSequencial)) {
-        sequencial = ultimoSequencial + 1;
-      }
-    }
-
-    return `${prefixo}${sequencial.toString().padStart(3, '0')}`;
-  };
-
-  const criarPedidoComRetry = async (
+  const criarPedido = async (
     clienteId: string,
     clienteNome: string,
     enderecoEntrega: Endereco,
     formaPagamento: 'credito' | 'debito' | 'pix' | 'dinheiro',
     itens: CarrinhoItem[],
-    valorTotal: number,
-    tentativa: number = 1
+    valorTotal: number
   ): Promise<string | null> => {
-    const maxTentativas = 3;
-    
     try {
-      const numeroPedido = await gerarNumeroPedido();
-
-      // 1. Criar o pedido
+      // 1. Criar o pedido - usar string vazia para que o trigger do banco gere o número
       const { data: pedidoData, error: pedidoError } = await supabase
         .from('pedidos')
         .insert({
-          numero_pedido: numeroPedido,
+          numero_pedido: '', // Trigger no banco vai substituir por número sequencial
           cliente_id: clienteId || null,
           cliente_nome: clienteNome,
           endereco_rua: enderecoEntrega.rua,
@@ -172,15 +130,9 @@ export function PedidosProvider({ children }: { children: ReactNode }) {
         .select()
         .single();
 
-      if (pedidoError) {
-        // Se for erro de chave duplicada e ainda temos tentativas, retry
-        if (pedidoError.message.includes('duplicate key') && tentativa < maxTentativas) {
-          console.log(`Tentativa ${tentativa} falhou, tentando novamente...`);
-          await new Promise(resolve => setTimeout(resolve, 100 * tentativa)); // pequeno delay
-          return criarPedidoComRetry(clienteId, clienteNome, enderecoEntrega, formaPagamento, itens, valorTotal, tentativa + 1);
-        }
-        throw pedidoError;
-      }
+      if (pedidoError) throw pedidoError;
+
+      const numeroPedido = pedidoData.numero_pedido;
 
       // 2. Criar os itens do pedido
       for (const item of itens) {
@@ -226,17 +178,6 @@ export function PedidosProvider({ children }: { children: ReactNode }) {
       toast.error('Erro ao criar pedido: ' + error.message);
       return null;
     }
-  };
-
-  const criarPedido = async (
-    clienteId: string,
-    clienteNome: string,
-    enderecoEntrega: Endereco,
-    formaPagamento: 'credito' | 'debito' | 'pix' | 'dinheiro',
-    itens: CarrinhoItem[],
-    valorTotal: number
-  ): Promise<string | null> => {
-    return criarPedidoComRetry(clienteId, clienteNome, enderecoEntrega, formaPagamento, itens, valorTotal, 1);
   };
 
   const atualizarStatus = async (pedidoId: string, status: StatusPedido) => {
