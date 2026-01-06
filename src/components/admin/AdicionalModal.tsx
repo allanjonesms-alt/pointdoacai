@@ -8,24 +8,34 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AdicionalDB } from '@/hooks/useProdutos';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { AdicionalDB, TipoAdicional, TIPO_ADICIONAL_LABELS } from '@/hooks/useProdutos';
 
 interface AdicionalModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   adicional?: AdicionalDB | null;
-  onSave: (data: { nome: string; ativo: boolean }) => Promise<boolean>;
+  onSave: (data: { nome: string; tipo: TipoAdicional; ativo: boolean }) => Promise<boolean>;
 }
 
 export function AdicionalModal({ open, onOpenChange, adicional, onSave }: AdicionalModalProps) {
   const [nome, setNome] = useState('');
+  const [tipo, setTipo] = useState<TipoAdicional>('doces');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (adicional) {
       setNome(adicional.nome);
+      setTipo(adicional.tipo);
     } else {
       setNome('');
+      setTipo('doces');
     }
   }, [adicional, open]);
 
@@ -35,6 +45,7 @@ export function AdicionalModal({ open, onOpenChange, adicional, onSave }: Adicio
 
     const success = await onSave({
       nome,
+      tipo,
       ativo: adicional?.ativo ?? true,
     });
 
@@ -62,6 +73,22 @@ export function AdicionalModal({ open, onOpenChange, adicional, onSave }: Adicio
               required
               autoFocus
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="tipo">Tipo</Label>
+            <Select value={tipo} onValueChange={(value) => setTipo(value as TipoAdicional)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.keys(TIPO_ADICIONAL_LABELS) as TipoAdicional[]).map((key) => (
+                  <SelectItem key={key} value={key}>
+                    {TIPO_ADICIONAL_LABELS[key]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex gap-2 pt-4">

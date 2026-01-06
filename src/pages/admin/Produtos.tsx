@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { ArrowLeft, Package, Sparkles, Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useProdutos, ProdutoDB, AdicionalDB } from '@/hooks/useProdutos';
+import { useProdutos, ProdutoDB, AdicionalDB, TipoAdicional, TIPO_ADICIONAL_LABELS } from '@/hooks/useProdutos';
 import { ProdutoModal } from '@/components/admin/ProdutoModal';
 import { AdicionalModal } from '@/components/admin/AdicionalModal';
 import {
@@ -77,13 +77,21 @@ export default function AdminProdutos() {
     setAdicionalModalOpen(true);
   };
 
-  const handleSaveAdicional = async (data: { nome: string; ativo: boolean }) => {
+  const handleSaveAdicional = async (data: { nome: string; tipo: TipoAdicional; ativo: boolean }) => {
     if (adicionalEditando) {
       return atualizarAdicional(adicionalEditando.id, data);
     } else {
       return criarAdicional(data);
     }
   };
+
+  // Group adicionais by type
+  const adicionaisByType = adicionais.reduce((acc, adicional) => {
+    const tipo = adicional.tipo || 'doces';
+    if (!acc[tipo]) acc[tipo] = [];
+    acc[tipo].push(adicional);
+    return acc;
+  }, {} as Record<TipoAdicional, AdicionalDB[]>);
 
   const handleDeleteClick = (type: 'produto' | 'adicional', id: string, nome: string) => {
     setItemToDelete({ type, id, nome });
@@ -225,46 +233,55 @@ export default function AdminProdutos() {
               Cadastrar Adicional
             </Button>
 
-            {/* Adicionais List */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {adicionais.map((adicional) => (
-                <div
-                  key={adicional.id}
-                  className={cn(
-                    'bg-card rounded-xl p-4 shadow-card border border-border/50 flex items-center justify-between transition-opacity',
-                    !adicional.ativo && 'opacity-60'
+            {/* Adicionais List by Type */}
+            {(['frutas', 'doces', 'cereais'] as TipoAdicional[]).map((tipo) => (
+              <div key={tipo} className="space-y-3">
+                <h3 className="font-display font-bold text-foreground flex items-center gap-2">
+                  <span className="text-xl">
+                    {tipo === 'frutas' ? '🍓' : tipo === 'doces' ? '🍫' : '🌾'}
+                  </span>
+                  {TIPO_ADICIONAL_LABELS[tipo]}
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {(adicionaisByType[tipo] || []).map((adicional) => (
+                    <div
+                      key={adicional.id}
+                      className={cn(
+                        'bg-card rounded-xl p-4 shadow-card border border-border/50 flex items-center justify-between transition-opacity',
+                        !adicional.ativo && 'opacity-60'
+                      )}
+                    >
+                      <span className="font-medium text-foreground">{adicional.nome}</span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleEditarAdicional(adicional)}
+                          className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+                          title="Editar"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClick('adicional', adicional.id, adicional.nome)}
+                          className="p-2 text-destructive hover:text-destructive/80 transition-colors"
+                          title="Excluir"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                        <Switch
+                          checked={adicional.ativo}
+                          onCheckedChange={(checked) => toggleAdicionalAtivo(adicional.id, checked)}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                  {(!adicionaisByType[tipo] || adicionaisByType[tipo].length === 0) && (
+                    <div className="bg-muted/50 rounded-xl p-4 border border-dashed border-border text-center col-span-2">
+                      <p className="text-muted-foreground text-sm">Nenhum adicional de {TIPO_ADICIONAL_LABELS[tipo].toLowerCase()}</p>
+                    </div>
                   )}
-                >
-                  <span className="font-medium text-foreground">{adicional.nome}</span>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleEditarAdicional(adicional)}
-                      className="p-2 text-muted-foreground hover:text-foreground transition-colors"
-                      title="Editar"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteClick('adicional', adicional.id, adicional.nome)}
-                      className="p-2 text-destructive hover:text-destructive/80 transition-colors"
-                      title="Excluir"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                    <Switch
-                      checked={adicional.ativo}
-                      onCheckedChange={(checked) => toggleAdicionalAtivo(adicional.id, checked)}
-                    />
-                  </div>
                 </div>
-              ))}
-
-              {adicionais.length === 0 && (
-                <div className="bg-card rounded-xl p-8 shadow-card border border-border/50 text-center col-span-2">
-                  <p className="text-muted-foreground">Nenhum adicional cadastrado</p>
-                </div>
-              )}
-            </div>
+              </div>
+            ))}
           </div>
         )}
       </div>

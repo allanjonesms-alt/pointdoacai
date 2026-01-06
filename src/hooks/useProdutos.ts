@@ -13,9 +13,18 @@ export interface ProdutoDB {
   updated_at: string;
 }
 
+export type TipoAdicional = 'frutas' | 'doces' | 'cereais';
+
+export const TIPO_ADICIONAL_LABELS: Record<TipoAdicional, string> = {
+  frutas: 'Frutas',
+  doces: 'Doces',
+  cereais: 'Cereais',
+};
+
 export interface AdicionalDB {
   id: string;
   nome: string;
+  tipo: TipoAdicional;
   ativo: boolean;
   created_at: string;
   updated_at: string;
