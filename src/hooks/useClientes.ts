@@ -38,11 +38,11 @@ export function useClientes() {
     try {
       setIsLoading(true);
       
-      // Fetch all profiles
+      // Fetch all profiles ordered alphabetically
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
-        .order('nome');
+        .order('nome', { ascending: true });
 
       if (profilesError) {
         throw profilesError;
