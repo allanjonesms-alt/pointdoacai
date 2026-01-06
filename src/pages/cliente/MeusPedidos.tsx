@@ -10,6 +10,7 @@ import { ptBR } from 'date-fns/locale';
 import { TAMANHO_LABELS, StatusPedido } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useNotificationSound } from '@/hooks/useNotificationSound';
 
 const STATUS_MESSAGES: Record<StatusPedido, string> = {
   pendente: '',
@@ -25,6 +26,7 @@ export default function MeusPedidos() {
   const { user } = useAuth();
   const { getPedidosCliente, refetch } = usePedidos();
   const previousStatusRef = useRef<Map<string, StatusPedido>>(new Map());
+  const { playNotification } = useNotificationSound();
 
   const pedidos = user ? getPedidosCliente(user.id) : [];
 
@@ -58,6 +60,7 @@ export default function MeusPedidos() {
 
           // Only notify if status actually changed
           if (previousStatus && previousStatus !== newStatus && STATUS_MESSAGES[newStatus]) {
+            playNotification();
             toast.success(STATUS_MESSAGES[newStatus], {
               duration: 5000,
             });
