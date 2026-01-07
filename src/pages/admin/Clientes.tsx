@@ -148,87 +148,87 @@ export default function AdminClientes() {
               clientesOrdenados.map((cliente) => (
               <div
                 key={cliente.id}
-                className="bg-card rounded-xl p-4 shadow-card border border-border/50 animate-fade-in"
+                className="bg-card rounded-xl p-3 sm:p-4 shadow-card border border-border/50 animate-fade-in"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 gradient-acai rounded-full flex items-center justify-center">
-                      <User className="h-6 w-6 text-primary-foreground" />
+                <div className="flex items-start justify-between mb-3 sm:mb-4 gap-2">
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 gradient-acai rounded-full flex items-center justify-center flex-shrink-0">
+                      <User className="h-5 w-5 sm:h-6 sm:w-6 text-primary-foreground" />
                     </div>
-                    <div>
-                      <h3 className="font-display font-bold text-foreground">{cliente.nome}</h3>
+                    <div className="min-w-0">
+                      <h3 className="font-display font-bold text-sm sm:text-base text-foreground truncate">{cliente.nome}</h3>
                       <div className="flex items-center gap-1 mt-1">
                         {cliente.role === 'admin' ? (
-                          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                          <span className="inline-flex items-center gap-1 text-xs px-1.5 sm:px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
                             <Shield className="h-3 w-3" />
-                            Admin
+                            <span className="hidden sm:inline">Admin</span>
                           </span>
                         ) : cliente.tipo_cliente === 'organico' ? (
-                          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                          <span className="inline-flex items-center gap-1 text-xs px-1.5 sm:px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
                             <Leaf className="h-3 w-3" />
-                            Orgânico
+                            <span className="hidden sm:inline">Orgânico</span>
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                          <span className="inline-flex items-center gap-1 text-xs px-1.5 sm:px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
                             <Sparkles className="h-3 w-3" />
-                            Sintético
+                            <span className="hidden sm:inline">Sintético</span>
                           </span>
                         )}
                       </div>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right flex-shrink-0">
                     <div className="flex items-center gap-1 text-tropical">
-                      <TrendingUp className="h-4 w-4" />
-                      <span className="font-bold">
+                      <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
+                      <span className="font-bold text-sm sm:text-base whitespace-nowrap">
                         R$ {Number(cliente.valor_total_compras).toFixed(2).replace('.', ',')}
                       </span>
                     </div>
-                    <p className="text-xs text-muted-foreground">Total comprado</p>
+                    <p className="text-xs text-muted-foreground hidden sm:block">Total comprado</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm mb-4">
+                <div className="grid grid-cols-1 gap-2 text-sm mb-3 sm:mb-4">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Phone className="h-4 w-4 flex-shrink-0" />
-                    {cliente.telefone}
+                    <span className="truncate">{cliente.telefone}</span>
                   </div>
                   {cliente.email && (
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Mail className="h-4 w-4 flex-shrink-0" />
-                      {cliente.email}
+                      <span className="truncate">{cliente.email}</span>
                     </div>
                   )}
                 </div>
 
-                {/* Endereço completo */}
-                <div className="bg-muted/50 rounded-lg p-3 mb-4">
+                <div className="bg-muted/50 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4">
                   <div className="flex items-start gap-2 text-sm">
                     <MapPin className="h-4 w-4 flex-shrink-0 mt-0.5 text-primary" />
-                    <div className="text-muted-foreground">
-                      <p>
+                    <div className="text-muted-foreground text-xs sm:text-sm min-w-0">
+                      <p className="truncate">
                         {cliente.rua}, {cliente.numero}
                         {cliente.complemento && ` - ${cliente.complemento}`}
                       </p>
                       <p>{cliente.bairro}</p>
                       {cliente.referencia && (
-                        <p className="text-xs mt-1">Ref: {cliente.referencia}</p>
+                        <p className="text-xs mt-1 truncate">Ref: {cliente.referencia}</p>
                       )}
                     </div>
                   </div>
                 </div>
 
-                <div className="flex gap-2 pt-4 border-t border-border">
-                  <Button variant="outline" size="sm" className="flex-1">
-                    Ver Histórico
+                <div className="flex gap-2 pt-3 sm:pt-4 border-t border-border">
+                  <Button variant="outline" size="sm" className="flex-1 text-xs sm:text-sm">
+                    <span className="hidden sm:inline">Ver </span>Histórico
                   </Button>
                   <Button 
                     variant="ghost" 
                     size="sm"
                     onClick={() => navigate(`/admin/clientes/${cliente.id}/editar`)}
+                    className="text-xs sm:text-sm"
                   >
-                    <Pencil className="h-4 w-4 mr-1" />
-                    Editar
+                    <Pencil className="h-4 w-4 sm:mr-1" />
+                    <span className="hidden sm:inline">Editar</span>
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>

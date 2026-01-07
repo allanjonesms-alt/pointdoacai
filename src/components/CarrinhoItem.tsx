@@ -14,14 +14,14 @@ export function CarrinhoItemCard({ item }: CarrinhoItemProps) {
   const valorTotal = (item.valorUnitario + item.valorAdicionais) * item.quantidade;
 
   return (
-    <div className="bg-card rounded-xl p-4 shadow-card border border-border/50 animate-fade-in">
-      <div className="flex items-start justify-between gap-4">
+    <div className="bg-card rounded-xl p-3 sm:p-4 shadow-card border border-border/50 animate-fade-in">
+      <div className="flex items-start justify-between gap-3">
         {/* Product Info */}
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-2xl">🥣</span>
-            <div>
-              <h4 className="font-display font-bold text-foreground">
+            <span className="text-xl sm:text-2xl flex-shrink-0">🥣</span>
+            <div className="min-w-0">
+              <h4 className="font-display font-bold text-sm sm:text-base text-foreground truncate">
                 Açaí {TAMANHO_LABELS[item.produto.tamanho]}
               </h4>
               <p className="text-xs text-muted-foreground">{item.produto.peso}</p>
@@ -36,7 +36,7 @@ export function CarrinhoItemCard({ item }: CarrinhoItemProps) {
                 {item.adicionais.map((adicional, index) => (
                   <span
                     key={adicional}
-                    className={`text-xs px-2 py-0.5 rounded-full ${
+                    className={`text-xs px-1.5 sm:px-2 py-0.5 rounded-full ${
                       index < 3
                         ? 'bg-tropical-light text-tropical'
                         : 'bg-accent/20 text-accent'
@@ -52,13 +52,13 @@ export function CarrinhoItemCard({ item }: CarrinhoItemProps) {
         </div>
 
         {/* Price & Actions */}
-        <div className="text-right">
-          <p className="font-bold text-lg text-primary">
+        <div className="text-right flex-shrink-0">
+          <p className="font-bold text-base sm:text-lg text-primary whitespace-nowrap">
             R$ {valorTotal.toFixed(2).replace('.', ',')}
           </p>
           {item.valorAdicionais > 0 && (
             <p className="text-xs text-muted-foreground">
-              (+ R$ {(item.valorAdicionais * item.quantidade).toFixed(2).replace('.', ',')} adicionais)
+              (+R$ {(item.valorAdicionais * item.quantidade).toFixed(2).replace('.', ',')})
             </p>
           )}
         </div>

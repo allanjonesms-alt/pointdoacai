@@ -81,7 +81,7 @@ export function StatusProgressBar({ currentStatus, onAdvanceStatus }: StatusProg
             <span
               key={step.id}
               className={cn(
-                'text-[9px] font-medium transition-colors duration-300 text-center w-12',
+                'text-[8px] sm:text-[9px] font-medium transition-colors duration-300 text-center w-10 sm:w-12',
                 isCurrent && 'text-foreground font-bold',
                 isPast && 'text-muted-foreground',
                 !isPast && !isCurrent && 'text-muted-foreground/50'
@@ -98,13 +98,13 @@ export function StatusProgressBar({ currentStatus, onAdvanceStatus }: StatusProg
         <button
           onClick={handleClick}
           className={cn(
-            'w-full mt-3 py-2.5 rounded-lg font-semibold text-white text-sm transition-all duration-300',
+            'w-full mt-3 py-2 sm:py-2.5 rounded-lg font-semibold text-white text-xs sm:text-sm transition-all duration-300',
             'hover:opacity-90 hover:scale-[1.02] active:scale-[0.98]',
-            'flex items-center justify-center gap-2',
+            'flex items-center justify-center gap-1 sm:gap-2',
             nextStatus.color
           )}
         >
-          <span>Avançar para: {nextStatus.label}</span>
+          <span className="truncate">Avançar: {nextStatus.shortLabel}</span>
           <span className="text-white/70">→</span>
         </button>
       )}
