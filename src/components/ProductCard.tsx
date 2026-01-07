@@ -34,19 +34,19 @@ export function ProductCard({ produto, onSelect, selected }: ProductCardProps) {
       </div>
 
       {/* Info */}
-      <div className="space-y-2">
-        <h3 className="font-display font-bold text-lg text-foreground">
+      <div className="space-y-1">
+        <h3 className="font-display font-bold text-base sm:text-lg text-foreground leading-tight">
           {TAMANHO_LABELS[produto.tamanho]}
         </h3>
-        <p className="text-sm text-muted-foreground">{produto.peso}</p>
-        <div className="flex items-center justify-between pt-2">
-          <span className="text-2xl font-bold text-primary">
+        <p className="text-xs sm:text-sm text-muted-foreground">{produto.peso}</p>
+        <div className="flex items-center justify-between pt-2 gap-2">
+          <span className="text-lg sm:text-2xl font-bold text-primary whitespace-nowrap">
             R$ {produto.preco.toFixed(2).replace('.', ',')}
           </span>
           <Button
             size="icon"
             variant={selected ? 'acai' : 'soft'}
-            className="rounded-full"
+            className="rounded-full shrink-0"
           >
             <Plus className="h-5 w-5" />
           </Button>
