@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, TrendingUp, Calendar, DollarSign } from 'lucide-react';
+import { ArrowLeft, Loader2, TrendingUp, Calendar, DollarSign, Trophy, Sparkles } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts';
 import { format, startOfWeek, endOfWeek, subWeeks, startOfMonth, endOfMonth, subMonths, eachDayOfInterval, isSameDay } from 'date-fns';
@@ -13,33 +13,62 @@ interface PedidoData {
   status: string;
 }
 
+interface PedidoItemData {
+  produto_nome: string;
+  tamanho: string;
+  quantidade: number;
+}
+
+interface AdicionalData {
+  adicional_nome: string;
+}
+
 export default function AdminRelatorios() {
   const navigate = useNavigate();
   const [pedidos, setPedidos] = useState<PedidoData[]>([]);
+  const [pedidoItens, setPedidoItens] = useState<PedidoItemData[]>([]);
+  const [adicionais, setAdicionais] = useState<AdicionalData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchPedidos = async () => {
+    const fetchData = async () => {
       try {
-        // Buscar pedidos dos últimos 12 meses para os gráficos
         const dozeAtras = subMonths(new Date(), 12);
         
-        const { data, error } = await supabase
+        // Buscar pedidos
+        const { data: pedidosData, error: pedidosError } = await supabase
           .from('pedidos')
           .select('id, valor_total, created_at, status')
           .gte('created_at', dozeAtras.toISOString())
           .order('created_at', { ascending: true });
 
-        if (error) throw error;
-        setPedidos(data || []);
+        if (pedidosError) throw pedidosError;
+        setPedidos(pedidosData || []);
+
+        // Buscar itens de pedido para ranking de produtos
+        const { data: itensData, error: itensError } = await supabase
+          .from('pedido_itens')
+          .select('produto_nome, tamanho, quantidade');
+
+        if (itensError) throw itensError;
+        setPedidoItens(itensData || []);
+
+        // Buscar adicionais para ranking
+        const { data: adicionaisData, error: adicionaisError } = await supabase
+          .from('pedido_item_adicionais')
+          .select('adicional_nome');
+
+        if (adicionaisError) throw adicionaisError;
+        setAdicionais(adicionaisData || []);
+
       } catch (err) {
-        console.error('Erro ao buscar pedidos:', err);
+        console.error('Erro ao buscar dados:', err);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchPedidos();
+    fetchData();
   }, []);
 
   // Dados da semana atual (domingo a sábado)
@@ -100,6 +129,35 @@ export default function AdminRelatorios() {
     const mesAtual = dadosMensais[dadosMensais.length - 1];
     return mesAtual || { quantidade: 0, valor: 0 };
   }, [dadosMensais]);
+
+  // Ranking de produtos mais vendidos
+  const rankingProdutos = useMemo(() => {
+    const contagem: Record<string, number> = {};
+    
+    pedidoItens.forEach(item => {
+      const key = `${item.produto_nome} - ${item.tamanho}`;
+      contagem[key] = (contagem[key] || 0) + item.quantidade;
+    });
+
+    return Object.entries(contagem)
+      .map(([nome, quantidade]) => ({ nome, quantidade }))
+      .sort((a, b) => b.quantidade - a.quantidade)
+      .slice(0, 10);
+  }, [pedidoItens]);
+
+  // Ranking de adicionais mais vendidos
+  const rankingAdicionais = useMemo(() => {
+    const contagem: Record<string, number> = {};
+    
+    adicionais.forEach(item => {
+      contagem[item.adicional_nome] = (contagem[item.adicional_nome] || 0) + 1;
+    });
+
+    return Object.entries(contagem)
+      .map(([nome, quantidade]) => ({ nome, quantidade }))
+      .sort((a, b) => b.quantidade - a.quantidade)
+      .slice(0, 10);
+  }, [adicionais]);
 
   if (isLoading) {
     return (
@@ -280,6 +338,79 @@ export default function AdminRelatorios() {
                 />
               </LineChart>
             </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Rankings */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Ranking de Produtos */}
+          <div className="bg-card rounded-xl p-4 shadow-card border border-border/50">
+            <div className="flex items-center gap-2 mb-4">
+              <Trophy className="h-5 w-5 text-primary" />
+              <h2 className="font-display font-bold text-lg text-foreground">
+                Produtos Mais Vendidos
+              </h2>
+            </div>
+            {rankingProdutos.length === 0 ? (
+              <p className="text-muted-foreground text-sm text-center py-4">Nenhum dado disponível</p>
+            ) : (
+              <div className="space-y-3">
+                {rankingProdutos.map((item, index) => (
+                  <div key={item.nome} className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                      index === 0 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                      index === 1 ? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' :
+                      index === 2 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
+                      'bg-muted text-muted-foreground'
+                    }`}>
+                      {index + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-foreground truncate">{item.nome}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-bold text-primary">{item.quantidade}</span>
+                      <span className="text-xs text-muted-foreground ml-1">un.</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Ranking de Adicionais */}
+          <div className="bg-card rounded-xl p-4 shadow-card border border-border/50">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="h-5 w-5 text-tropical" />
+              <h2 className="font-display font-bold text-lg text-foreground">
+                Adicionais Mais Pedidos
+              </h2>
+            </div>
+            {rankingAdicionais.length === 0 ? (
+              <p className="text-muted-foreground text-sm text-center py-4">Nenhum dado disponível</p>
+            ) : (
+              <div className="space-y-3">
+                {rankingAdicionais.map((item, index) => (
+                  <div key={item.nome} className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                      index === 0 ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                      index === 1 ? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' :
+                      index === 2 ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400' :
+                      'bg-muted text-muted-foreground'
+                    }`}>
+                      {index + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-foreground truncate">{item.nome}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-bold text-tropical">{item.quantidade}</span>
+                      <span className="text-xs text-muted-foreground ml-1">vezes</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
