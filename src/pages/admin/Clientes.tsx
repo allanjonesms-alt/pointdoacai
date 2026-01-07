@@ -34,15 +34,25 @@ export default function AdminClientes() {
   const [busca, setBusca] = useState('');
 
   const clientesFiltrados = useMemo(() => {
-    if (!busca.trim()) return clientes;
-    const termo = busca.toLowerCase().trim();
-    
+    const termoOriginal = busca.trim();
+    if (!termoOriginal) return clientes;
+
+    const normalizar = (s: string) =>
+      s
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+
+    const termoNome = normalizar(termoOriginal.replace(/[0-9]/g, '')).trim();
+    const termoNumeros = termoOriginal.replace(/\D/g, '');
+
     return clientes.filter((cliente) => {
-      const nomeMatch = cliente.nome.toLowerCase().includes(termo);
-      const telefoneMatch = cliente.telefone.includes(termo) || 
-        cliente.telefone.replace(/\D/g, '').includes(termo.replace(/\D/g, ''));
-      
-      console.log('Filtrando:', cliente.nome, 'termo:', termo, 'nomeMatch:', nomeMatch);
+      const nomeNormalizado = normalizar(cliente.nome);
+      const nomeMatch = termoNome ? nomeNormalizado.includes(termoNome) : false;
+
+      const telefoneNumeros = (cliente.telefone || '').replace(/\D/g, '');
+      const telefoneMatch = termoNumeros ? telefoneNumeros.includes(termoNumeros) : false;
+
       return nomeMatch || telefoneMatch;
     });
   }, [clientes, busca]);
