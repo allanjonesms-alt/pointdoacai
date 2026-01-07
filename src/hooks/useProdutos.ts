@@ -2,6 +2,16 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+export type CategoriaProduto = 'acai' | 'barcas' | 'sorvetes' | 'picoles' | 'bebidas';
+
+export const CATEGORIA_LABELS: Record<CategoriaProduto, string> = {
+  acai: 'Açaí',
+  barcas: 'Barcas',
+  sorvetes: 'Sorvetes',
+  picoles: 'Picolés',
+  bebidas: 'Bebidas',
+};
+
 export interface ProdutoDB {
   id: string;
   nome: string;
@@ -9,6 +19,7 @@ export interface ProdutoDB {
   peso: string;
   preco: number;
   ativo: boolean;
+  categoria: CategoriaProduto;
   created_at: string;
   updated_at: string;
 }
@@ -77,9 +88,10 @@ export function useProdutos() {
   }, [refetch]);
 
   // Produtos CRUD
-  const criarProduto = async (produto: Omit<ProdutoDB, 'id' | 'created_at' | 'updated_at'>) => {
+  const criarProduto = async (produto: Omit<ProdutoDB, 'id' | 'created_at' | 'updated_at' | 'categoria'> & { categoria?: CategoriaProduto }) => {
+    const produtoComCategoria = { ...produto, categoria: produto.categoria || 'acai' };
     try {
-      const { error } = await supabase.from('produtos').insert(produto);
+      const { error } = await supabase.from('produtos').insert(produtoComCategoria);
       if (error) throw error;
       toast.success('Produto criado com sucesso!');
       await fetchProdutos();

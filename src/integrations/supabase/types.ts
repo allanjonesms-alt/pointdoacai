@@ -181,6 +181,7 @@ export type Database = {
       produtos: {
         Row: {
           ativo: boolean
+          categoria: Database["public"]["Enums"]["categoria_produto"]
           created_at: string
           id: string
           nome: string
@@ -191,6 +192,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          categoria?: Database["public"]["Enums"]["categoria_produto"]
           created_at?: string
           id?: string
           nome: string
@@ -201,6 +203,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          categoria?: Database["public"]["Enums"]["categoria_produto"]
           created_at?: string
           id?: string
           nome?: string
@@ -295,6 +298,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "cliente"
+      categoria_produto: "acai" | "barcas" | "sorvetes" | "picoles" | "bebidas"
       forma_pagamento: "credito" | "debito" | "pix" | "dinheiro"
       status_pedido:
         | "pendente"
@@ -434,6 +438,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "cliente"],
+      categoria_produto: ["acai", "barcas", "sorvetes", "picoles", "bebidas"],
       forma_pagamento: ["credito", "debito", "pix", "dinheiro"],
       status_pedido: [
         "pendente",
