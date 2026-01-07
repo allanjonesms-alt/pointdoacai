@@ -35,12 +35,17 @@ export default function AdminClientes() {
 
   const clientesFiltrados = useMemo(() => {
     if (!busca.trim()) return clientes;
-    const termoBusca = busca.toLowerCase().trim();
-    return clientes.filter((cliente) => 
-      cliente.nome.toLowerCase().includes(termoBusca) ||
-      cliente.telefone.replace(/\D/g, '').includes(termoBusca.replace(/\D/g, '')) ||
-      cliente.telefone.includes(termoBusca)
-    );
+    const termoBusca = busca.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return clientes.filter((cliente) => {
+      const nomeNormalizado = cliente.nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const telefoneNumeros = cliente.telefone.replace(/\D/g, '');
+      const buscaNumeros = termoBusca.replace(/\D/g, '');
+      
+      return nomeNormalizado.includes(termoBusca) ||
+        cliente.nome.toLowerCase().includes(busca.toLowerCase().trim()) ||
+        telefoneNumeros.includes(buscaNumeros) ||
+        cliente.telefone.includes(busca.trim());
+    });
   }, [clientes, busca]);
 
   const clientesOrdenados = useMemo(() => {
