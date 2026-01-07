@@ -79,18 +79,18 @@ export default function ClienteHome() {
         <div className="space-y-4 animate-fade-in-up">
           {/* Novo Pedido */}
           <Link to="/novo-pedido">
-            <div className="bg-card rounded-2xl p-6 shadow-float border border-border/50 flex items-center gap-4 hover:scale-[1.02] transition-transform">
-              <div className="w-14 h-14 gradient-acai rounded-xl flex items-center justify-center shadow-button">
-                <ShoppingBag className="h-7 w-7 text-primary-foreground" />
+            <div className="bg-card rounded-2xl p-4 sm:p-6 shadow-float border border-border/50 flex items-center gap-3 sm:gap-4 hover:scale-[1.02] transition-transform">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 gradient-acai rounded-xl flex items-center justify-center shadow-button flex-shrink-0">
+                <ShoppingBag className="h-6 w-6 sm:h-7 sm:w-7 text-primary-foreground" />
               </div>
-              <div className="flex-1">
-                <h2 className="font-display font-bold text-lg text-foreground">Novo Pedido</h2>
-                <p className="text-sm text-muted-foreground">Monte seu açaí personalizado</p>
+              <div className="flex-1 min-w-0">
+                <h2 className="font-display font-bold text-base sm:text-lg text-foreground">Novo Pedido</h2>
+                <p className="text-xs sm:text-sm text-muted-foreground">Monte seu açaí personalizado</p>
               </div>
               {quantidadeTotal > 0 && (
-                <div className="relative">
-                  <ShoppingCart className="h-6 w-6 text-primary" />
-                  <span className="absolute -top-2 -right-2 bg-accent text-accent-foreground text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                <div className="relative flex-shrink-0">
+                  <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+                  <span className="absolute -top-2 -right-2 bg-accent text-accent-foreground text-xs font-bold w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center">
                     {quantidadeTotal}
                   </span>
                 </div>
@@ -100,26 +100,26 @@ export default function ClienteHome() {
 
           {/* Meus Pedidos */}
           <Link to="/meus-pedidos">
-            <div className="bg-card rounded-2xl p-6 shadow-card border border-border/50 flex items-center gap-4 hover:shadow-float transition-shadow">
-              <div className="w-14 h-14 bg-tropical rounded-xl flex items-center justify-center">
-                <ClipboardList className="h-7 w-7 text-secondary-foreground" />
+            <div className="bg-card rounded-2xl p-4 sm:p-6 shadow-card border border-border/50 flex items-center gap-3 sm:gap-4 hover:shadow-float transition-shadow">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-tropical rounded-xl flex items-center justify-center flex-shrink-0">
+                <ClipboardList className="h-6 w-6 sm:h-7 sm:w-7 text-secondary-foreground" />
               </div>
-              <div className="flex-1">
-                <h2 className="font-display font-bold text-lg text-foreground">Meus Pedidos</h2>
-                <p className="text-sm text-muted-foreground">Acompanhe seus pedidos</p>
+              <div className="flex-1 min-w-0">
+                <h2 className="font-display font-bold text-base sm:text-lg text-foreground">Meus Pedidos</h2>
+                <p className="text-xs sm:text-sm text-muted-foreground">Acompanhe seus pedidos</p>
               </div>
             </div>
           </Link>
 
           {/* Perfil */}
           <Link to="/perfil">
-            <div className="bg-card rounded-2xl p-6 shadow-card border border-border/50 flex items-center gap-4 hover:shadow-float transition-shadow">
-              <div className="w-14 h-14 bg-muted rounded-xl flex items-center justify-center">
-                <User className="h-7 w-7 text-foreground" />
+            <div className="bg-card rounded-2xl p-4 sm:p-6 shadow-card border border-border/50 flex items-center gap-3 sm:gap-4 hover:shadow-float transition-shadow">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-muted rounded-xl flex items-center justify-center flex-shrink-0">
+                <User className="h-6 w-6 sm:h-7 sm:w-7 text-foreground" />
               </div>
-              <div className="flex-1">
-                <h2 className="font-display font-bold text-lg text-foreground">Meu Perfil</h2>
-                <p className="text-sm text-muted-foreground">Gerencie seus dados</p>
+              <div className="flex-1 min-w-0">
+                <h2 className="font-display font-bold text-base sm:text-lg text-foreground">Meu Perfil</h2>
+                <p className="text-xs sm:text-sm text-muted-foreground">Gerencie seus dados</p>
               </div>
             </div>
           </Link>
