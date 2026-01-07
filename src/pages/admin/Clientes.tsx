@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, User, Phone, Mail, MapPin, TrendingUp, Pencil, Trash2, Loader2, Leaf, Sparkles, Shield, ArrowUpDown } from 'lucide-react';
+import { ArrowLeft, User, Phone, Mail, MapPin, TrendingUp, Pencil, Trash2, Loader2, Leaf, Sparkles, Shield, ArrowUpDown, Search } from 'lucide-react';
 import { useClientes } from '@/hooks/useClientes';
 import { toast } from 'sonner';
 import { CadastroClienteModal } from '@/components/admin/CadastroClienteModal';
@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 type OrdenacaoType = 'nome' | 'total_desc' | 'total_asc';
 
@@ -30,9 +31,20 @@ export default function AdminClientes() {
   const navigate = useNavigate();
   const { clientes, isLoading, deleteCliente, fetchClientes } = useClientes();
   const [ordenacao, setOrdenacao] = useState<OrdenacaoType>('nome');
+  const [busca, setBusca] = useState('');
+
+  const clientesFiltrados = useMemo(() => {
+    if (!busca.trim()) return clientes;
+    const termoBusca = busca.toLowerCase().trim();
+    return clientes.filter((cliente) => 
+      cliente.nome.toLowerCase().includes(termoBusca) ||
+      cliente.telefone.replace(/\D/g, '').includes(termoBusca.replace(/\D/g, '')) ||
+      cliente.telefone.includes(termoBusca)
+    );
+  }, [clientes, busca]);
 
   const clientesOrdenados = useMemo(() => {
-    const sorted = [...clientes];
+    const sorted = [...clientesFiltrados];
     switch (ordenacao) {
       case 'total_desc':
         return sorted.sort((a, b) => Number(b.valor_total_compras) - Number(a.valor_total_compras));
@@ -42,7 +54,7 @@ export default function AdminClientes() {
       default:
         return sorted.sort((a, b) => a.nome.localeCompare(b.nome));
     }
-  }, [clientes, ordenacao]);
+  }, [clientesFiltrados, ordenacao]);
 
   const handleDelete = async (clienteId: string, nome: string) => {
     const result = await deleteCliente(clienteId);
@@ -87,22 +99,39 @@ export default function AdminClientes() {
           </div>
         ) : (
           <div className="space-y-4">
-            {/* Ordenação */}
-            <div className="flex items-center justify-end gap-2">
-              <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-              <Select value={ordenacao} onValueChange={(value: OrdenacaoType) => setOrdenacao(value)}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Ordenar por" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="nome">Nome (A-Z)</SelectItem>
-                  <SelectItem value="total_desc">Maior total comprado</SelectItem>
-                  <SelectItem value="total_asc">Menor total comprado</SelectItem>
-                </SelectContent>
-              </Select>
+            {/* Busca e Ordenação */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por nome ou telefone..."
+                  value={busca}
+                  onChange={(e) => setBusca(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+                <Select value={ordenacao} onValueChange={(value: OrdenacaoType) => setOrdenacao(value)}>
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Ordenar por" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="nome">Nome (A-Z)</SelectItem>
+                    <SelectItem value="total_desc">Maior total comprado</SelectItem>
+                    <SelectItem value="total_asc">Menor total comprado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            {clientesOrdenados.map((cliente) => (
+            {clientesOrdenados.length === 0 ? (
+              <div className="text-center py-8">
+                <Search className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                <p className="text-muted-foreground">Nenhum cliente encontrado para "{busca}"</p>
+              </div>
+            ) : (
+              clientesOrdenados.map((cliente) => (
               <div
                 key={cliente.id}
                 className="bg-card rounded-xl p-4 shadow-card border border-border/50 animate-fade-in"
@@ -214,7 +243,8 @@ export default function AdminClientes() {
                   </AlertDialog>
                 </div>
               </div>
-            ))}
+              ))
+            )}
           </div>
         )}
       </div>
