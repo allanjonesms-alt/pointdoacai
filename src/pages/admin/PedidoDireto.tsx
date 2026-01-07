@@ -9,7 +9,7 @@ import { AdicionalQuantity } from '@/components/AdicionalQuantity';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Plus, ShoppingCart, Trash2, User, Check, Search, Phone } from 'lucide-react';
+import { ArrowLeft, Plus, ShoppingCart, Trash2, User, Check, Search, Phone, Truck, Store } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import isoporImage from '@/assets/isopor-acai.png';
 import copoImage from '@/assets/copo-acai.png';
@@ -20,6 +20,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+
+type ModoEntrega = 'entrega' | 'retirada';
+const TAXA_ENTREGA = 1.00;
 
 export default function PedidoDireto() {
   const navigate = useNavigate();
@@ -37,6 +40,7 @@ export default function PedidoDireto() {
   const [itensCarrinho, setItensCarrinho] = useState<CarrinhoItem[]>([]);
   const [formaPagamento, setFormaPagamento] = useState<'credito' | 'debito' | 'pix' | 'dinheiro'>('dinheiro');
   const [pedidoPago, setPedidoPago] = useState<boolean>(false);
+  const [modoEntrega, setModoEntrega] = useState<ModoEntrega>('entrega');
 
   const produtosAtivos = produtos.filter(p => p.ativo);
   const adicionaisAtivos = adicionais.filter(a => a.ativo);
@@ -135,11 +139,14 @@ export default function PedidoDireto() {
     setItensCarrinho(prev => prev.filter(item => item.id !== itemId));
   };
 
-  const calcularTotal = () => {
+  const calcularSubtotal = () => {
     return itensCarrinho.reduce((acc, item) => 
       acc + (item.valorUnitario + item.valorAdicionais) * item.quantidade, 0
     );
   };
+
+  const taxaEntrega = itensCarrinho.length > 0 && modoEntrega === 'entrega' ? TAXA_ENTREGA : 0;
+  const calcularTotal = () => calcularSubtotal() + taxaEntrega;
 
   const handleFinalizarPedido = () => {
     if (!clienteInfo) return;
@@ -522,6 +529,61 @@ export default function PedidoDireto() {
               ))}
             </div>
 
+            {/* Modo de Entrega */}
+            <div className="bg-card rounded-xl p-4 shadow-card border border-border/50">
+              <h3 className="font-display font-semibold text-foreground mb-4">
+                Modo de entrega
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setModoEntrega('entrega')}
+                  className={cn(
+                    'flex items-center gap-3 p-4 rounded-xl border-2 transition-all',
+                    modoEntrega === 'entrega'
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:border-primary/50'
+                  )}
+                >
+                  <div className={cn(
+                    'w-10 h-10 rounded-lg flex items-center justify-center',
+                    modoEntrega === 'entrega' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                  )}>
+                    <Truck className="h-5 w-5" />
+                  </div>
+                  <div className="text-left">
+                    <span className="font-medium text-foreground block">Entrega</span>
+                    <span className="text-xs text-muted-foreground">+ R$ 1,00</span>
+                  </div>
+                  {modoEntrega === 'entrega' && (
+                    <Check className="h-5 w-5 text-primary ml-auto" />
+                  )}
+                </button>
+                <button
+                  onClick={() => setModoEntrega('retirada')}
+                  className={cn(
+                    'flex items-center gap-3 p-4 rounded-xl border-2 transition-all',
+                    modoEntrega === 'retirada'
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:border-primary/50'
+                  )}
+                >
+                  <div className={cn(
+                    'w-10 h-10 rounded-lg flex items-center justify-center',
+                    modoEntrega === 'retirada' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                  )}>
+                    <Store className="h-5 w-5" />
+                  </div>
+                  <div className="text-left">
+                    <span className="font-medium text-foreground block">Retirada</span>
+                    <span className="text-xs text-green-600">Grátis</span>
+                  </div>
+                  {modoEntrega === 'retirada' && (
+                    <Check className="h-5 w-5 text-primary ml-auto" />
+                  )}
+                </button>
+              </div>
+            </div>
+
             <div className="bg-card rounded-xl p-4 shadow-card border border-border/50">
               <label className="block text-sm font-medium text-foreground mb-2">
                 Forma de Pagamento
@@ -611,23 +673,31 @@ export default function PedidoDireto() {
       {step === 'resumo' && itensCarrinho.length > 0 && (
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 shadow-float">
           <div className="container max-w-md mx-auto">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total do Pedido</p>
-                <p className="font-bold text-xl text-foreground">
-                  R$ {calcularTotal().toFixed(2).replace('.', ',')}
-                </p>
+            <div className="space-y-2 mb-4">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span className="text-foreground">R$ {calcularSubtotal().toFixed(2).replace('.', ',')}</span>
               </div>
-              <Button
-                variant="acai"
-                size="lg"
-                onClick={handleFinalizarPedido}
-                className="gap-2"
-              >
-                <Check className="h-5 w-5" />
-                Finalizar Pedido
-              </Button>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Taxa de Entrega</span>
+                <span className={cn("text-foreground", modoEntrega === 'retirada' && "text-green-600")}>
+                  {modoEntrega === 'retirada' ? 'Grátis' : `R$ ${taxaEntrega.toFixed(2).replace('.', ',')}`}
+                </span>
+              </div>
+              <div className="flex justify-between font-bold text-lg pt-2 border-t border-border">
+                <span className="text-foreground">Total</span>
+                <span className="text-primary">R$ {calcularTotal().toFixed(2).replace('.', ',')}</span>
+              </div>
             </div>
+            <Button
+              variant="acai"
+              size="lg"
+              className="w-full gap-2"
+              onClick={handleFinalizarPedido}
+            >
+              <Check className="h-5 w-5" />
+              Finalizar Pedido
+            </Button>
           </div>
         </div>
       )}
