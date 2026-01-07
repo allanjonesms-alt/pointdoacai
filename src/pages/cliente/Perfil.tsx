@@ -4,9 +4,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, User, Phone, Mail, MapPin, LogOut, Key, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { ArrowLeft, User, Phone, Mail, LogOut, Key, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import EnderecosList from '@/components/EnderecosList';
 
 export default function Perfil() {
   const navigate = useNavigate();
@@ -131,26 +132,11 @@ export default function Perfil() {
             </div>
           </div>
 
-          <div className="bg-card rounded-xl p-4 shadow-card border border-border/50 flex items-start gap-4">
-            <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-              <MapPin className="h-6 w-6 text-primary" />
-            </div>
-            <div className="flex-1">
-              <p className="text-sm text-muted-foreground">Endereço</p>
-              <p className="font-semibold text-foreground">
-                {user.endereco.rua}, {user.endereco.numero}
-              </p>
-              <p className="text-sm text-foreground">
-                {user.endereco.bairro}
-                {user.endereco.complemento && ` - ${user.endereco.complemento}`}
-              </p>
-              {user.endereco.referencia && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Ref: {user.endereco.referencia}
-                </p>
-              )}
-            </div>
-          </div>
+        </div>
+
+        {/* Endereços de Entrega */}
+        <div className="bg-card rounded-xl p-4 shadow-card border border-border/50">
+          <EnderecosList />
         </div>
 
         {/* Password Change Section */}
