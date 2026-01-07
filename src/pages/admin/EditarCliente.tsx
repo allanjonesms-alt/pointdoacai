@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, User, Phone, Mail, MapPin, Home, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, User, Phone, Mail, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,11 +20,6 @@ const EditarCliente = () => {
     nome: '',
     telefone: '',
     email: '',
-    rua: '',
-    numero: '',
-    bairro: '',
-    complemento: '',
-    referencia: '',
   });
   const [isSaving, setIsSaving] = useState(false);
 
@@ -34,11 +29,6 @@ const EditarCliente = () => {
         nome: cliente.nome,
         telefone: cliente.telefone,
         email: cliente.email,
-        rua: cliente.rua,
-        numero: cliente.numero,
-        bairro: cliente.bairro,
-        complemento: cliente.complemento || '',
-        referencia: cliente.referencia || '',
       });
     }
   }, [cliente]);
@@ -60,22 +50,12 @@ const EditarCliente = () => {
       return;
     }
 
-    if (!formData.rua || !formData.numero || !formData.bairro) {
-      toast.error('Preencha o endereço completo');
-      return;
-    }
-
     setIsSaving(true);
 
     const result = await updateCliente(id, {
       nome: formData.nome,
       telefone: formData.telefone,
       email: formData.email,
-      rua: formData.rua,
-      numero: formData.numero,
-      bairro: formData.bairro,
-      complemento: formData.complemento || null,
-      referencia: formData.referencia || null,
     });
 
     setIsSaving(false);
@@ -188,75 +168,8 @@ const EditarCliente = () => {
                 </div>
               </div>
 
-              {/* Endereço */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-primary" />
-                  Endereço
-                </h3>
-                
-                <div className="grid gap-4">
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="col-span-2 space-y-2">
-                      <Label htmlFor="rua">Rua *</Label>
-                      <Input
-                        id="rua"
-                        name="rua"
-                        value={formData.rua}
-                        onChange={handleChange}
-                        placeholder="Nome da rua"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="numero">Número *</Label>
-                      <Input
-                        id="numero"
-                        name="numero"
-                        value={formData.numero}
-                        onChange={handleChange}
-                        placeholder="Nº"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="bairro">Bairro *</Label>
-                    <div className="relative">
-                      <Home className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="bairro"
-                        name="bairro"
-                        value={formData.bairro}
-                        onChange={handleChange}
-                        className="pl-10"
-                        placeholder="Nome do bairro"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="complemento">Complemento</Label>
-                    <Input
-                      id="complemento"
-                      name="complemento"
-                      value={formData.complemento}
-                      onChange={handleChange}
-                      placeholder="Apartamento, bloco, etc."
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="referencia">Ponto de Referência</Label>
-                    <Input
-                      id="referencia"
-                      name="referencia"
-                      value={formData.referencia}
-                      onChange={handleChange}
-                      placeholder="Próximo a..."
-                    />
-                  </div>
-                </div>
-              </div>
+              {/* Endereços de Entrega */}
+              <EnderecosList profileId={id} />
 
               <Button type="submit" className="w-full" size="lg" disabled={isSaving}>
                 {isSaving ? (
@@ -272,11 +185,6 @@ const EditarCliente = () => {
                 )}
               </Button>
             </form>
-
-            {/* Seção de Endereços de Entrega */}
-            <div className="mt-8 pt-6 border-t border-border">
-              <EnderecosList profileId={id} />
-            </div>
           </CardContent>
         </Card>
       </div>
