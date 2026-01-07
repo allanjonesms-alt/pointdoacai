@@ -189,7 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Check if there's an existing synthetic profile with this phone
       const { data: existingProfile } = await supabase
         .from('profiles')
-        .select('id, tipo_cliente')
+        .select('*')
         .eq('telefone', cleanPhone)
         .maybeSingle();
 
@@ -222,16 +222,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Wait a moment for the trigger to create the profile
         await new Promise(resolve => setTimeout(resolve, 500));
 
-        // If there was a synthetic profile, update it to link to the new auth user
+        // If there was a synthetic profile, migrate data to the new auth user profile
         if (existingProfile && existingProfile.tipo_cliente === 'sintetico') {
-          // Delete the auto-created profile from trigger (if any)
-          await supabase.from('profiles').delete().eq('id', data.user.id);
-          
-          // Update the existing synthetic profile to use the new auth user id and mark as organic
+          // Update the trigger-created profile with synthetic data + new user data + mark as organic
           const { error: updateError } = await supabase
             .from('profiles')
             .update({
-              id: data.user.id,
               nome: userData.nome,
               rua: userData.endereco.rua,
               numero: userData.endereco.numero,
@@ -239,12 +235,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               complemento: userData.endereco.complemento || null,
               referencia: userData.endereco.referencia || null,
               tipo_cliente: 'organico',
+              // Preserve important data from synthetic profile
+              valor_total_compras: existingProfile.valor_total_compras || 0,
+              email: existingProfile.email || null,
             })
-            .eq('id', existingProfile.id);
+            .eq('id', data.user.id);
 
           if (updateError) {
-            console.error('Error updating synthetic profile:', updateError);
+            console.error('Error updating profile:', updateError);
           }
+
+          // Delete the old synthetic profile (it's no longer needed)
+          await supabase.from('profiles').delete().eq('id', existingProfile.id);
         }
 
         const profile = await fetchUserProfile(data.user.id);
