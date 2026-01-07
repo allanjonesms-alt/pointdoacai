@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useEnderecos, Endereco, EnderecoInput } from '@/hooks/useEnderecos';
 import { toast } from 'sonner';
+import RuaAutocomplete from '@/components/RuaAutocomplete';
 
 interface EnderecosListProps {
   profileId?: string;
@@ -266,11 +267,10 @@ export default function EnderecosList({ profileId, showTitle = true }: Enderecos
             <div className="grid grid-cols-3 gap-3">
               <div className="col-span-2 space-y-2">
                 <Label htmlFor="rua">Rua *</Label>
-                <Input
-                  id="rua"
+                <RuaAutocomplete
                   value={formData.rua}
-                  onChange={(e) => setFormData(prev => ({ ...prev, rua: e.target.value }))}
-                  placeholder="Nome da rua"
+                  onChange={(value) => setFormData(prev => ({ ...prev, rua: value }))}
+                  placeholder="Selecione a rua..."
                 />
               </div>
               <div className="space-y-2">
@@ -364,11 +364,10 @@ export default function EnderecosList({ profileId, showTitle = true }: Enderecos
             <div className="grid grid-cols-3 gap-3">
               <div className="col-span-2 space-y-2">
                 <Label htmlFor="edit-rua">Rua *</Label>
-                <Input
-                  id="edit-rua"
+                <RuaAutocomplete
                   value={formData.rua}
-                  onChange={(e) => setFormData(prev => ({ ...prev, rua: e.target.value }))}
-                  placeholder="Nome da rua"
+                  onChange={(value) => setFormData(prev => ({ ...prev, rua: value }))}
+                  placeholder="Selecione a rua..."
                 />
               </div>
               <div className="space-y-2">
