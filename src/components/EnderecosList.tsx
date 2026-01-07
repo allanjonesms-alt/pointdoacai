@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Plus, Trash2, Star, Loader2, Home, Pencil } from 'lucide-react';
+import { MapPin, Plus, Trash2, Star, Loader2, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,6 +24,7 @@ import {
 import { useEnderecos, Endereco, EnderecoInput } from '@/hooks/useEnderecos';
 import { toast } from 'sonner';
 import RuaAutocomplete from '@/components/RuaAutocomplete';
+import BairroAutocomplete from '@/components/BairroAutocomplete';
 
 interface EnderecosListProps {
   profileId?: string;
@@ -286,16 +287,11 @@ export default function EnderecosList({ profileId, showTitle = true }: Enderecos
 
             <div className="space-y-2">
               <Label htmlFor="bairro">Bairro *</Label>
-              <div className="relative">
-                <Home className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="bairro"
-                  value={formData.bairro}
-                  onChange={(e) => setFormData(prev => ({ ...prev, bairro: e.target.value }))}
-                  className="pl-10"
-                  placeholder="Nome do bairro"
-                />
-              </div>
+              <BairroAutocomplete
+                value={formData.bairro}
+                onChange={(value) => setFormData(prev => ({ ...prev, bairro: value }))}
+                placeholder="Selecione o bairro..."
+              />
             </div>
 
             <div className="space-y-2">
@@ -383,16 +379,11 @@ export default function EnderecosList({ profileId, showTitle = true }: Enderecos
 
             <div className="space-y-2">
               <Label htmlFor="edit-bairro">Bairro *</Label>
-              <div className="relative">
-                <Home className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="edit-bairro"
-                  value={formData.bairro}
-                  onChange={(e) => setFormData(prev => ({ ...prev, bairro: e.target.value }))}
-                  className="pl-10"
-                  placeholder="Nome do bairro"
-                />
-              </div>
+              <BairroAutocomplete
+                value={formData.bairro}
+                onChange={(value) => setFormData(prev => ({ ...prev, bairro: value }))}
+                placeholder="Selecione o bairro..."
+              />
             </div>
 
             <div className="space-y-2">
