@@ -40,10 +40,11 @@ export default function MeusPedidos() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<CarrinhoItem | null>(null);
 
-  // Atualizar dados ao acessar a página
+  // Atualizar dados sempre ao acessar/montar a página
   useEffect(() => {
     refetch();
-  }, [refetch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const pedidos = user ? getPedidosCliente(user.id) : [];
 
