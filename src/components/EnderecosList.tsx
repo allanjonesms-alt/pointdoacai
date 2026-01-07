@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Plus, Trash2, Star, Loader2, Home } from 'lucide-react';
+import { MapPin, Plus, Trash2, Star, Loader2, Home, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -34,13 +34,16 @@ export default function EnderecosList({ profileId, showTitle = true }: Enderecos
     enderecos,
     isLoading,
     addEndereco,
+    updateEndereco,
     deleteEndereco,
     setDefaultEndereco,
   } = useEnderecos(profileId);
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [enderecoToDelete, setEnderecoToDelete] = useState<Endereco | null>(null);
+  const [enderecoToEdit, setEnderecoToEdit] = useState<Endereco | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState<EnderecoInput>({
     rua: '',
@@ -58,6 +61,18 @@ export default function EnderecosList({ profileId, showTitle = true }: Enderecos
       complemento: '',
       referencia: '',
     });
+  };
+
+  const openEditDialog = (endereco: Endereco) => {
+    setEnderecoToEdit(endereco);
+    setFormData({
+      rua: endereco.rua,
+      numero: endereco.numero,
+      bairro: endereco.bairro,
+      complemento: endereco.complemento || '',
+      referencia: endereco.referencia || '',
+    });
+    setIsEditDialogOpen(true);
   };
 
   const handleAddEndereco = async (e: React.FormEvent) => {
@@ -78,6 +93,30 @@ export default function EnderecosList({ profileId, showTitle = true }: Enderecos
       resetForm();
     } else {
       toast.error(result.error || 'Erro ao adicionar endereço');
+    }
+  };
+
+  const handleEditEndereco = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!enderecoToEdit) return;
+
+    if (!formData.rua || !formData.numero || !formData.bairro) {
+      toast.error('Preencha os campos obrigatórios');
+      return;
+    }
+
+    setIsSaving(true);
+    const result = await updateEndereco(enderecoToEdit.id, formData);
+    setIsSaving(false);
+
+    if (result.success) {
+      toast.success('Endereço atualizado com sucesso!');
+      setIsEditDialogOpen(false);
+      setEnderecoToEdit(null);
+      resetForm();
+    } else {
+      toast.error(result.error || 'Erro ao atualizar endereço');
     }
   };
 
@@ -167,31 +206,40 @@ export default function EnderecosList({ profileId, showTitle = true }: Enderecos
                       </p>
                     )}
                   </div>
-                  <div className="flex items-center gap-1">
-                    {!endereco.is_default && (
+                    <div className="flex items-center gap-1">
+                      {!endereco.is_default && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleSetDefault(endereco)}
+                          className="text-muted-foreground hover:text-primary"
+                          title="Definir como padrão"
+                        >
+                          <Star className="w-4 h-4" />
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleSetDefault(endereco)}
+                        onClick={() => openEditDialog(endereco)}
                         className="text-muted-foreground hover:text-primary"
-                        title="Definir como padrão"
+                        title="Editar endereço"
                       >
-                        <Star className="w-4 h-4" />
+                        <Pencil className="w-4 h-4" />
                       </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setEnderecoToDelete(endereco);
-                        setIsDeleteDialogOpen(true);
-                      }}
-                      className="text-muted-foreground hover:text-destructive"
-                      title="Excluir endereço"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setEnderecoToDelete(endereco);
+                          setIsDeleteDialogOpen(true);
+                        }}
+                        className="text-muted-foreground hover:text-destructive"
+                        title="Excluir endereço"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                 </div>
               </CardContent>
             </Card>
@@ -290,6 +338,105 @@ export default function EnderecosList({ profileId, showTitle = true }: Enderecos
                   </>
                 ) : (
                   'Adicionar'
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de edição */}
+      <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+        setIsEditDialogOpen(open);
+        if (!open) {
+          setEnderecoToEdit(null);
+          resetForm();
+        }
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Pencil className="w-5 h-5 text-primary" />
+              Editar Endereço
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditEndereco} className="space-y-4">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="col-span-2 space-y-2">
+                <Label htmlFor="edit-rua">Rua *</Label>
+                <Input
+                  id="edit-rua"
+                  value={formData.rua}
+                  onChange={(e) => setFormData(prev => ({ ...prev, rua: e.target.value }))}
+                  placeholder="Nome da rua"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-numero">Nº *</Label>
+                <Input
+                  id="edit-numero"
+                  value={formData.numero}
+                  onChange={(e) => setFormData(prev => ({ ...prev, numero: e.target.value }))}
+                  placeholder="Nº"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-bairro">Bairro *</Label>
+              <div className="relative">
+                <Home className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="edit-bairro"
+                  value={formData.bairro}
+                  onChange={(e) => setFormData(prev => ({ ...prev, bairro: e.target.value }))}
+                  className="pl-10"
+                  placeholder="Nome do bairro"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-complemento">Complemento</Label>
+              <Input
+                id="edit-complemento"
+                value={formData.complemento || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, complemento: e.target.value }))}
+                placeholder="Apartamento, bloco, etc."
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-referencia">Ponto de Referência</Label>
+              <Input
+                id="edit-referencia"
+                value={formData.referencia || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, referencia: e.target.value }))}
+                placeholder="Próximo a..."
+              />
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsEditDialogOpen(false);
+                  setEnderecoToEdit(null);
+                  resetForm();
+                }}
+                className="flex-1"
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" className="flex-1" disabled={isSaving}>
+                {isSaving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  'Salvar'
                 )}
               </Button>
             </div>
