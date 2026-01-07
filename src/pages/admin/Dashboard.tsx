@@ -5,7 +5,7 @@ import { usePedidos } from '@/contexts/PedidosContext';
 import { Logo } from '@/components/Logo';
 import { StatusProgressBar } from '@/components/StatusProgressBar';
 import { StatusPedido, TAMANHO_LABELS } from '@/types';
-import { LogOut, Users, Package, Plus, Clock, Loader2 } from 'lucide-react';
+import { LogOut, Users, Package, Plus, Clock, Loader2, BarChart3 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
@@ -81,7 +81,7 @@ export default function AdminDashboard() {
 
       <div className="container max-w-4xl mx-auto px-4 py-6">
         {/* Quick Actions */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <Link to="/admin/clientes">
             <div className="bg-card rounded-xl p-4 shadow-card border border-border/50 hover:shadow-float transition-shadow">
               <div className="w-12 h-12 bg-tropical rounded-lg flex items-center justify-center mb-3">
@@ -109,6 +109,16 @@ export default function AdminDashboard() {
               </div>
               <h3 className="font-display font-bold text-foreground">Produtos</h3>
               <p className="text-sm text-muted-foreground">Gerenciar cardápio</p>
+            </div>
+          </Link>
+
+          <Link to="/admin/relatorios">
+            <div className="bg-card rounded-xl p-4 shadow-card border border-border/50 hover:shadow-float transition-shadow">
+              <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center mb-3">
+                <BarChart3 className="h-6 w-6 text-foreground" />
+              </div>
+              <h3 className="font-display font-bold text-foreground">Relatórios</h3>
+              <p className="text-sm text-muted-foreground">Vendas e métricas</p>
             </div>
           </Link>
         </div>
