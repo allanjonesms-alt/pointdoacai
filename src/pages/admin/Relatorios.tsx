@@ -1,10 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, TrendingUp, Calendar, DollarSign, Trophy, Sparkles } from 'lucide-react';
+import { ArrowLeft, Loader2, TrendingUp, Calendar, DollarSign, Trophy, Sparkles, CalendarIcon, Package, ShoppingBag } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts';
-import { format, startOfWeek, endOfWeek, subWeeks, startOfMonth, endOfMonth, subMonths, eachDayOfInterval, isSameDay } from 'date-fns';
+import { format, startOfWeek, endOfWeek, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, startOfDay, endOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Button } from '@/components/ui/button';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 interface PedidoData {
   id: string;
@@ -17,10 +21,21 @@ interface PedidoItemData {
   produto_nome: string;
   tamanho: string;
   quantidade: number;
+  pedido_id: string;
 }
 
 interface AdicionalData {
   adicional_nome: string;
+}
+
+interface PedidoDiaDetalhado {
+  id: string;
+  numero_pedido: string;
+  cliente_nome: string;
+  valor_total: number;
+  created_at: string;
+  status: string;
+  forma_pagamento: string;
 }
 
 export default function AdminRelatorios() {
@@ -29,6 +44,9 @@ export default function AdminRelatorios() {
   const [pedidoItens, setPedidoItens] = useState<PedidoItemData[]>([]);
   const [adicionais, setAdicionais] = useState<AdicionalData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [pedidosDia, setPedidosDia] = useState<PedidoDiaDetalhado[]>([]);
+  const [isLoadingDia, setIsLoadingDia] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -48,7 +66,7 @@ export default function AdminRelatorios() {
         // Buscar itens de pedido para ranking de produtos
         const { data: itensData, error: itensError } = await supabase
           .from('pedido_itens')
-          .select('produto_nome, tamanho, quantidade');
+          .select('produto_nome, tamanho, quantidade, pedido_id');
 
         if (itensError) throw itensError;
         setPedidoItens(itensData || []);
@@ -70,6 +88,60 @@ export default function AdminRelatorios() {
 
     fetchData();
   }, []);
+
+  // Buscar pedidos do dia selecionado
+  useEffect(() => {
+    if (!selectedDate) {
+      setPedidosDia([]);
+      return;
+    }
+
+    const fetchPedidosDia = async () => {
+      setIsLoadingDia(true);
+      try {
+        const inicioDia = startOfDay(selectedDate);
+        const fimDia = endOfDay(selectedDate);
+
+        const { data, error } = await supabase
+          .from('pedidos')
+          .select('id, numero_pedido, cliente_nome, valor_total, created_at, status, forma_pagamento')
+          .gte('created_at', inicioDia.toISOString())
+          .lte('created_at', fimDia.toISOString())
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setPedidosDia(data || []);
+      } catch (err) {
+        console.error('Erro ao buscar pedidos do dia:', err);
+      } finally {
+        setIsLoadingDia(false);
+      }
+    };
+
+    fetchPedidosDia();
+  }, [selectedDate]);
+
+  // Resumo do dia selecionado
+  const resumoDia = useMemo(() => {
+    if (!selectedDate || pedidosDia.length === 0) {
+      return { quantidade: 0, valor: 0 };
+    }
+
+    return {
+      quantidade: pedidosDia.length,
+      valor: pedidosDia.reduce((acc, p) => acc + Number(p.valor_total), 0),
+    };
+  }, [selectedDate, pedidosDia]);
+
+  // Produtos vendidos no dia selecionado
+  const produtosVendidosDia = useMemo(() => {
+    if (!selectedDate || pedidosDia.length === 0) return 0;
+    
+    const pedidoIds = pedidosDia.map(p => p.id);
+    return pedidoItens
+      .filter(item => pedidoIds.includes(item.pedido_id))
+      .reduce((acc, item) => acc + item.quantidade, 0);
+  }, [selectedDate, pedidosDia, pedidoItens]);
 
   // Dados da semana atual (domingo a sábado)
   const dadosSemana = useMemo(() => {
@@ -217,6 +289,116 @@ export default function AdminRelatorios() {
             <p className="text-2xl font-bold text-primary">R$ {totalMesAtual.valor.toFixed(2).replace('.', ',')}</p>
             <p className="text-xs text-muted-foreground">faturado</p>
           </div>
+        </div>
+
+        {/* Seleção de Data para Vendas do Dia */}
+        <div className="bg-card rounded-xl p-4 shadow-card border border-border/50">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <h2 className="font-display font-bold text-lg text-foreground">
+              Vendas por Data
+            </h2>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "w-full sm:w-[240px] justify-start text-left font-normal",
+                    !selectedDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {selectedDate ? format(selectedDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) : <span>Selecione uma data</span>}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <CalendarComponent
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  initialFocus
+                  className={cn("p-3 pointer-events-auto")}
+                  disabled={(date) => date > new Date()}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          {selectedDate && (
+            <>
+              {isLoadingDia ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                </div>
+              ) : (
+                <>
+                  {/* Resumo do dia */}
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div className="bg-muted/50 rounded-lg p-3 text-center">
+                      <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+                        <ShoppingBag className="h-4 w-4" />
+                      </div>
+                      <p className="text-xl font-bold text-foreground">{resumoDia.quantidade}</p>
+                      <p className="text-xs text-muted-foreground">pedidos</p>
+                    </div>
+                    <div className="bg-muted/50 rounded-lg p-3 text-center">
+                      <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+                        <Package className="h-4 w-4" />
+                      </div>
+                      <p className="text-xl font-bold text-foreground">{produtosVendidosDia}</p>
+                      <p className="text-xs text-muted-foreground">produtos</p>
+                    </div>
+                    <div className="bg-muted/50 rounded-lg p-3 text-center">
+                      <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
+                        <DollarSign className="h-4 w-4" />
+                      </div>
+                      <p className="text-xl font-bold text-primary">R$ {resumoDia.valor.toFixed(2).replace('.', ',')}</p>
+                      <p className="text-xs text-muted-foreground">faturado</p>
+                    </div>
+                  </div>
+
+                  {/* Lista de pedidos do dia */}
+                  {pedidosDia.length === 0 ? (
+                    <p className="text-muted-foreground text-sm text-center py-4">
+                      Nenhuma venda nesta data
+                    </p>
+                  ) : (
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {pedidosDia.map((pedido) => (
+                        <div
+                          key={pedido.id}
+                          className="flex items-center justify-between bg-muted/30 rounded-lg p-3 text-sm"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-primary">#{pedido.numero_pedido}</span>
+                              <span className="text-muted-foreground">•</span>
+                              <span className="text-foreground truncate">{pedido.cliente_nome}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                              <span>{format(new Date(pedido.created_at), 'HH:mm')}</span>
+                              <span>•</span>
+                              <span className="capitalize">{pedido.forma_pagamento}</span>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-foreground">
+                              R$ {Number(pedido.valor_total).toFixed(2).replace('.', ',')}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </>
+          )}
+
+          {!selectedDate && (
+            <p className="text-muted-foreground text-sm text-center py-4">
+              Selecione uma data para visualizar as vendas
+            </p>
+          )}
         </div>
 
         {/* Gráfico Semanal */}
