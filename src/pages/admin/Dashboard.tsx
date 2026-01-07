@@ -131,6 +131,16 @@ export default function AdminDashboard() {
               <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">Gerenciar ruas</p>
             </div>
           </Link>
+
+          <Link to="/admin/bairros">
+            <div className="bg-card rounded-xl p-3 sm:p-4 shadow-card border border-border/50 hover:shadow-float transition-shadow">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-tropical rounded-lg flex items-center justify-center mb-2 sm:mb-3">
+                <MapPin className="h-5 w-5 sm:h-6 sm:w-6 text-secondary-foreground" />
+              </div>
+              <h3 className="font-display font-bold text-sm sm:text-base text-foreground">Bairros</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">Gerenciar bairros</p>
+            </div>
+          </Link>
         </div>
 
         {/* Orders List */}
