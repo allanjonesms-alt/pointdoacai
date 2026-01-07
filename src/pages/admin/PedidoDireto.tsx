@@ -232,7 +232,14 @@ export default function PedidoDireto() {
             </button>
           )}
           {itensCarrinho.length === 0 && step !== 'resumo' && <div className="w-6" />}
-          {step === 'resumo' && <div className="w-6" />}
+          {step === 'resumo' && (
+            <button 
+              onClick={() => navigate('/admin')}
+              className="text-primary-foreground/80 hover:text-primary-foreground text-sm font-medium"
+            >
+              Dashboard
+            </button>
+          )}
         </div>
       </div>
 
