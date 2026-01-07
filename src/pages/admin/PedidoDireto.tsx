@@ -36,7 +36,7 @@ export default function PedidoDireto() {
   const [adicionaisQuantidades, setAdicionaisQuantidades] = useState<Record<string, number>>({});
   const [itensCarrinho, setItensCarrinho] = useState<CarrinhoItem[]>([]);
   const [formaPagamento, setFormaPagamento] = useState<'credito' | 'debito' | 'pix' | 'dinheiro'>('dinheiro');
-  const [pedidoPago, setPedidoPago] = useState<boolean>(true);
+  const [pedidoPago, setPedidoPago] = useState<boolean>(false);
 
   const produtosAtivos = produtos.filter(p => p.ativo);
   const adicionaisAtivos = adicionais.filter(a => a.ativo);
