@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCarrinho, ModoEntrega } from '@/contexts/CarrinhoContext';
 import { usePedidos } from '@/contexts/PedidosContext';
@@ -6,15 +6,23 @@ import { useAuth } from '@/contexts/AuthContext';
 import { CarrinhoItemCard } from '@/components/CarrinhoItem';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, ShoppingBag, CreditCard, Smartphone, Banknote, QrCode, Check, MapPin, Store, Truck } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, CreditCard, Smartphone, Banknote, QrCode, Check, MapPin, Store, Truck, ChevronDown, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PixQRCode } from '@/components/PixQRCode';
+import { useEnderecos, Endereco } from '@/hooks/useEnderecos';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 
 type FormaPagamento = 'credito' | 'debito' | 'pix' | 'dinheiro';
 
@@ -31,10 +39,21 @@ export default function Carrinho() {
   const { itens, subtotal, totalAdicionais, taxaEntrega, total, limparCarrinho, modoEntrega, setModoEntrega } = useCarrinho();
   const { criarPedido } = usePedidos();
   const { toast } = useToast();
+  const { enderecos, getDefaultEndereco } = useEnderecos();
   const [formaPagamento, setFormaPagamento] = useState<FormaPagamento | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showPixModal, setShowPixModal] = useState(false);
   const [numeroPedidoAtual, setNumeroPedidoAtual] = useState<string | null>(null);
+  const [enderecoSelecionado, setEnderecoSelecionado] = useState<Endereco | null>(null);
+  const [showEnderecoSheet, setShowEnderecoSheet] = useState(false);
+
+  // Define o endereço padrão quando os endereços carregam
+  useEffect(() => {
+    if (enderecos.length > 0 && !enderecoSelecionado) {
+      const defaultEndereco = getDefaultEndereco();
+      setEnderecoSelecionado(defaultEndereco);
+    }
+  }, [enderecos, enderecoSelecionado, getDefaultEndereco]);
 
   const handleFinalizarPedido = async () => {
     if (!formaPagamento) {
@@ -48,12 +67,25 @@ export default function Carrinho() {
 
     if (!user) return;
 
+    // Determinar o endereço para entrega
+    let enderecoEntrega = user.endereco;
+    
+    if (modoEntrega === 'entrega' && enderecoSelecionado) {
+      enderecoEntrega = {
+        rua: enderecoSelecionado.rua,
+        numero: enderecoSelecionado.numero,
+        bairro: enderecoSelecionado.bairro,
+        complemento: enderecoSelecionado.complemento || undefined,
+        referencia: enderecoSelecionado.referencia || undefined,
+      };
+    }
+
     setIsLoading(true);
 
     const numeroPedido = await criarPedido(
       user.id,
       user.nome,
-      user.endereco,
+      enderecoEntrega,
       formaPagamento,
       itens,
       total
@@ -227,23 +259,108 @@ export default function Carrinho() {
 
         {/* Delivery Address */}
         {user && modoEntrega === 'entrega' && (
-          <div className="bg-card rounded-xl p-4 shadow-card border border-border/50">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                <MapPin className="h-5 w-5 text-primary" />
+          <Sheet open={showEnderecoSheet} onOpenChange={setShowEnderecoSheet}>
+            <SheetTrigger asChild>
+              <button className="w-full bg-card rounded-xl p-4 shadow-card border border-border/50 text-left hover:border-primary/50 transition-colors">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <MapPin className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-foreground mb-1">Entregar em</h3>
+                      {enderecos.length > 1 && (
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      )}
+                    </div>
+                    {enderecoSelecionado ? (
+                      <>
+                        <p className="text-sm text-muted-foreground">
+                          {enderecoSelecionado.rua}, {enderecoSelecionado.numero}
+                          {enderecoSelecionado.complemento && ` - ${enderecoSelecionado.complemento}`}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {enderecoSelecionado.bairro}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-sm text-muted-foreground">
+                          {user.endereco.rua}, {user.endereco.numero}
+                          {user.endereco.complemento && ` - ${user.endereco.complemento}`}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {user.endereco.bairro}
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="rounded-t-2xl">
+              <SheetHeader>
+                <SheetTitle className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-primary" />
+                  Selecionar Endereço
+                </SheetTitle>
+              </SheetHeader>
+              <div className="mt-4 space-y-3 max-h-[60vh] overflow-y-auto">
+                {enderecos.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground mb-4">Nenhum endereço cadastrado</p>
+                    <Button onClick={() => navigate('/perfil')} variant="outline">
+                      Cadastrar Endereço
+                    </Button>
+                  </div>
+                ) : (
+                  enderecos.map((endereco) => (
+                    <button
+                      key={endereco.id}
+                      onClick={() => {
+                        setEnderecoSelecionado(endereco);
+                        setShowEnderecoSheet(false);
+                      }}
+                      className={cn(
+                        'w-full p-4 rounded-xl border-2 text-left transition-all',
+                        enderecoSelecionado?.id === endereco.id
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/50'
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            {endereco.is_default && (
+                              <span className="inline-flex items-center gap-1 text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
+                                <Star className="w-3 h-3" />
+                                Padrão
+                              </span>
+                            )}
+                          </div>
+                          <p className="font-medium text-foreground">
+                            {endereco.rua}, {endereco.numero}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {endereco.bairro}
+                            {endereco.complemento && ` - ${endereco.complemento}`}
+                          </p>
+                          {endereco.referencia && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Ref: {endereco.referencia}
+                            </p>
+                          )}
+                        </div>
+                        {enderecoSelecionado?.id === endereco.id && (
+                          <Check className="h-5 w-5 text-primary flex-shrink-0" />
+                        )}
+                      </div>
+                    </button>
+                  ))
+                )}
               </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-foreground mb-1">Entregar em</h3>
-                <p className="text-sm text-muted-foreground">
-                  {user.endereco.rua}, {user.endereco.numero}
-                  {user.endereco.complemento && ` - ${user.endereco.complemento}`}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {user.endereco.bairro}
-                </p>
-              </div>
-            </div>
-          </div>
+            </SheetContent>
+          </Sheet>
         )}
 
         {/* Pickup Location */}
