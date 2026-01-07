@@ -180,7 +180,7 @@ export default function AdminProdutos() {
             </Button>
 
             {/* Products List by Category */}
-            {(['acai', 'barcas', 'sorvetes', 'picoles', 'bebidas'] as CategoriaProduto[]).map((categoria) => {
+            {(['acai', 'barcas', 'picoles', 'sorvetes', 'bebidas'] as CategoriaProduto[]).map((categoria) => {
               const produtosCategoria = produtosByCategoria[categoria] || [];
               if (produtosCategoria.length === 0) return null;
               
