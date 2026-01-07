@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Pencil, Loader2, MapPin, Check, X } from 'lucide-react';
+import { ArrowLeft, Plus, Pencil, Loader2, MapPin, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,6 +33,7 @@ interface Rua {
 
 export default function AdminRuas() {
   const [ruas, setRuas] = useState<Rua[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -60,7 +61,32 @@ export default function AdminRuas() {
 
   useEffect(() => {
     fetchRuas();
+
+    // Real-time subscription
+    const channel = supabase
+      .channel('ruas-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'ruas',
+        },
+        () => {
+          fetchRuas();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
+
+  // Filtered ruas based on search query
+  const filteredRuas = ruas.filter(rua =>
+    rua.nome.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleAddRua = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -224,49 +250,64 @@ export default function AdminRuas() {
               </Dialog>
             </div>
           </CardHeader>
-          <CardContent className="p-0">
+          <CardContent className="p-4">
+            {/* Search Field */}
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar rua..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
-            ) : ruas.length === 0 ? (
+            ) : filteredRuas.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-muted-foreground">Nenhuma rua cadastrada</p>
+                <p className="text-muted-foreground">
+                  {searchQuery ? 'Nenhuma rua encontrada' : 'Nenhuma rua cadastrada'}
+                </p>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead className="w-24 text-center">Ativo</TableHead>
-                    <TableHead className="w-20 text-center">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {ruas.map((rua) => (
-                    <TableRow key={rua.id} className={!rua.ativo ? 'opacity-50' : ''}>
-                      <TableCell className="font-medium">{rua.nome}</TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center">
-                          <Switch
-                            checked={rua.ativo}
-                            onCheckedChange={() => handleToggleAtivo(rua)}
-                          />
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => openEditDialog(rua)}
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                      </TableCell>
+              <div className="border rounded-lg overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nome</TableHead>
+                      <TableHead className="w-24 text-center">Ativo</TableHead>
+                      <TableHead className="w-20 text-center">Ações</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredRuas.map((rua) => (
+                      <TableRow key={rua.id} className={!rua.ativo ? 'opacity-50' : ''}>
+                        <TableCell className="font-medium">{rua.nome}</TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center">
+                            <Switch
+                              checked={rua.ativo}
+                              onCheckedChange={() => handleToggleAtivo(rua)}
+                            />
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openEditDialog(rua)}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
             )}
           </CardContent>
         </Card>
