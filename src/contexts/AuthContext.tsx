@@ -183,8 +183,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (userData: RegisterData): Promise<{ success: boolean; error?: string }> => {
     try {
       const redirectUrl = `${window.location.origin}/`;
+      const cleanPhone = userData.telefone.replace(/\D/g, '');
       const email = phoneToEmail(userData.telefone);
       
+      // Check if there's an existing synthetic profile with this phone
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id, tipo_cliente')
+        .eq('telefone', cleanPhone)
+        .maybeSingle();
+
+      // Create auth user
       const { data, error } = await supabase.auth.signUp({
         email,
         password: userData.senha,
@@ -192,7 +201,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           emailRedirectTo: redirectUrl,
           data: {
             nome: userData.nome,
-            telefone: userData.telefone,
+            telefone: cleanPhone,
             rua: userData.endereco.rua,
             numero: userData.endereco.numero,
             bairro: userData.endereco.bairro,
@@ -212,6 +221,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data.user) {
         // Wait a moment for the trigger to create the profile
         await new Promise(resolve => setTimeout(resolve, 500));
+
+        // If there was a synthetic profile, update it to link to the new auth user
+        if (existingProfile && existingProfile.tipo_cliente === 'sintetico') {
+          // Delete the auto-created profile from trigger (if any)
+          await supabase.from('profiles').delete().eq('id', data.user.id);
+          
+          // Update the existing synthetic profile to use the new auth user id and mark as organic
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({
+              id: data.user.id,
+              nome: userData.nome,
+              rua: userData.endereco.rua,
+              numero: userData.endereco.numero,
+              bairro: userData.endereco.bairro,
+              complemento: userData.endereco.complemento || null,
+              referencia: userData.endereco.referencia || null,
+              tipo_cliente: 'organico',
+            })
+            .eq('id', existingProfile.id);
+
+          if (updateError) {
+            console.error('Error updating synthetic profile:', updateError);
+          }
+        }
+
         const profile = await fetchUserProfile(data.user.id);
         setUser(profile);
       }
