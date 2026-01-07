@@ -20,6 +20,8 @@ export interface ProdutoDB {
   preco: number;
   ativo: boolean;
   categoria: CategoriaProduto;
+  adicionais_gratis: number;
+  preco_adicional_extra: number;
   created_at: string;
   updated_at: string;
 }
@@ -88,10 +90,15 @@ export function useProdutos() {
   }, [refetch]);
 
   // Produtos CRUD
-  const criarProduto = async (produto: Omit<ProdutoDB, 'id' | 'created_at' | 'updated_at' | 'categoria'> & { categoria?: CategoriaProduto }) => {
-    const produtoComCategoria = { ...produto, categoria: produto.categoria || 'acai' };
+  const criarProduto = async (produto: Omit<ProdutoDB, 'id' | 'created_at' | 'updated_at'>) => {
+    const produtoComDefaults = { 
+      ...produto, 
+      categoria: produto.categoria || 'acai',
+      adicionais_gratis: produto.adicionais_gratis || 0,
+      preco_adicional_extra: produto.preco_adicional_extra || 0,
+    };
     try {
-      const { error } = await supabase.from('produtos').insert(produtoComCategoria);
+      const { error } = await supabase.from('produtos').insert(produtoComDefaults);
       if (error) throw error;
       toast.success('Produto criado com sucesso!');
       await fetchProdutos();

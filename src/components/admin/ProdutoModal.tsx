@@ -22,7 +22,16 @@ interface ProdutoModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   produto?: ProdutoDB | null;
-  onSave: (data: { nome: string; tamanho: ProdutoDB['tamanho']; peso: string; preco: number; ativo: boolean; categoria: CategoriaProduto }) => Promise<boolean>;
+  onSave: (data: { 
+    nome: string; 
+    tamanho: ProdutoDB['tamanho']; 
+    peso: string; 
+    preco: number; 
+    ativo: boolean; 
+    categoria: CategoriaProduto;
+    adicionais_gratis: number;
+    preco_adicional_extra: number;
+  }) => Promise<boolean>;
 }
 
 export function ProdutoModal({ open, onOpenChange, produto, onSave }: ProdutoModalProps) {
@@ -31,6 +40,8 @@ export function ProdutoModal({ open, onOpenChange, produto, onSave }: ProdutoMod
   const [peso, setPeso] = useState('');
   const [preco, setPreco] = useState('');
   const [categoria, setCategoria] = useState<CategoriaProduto>('acai');
+  const [adicionaisGratis, setAdicionaisGratis] = useState('0');
+  const [precoAdicionalExtra, setPrecoAdicionalExtra] = useState('0');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -40,12 +51,16 @@ export function ProdutoModal({ open, onOpenChange, produto, onSave }: ProdutoMod
       setPeso(produto.peso);
       setPreco(produto.preco.toString());
       setCategoria(produto.categoria || 'acai');
+      setAdicionaisGratis((produto.adicionais_gratis || 0).toString());
+      setPrecoAdicionalExtra((produto.preco_adicional_extra || 0).toString());
     } else {
       setNome('Açaí');
       setTamanho('medio');
       setPeso('');
       setPreco('');
       setCategoria('acai');
+      setAdicionaisGratis('0');
+      setPrecoAdicionalExtra('0');
     }
   }, [produto, open]);
 
@@ -60,6 +75,8 @@ export function ProdutoModal({ open, onOpenChange, produto, onSave }: ProdutoMod
       preco: parseFloat(preco.replace(',', '.')),
       ativo: produto?.ativo ?? true,
       categoria,
+      adicionais_gratis: parseInt(adicionaisGratis) || 0,
+      preco_adicional_extra: parseFloat(precoAdicionalExtra.replace(',', '.')) || 0,
     });
 
     setIsSubmitting(false);
@@ -141,6 +158,31 @@ export function ProdutoModal({ open, onOpenChange, produto, onSave }: ProdutoMod
               inputMode="decimal"
               required
             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="adicionaisGratis">Adicionais Grátis</Label>
+              <Input
+                id="adicionaisGratis"
+                value={adicionaisGratis}
+                onChange={(e) => setAdicionaisGratis(e.target.value)}
+                placeholder="0"
+                type="number"
+                min="0"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="precoAdicionalExtra">Preço Adicional Extra (R$)</Label>
+              <Input
+                id="precoAdicionalExtra"
+                value={precoAdicionalExtra}
+                onChange={(e) => setPrecoAdicionalExtra(e.target.value)}
+                placeholder="0.00"
+                type="text"
+                inputMode="decimal"
+              />
+            </div>
           </div>
 
           <div className="flex gap-2 pt-4">

@@ -59,7 +59,16 @@ export default function AdminProdutos() {
     setProdutoModalOpen(true);
   };
 
-  const handleSaveProduto = async (data: { nome: string; tamanho: ProdutoDB['tamanho']; peso: string; preco: number; ativo: boolean; categoria: CategoriaProduto }) => {
+  const handleSaveProduto = async (data: { 
+    nome: string; 
+    tamanho: ProdutoDB['tamanho']; 
+    peso: string; 
+    preco: number; 
+    ativo: boolean; 
+    categoria: CategoriaProduto;
+    adicionais_gratis: number;
+    preco_adicional_extra: number;
+  }) => {
     if (produtoEditando) {
       return atualizarProduto(produtoEditando.id, data);
     } else {

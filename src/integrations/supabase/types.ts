@@ -180,6 +180,7 @@ export type Database = {
       }
       produtos: {
         Row: {
+          adicionais_gratis: number
           ativo: boolean
           categoria: Database["public"]["Enums"]["categoria_produto"]
           created_at: string
@@ -187,10 +188,12 @@ export type Database = {
           nome: string
           peso: string
           preco: number
+          preco_adicional_extra: number
           tamanho: Database["public"]["Enums"]["tamanho_produto"]
           updated_at: string
         }
         Insert: {
+          adicionais_gratis?: number
           ativo?: boolean
           categoria?: Database["public"]["Enums"]["categoria_produto"]
           created_at?: string
@@ -198,10 +201,12 @@ export type Database = {
           nome: string
           peso: string
           preco: number
+          preco_adicional_extra?: number
           tamanho: Database["public"]["Enums"]["tamanho_produto"]
           updated_at?: string
         }
         Update: {
+          adicionais_gratis?: number
           ativo?: boolean
           categoria?: Database["public"]["Enums"]["categoria_produto"]
           created_at?: string
@@ -209,6 +214,7 @@ export type Database = {
           nome?: string
           peso?: string
           preco?: number
+          preco_adicional_extra?: number
           tamanho?: Database["public"]["Enums"]["tamanho_produto"]
           updated_at?: string
         }
