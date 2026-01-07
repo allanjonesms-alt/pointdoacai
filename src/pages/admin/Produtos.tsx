@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { ArrowLeft, Package, Sparkles, Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useProdutos, ProdutoDB, AdicionalDB, TipoAdicional, TIPO_ADICIONAL_LABELS } from '@/hooks/useProdutos';
+import { useProdutos, ProdutoDB, AdicionalDB, TipoAdicional, TIPO_ADICIONAL_LABELS, CategoriaProduto, CATEGORIA_LABELS } from '@/hooks/useProdutos';
 import { ProdutoModal } from '@/components/admin/ProdutoModal';
 import { AdicionalModal } from '@/components/admin/AdicionalModal';
 import {
@@ -59,13 +59,21 @@ export default function AdminProdutos() {
     setProdutoModalOpen(true);
   };
 
-  const handleSaveProduto = async (data: { nome: string; tamanho: ProdutoDB['tamanho']; peso: string; preco: number; ativo: boolean }) => {
+  const handleSaveProduto = async (data: { nome: string; tamanho: ProdutoDB['tamanho']; peso: string; preco: number; ativo: boolean; categoria: CategoriaProduto }) => {
     if (produtoEditando) {
       return atualizarProduto(produtoEditando.id, data);
     } else {
       return criarProduto(data);
     }
   };
+
+  // Group produtos by category
+  const produtosByCategoria = produtos.reduce((acc, produto) => {
+    const cat = produto.categoria || 'acai';
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(produto);
+    return acc;
+  }, {} as Record<CategoriaProduto, ProdutoDB[]>);
 
   const handleNovoAdicional = () => {
     setAdicionalEditando(null);
@@ -171,59 +179,74 @@ export default function AdminProdutos() {
               Cadastrar Produto
             </Button>
 
-            {/* Products List */}
-            <div className="space-y-3">
-              {produtos.map((produto) => (
-                <div
-                  key={produto.id}
-                  className={cn(
-                    'bg-card rounded-xl p-4 shadow-card border border-border/50 flex items-center gap-4 transition-opacity',
-                    !produto.ativo && 'opacity-60'
-                  )}
-                >
-                  <div className="w-14 h-14 bg-gradient-to-br from-acai-light to-muted rounded-xl flex items-center justify-center">
-                    <span className="text-3xl">🥣</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-display font-bold text-foreground">
-                      {TAMANHO_LABELS[produto.tamanho] || produto.tamanho}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">{produto.peso}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-lg text-primary">
-                      R$ {produto.preco.toFixed(2).replace('.', ',')}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleEditarProduto(produto)}
-                      className="p-2 text-muted-foreground hover:text-foreground transition-colors"
-                      title="Editar"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteClick('produto', produto.id, TAMANHO_LABELS[produto.tamanho] || produto.tamanho)}
-                      className="p-2 text-destructive hover:text-destructive/80 transition-colors"
-                      title="Excluir"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                    <Switch
-                      checked={produto.ativo}
-                      onCheckedChange={(checked) => toggleProdutoAtivo(produto.id, checked)}
-                    />
+            {/* Products List by Category */}
+            {(['acai', 'barcas', 'sorvetes', 'picoles', 'bebidas'] as CategoriaProduto[]).map((categoria) => {
+              const produtosCategoria = produtosByCategoria[categoria] || [];
+              if (produtosCategoria.length === 0) return null;
+              
+              const categoriaEmoji = categoria === 'acai' ? '🍇' : categoria === 'barcas' ? '🛶' : categoria === 'sorvetes' ? '🍨' : categoria === 'picoles' ? '🍦' : '🥤';
+              
+              return (
+                <div key={categoria} className="space-y-3">
+                  <h3 className="font-display font-bold text-foreground flex items-center gap-2">
+                    <span className="text-xl">{categoriaEmoji}</span>
+                    {CATEGORIA_LABELS[categoria]}
+                  </h3>
+                  <div className="space-y-3">
+                    {produtosCategoria.map((produto) => (
+                      <div
+                        key={produto.id}
+                        className={cn(
+                          'bg-card rounded-xl p-4 shadow-card border border-border/50 flex items-center gap-4 transition-opacity',
+                          !produto.ativo && 'opacity-60'
+                        )}
+                      >
+                        <div className="w-14 h-14 bg-gradient-to-br from-acai-light to-muted rounded-xl flex items-center justify-center">
+                          <span className="text-3xl">{categoriaEmoji}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-display font-bold text-foreground">
+                            {produto.nome} - {TAMANHO_LABELS[produto.tamanho] || produto.tamanho}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">{produto.peso}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-lg text-primary">
+                            R$ {produto.preco.toFixed(2).replace('.', ',')}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleEditarProduto(produto)}
+                            className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+                            title="Editar"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick('produto', produto.id, `${produto.nome} - ${TAMANHO_LABELS[produto.tamanho] || produto.tamanho}`)}
+                            className="p-2 text-destructive hover:text-destructive/80 transition-colors"
+                            title="Excluir"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                          <Switch
+                            checked={produto.ativo}
+                            onCheckedChange={(checked) => toggleProdutoAtivo(produto.id, checked)}
+                          />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
+              );
+            })}
 
-              {produtos.length === 0 && (
-                <div className="bg-card rounded-xl p-8 shadow-card border border-border/50 text-center">
-                  <p className="text-muted-foreground">Nenhum produto cadastrado</p>
-                </div>
-              )}
-            </div>
+            {produtos.length === 0 && (
+              <div className="bg-card rounded-xl p-8 shadow-card border border-border/50 text-center">
+                <p className="text-muted-foreground">Nenhum produto cadastrado</p>
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-4">
