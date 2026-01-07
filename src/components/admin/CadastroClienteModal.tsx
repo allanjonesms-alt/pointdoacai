@@ -37,7 +37,6 @@ export function CadastroClienteModal({ onSuccess }: CadastroClienteModalProps) {
     bairro: '',
     complemento: '',
     referencia: '',
-    senha: '',
   });
 
   const handleChange = (field: string, value: string) => {
@@ -58,20 +57,14 @@ export function CadastroClienteModal({ onSuccess }: CadastroClienteModalProps) {
       bairro: '',
       complemento: '',
       referencia: '',
-      senha: '',
     });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.nome.trim() || !formData.telefone.trim() || !formData.senha.trim()) {
-      toast.error('Nome, telefone e senha são obrigatórios');
-      return;
-    }
-
-    if (formData.senha.length < 6) {
-      toast.error('A senha deve ter pelo menos 6 caracteres');
+    if (!formData.nome.trim() || !formData.telefone.trim()) {
+      toast.error('Nome e telefone são obrigatórios');
       return;
     }
 
@@ -79,64 +72,47 @@ export function CadastroClienteModal({ onSuccess }: CadastroClienteModalProps) {
 
     try {
       const cleanPhone = formData.telefone.replace(/\D/g, '');
-      const userEmail = `${cleanPhone}@acai.app`;
 
-      // Store current session before creating new user
-      const { data: currentSession } = await supabase.auth.getSession();
+      // Check if phone already exists
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id, telefone')
+        .eq('telefone', cleanPhone)
+        .maybeSingle();
 
-      // Create user in auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: userEmail,
-        password: formData.senha,
-        options: {
-          data: {
-            nome: formData.nome,
-            telefone: cleanPhone,
-            rua: formData.rua,
-            numero: formData.numero,
-            bairro: formData.bairro,
-            complemento: formData.complemento,
-            referencia: formData.referencia,
-          },
-        },
-      });
-
-      if (authError) {
-        if (authError.message.includes('already registered')) {
-          toast.error('Este telefone já está cadastrado');
-        } else {
-          toast.error(authError.message);
-        }
+      if (existingProfile) {
+        toast.error('Este telefone já está cadastrado');
         setIsLoading(false);
         return;
       }
 
-      if (authData.user) {
-        // Wait for trigger to create profile, then update tipo_cliente
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({ 
-            tipo_cliente: 'sintetico',
-            email: formData.email || null,
-          })
-          .eq('id', authData.user.id);
+      // Generate a unique ID for the synthetic client (no auth user)
+      const syntheticId = crypto.randomUUID();
 
-        if (updateError) {
-          console.error('Error updating profile:', updateError);
-        }
+      // Insert profile directly without auth user
+      const { error: insertError } = await supabase
+        .from('profiles')
+        .insert({
+          id: syntheticId,
+          nome: formData.nome,
+          telefone: cleanPhone,
+          email: formData.email || null,
+          rua: formData.rua,
+          numero: formData.numero,
+          bairro: formData.bairro,
+          complemento: formData.complemento || null,
+          referencia: formData.referencia || null,
+          tipo_cliente: 'sintetico',
+        });
 
-        // Restore admin session if it was lost
-        if (currentSession?.session) {
-          await supabase.auth.setSession({
-            access_token: currentSession.session.access_token,
-            refresh_token: currentSession.session.refresh_token,
-          });
-        }
+      if (insertError) {
+        console.error('Error creating profile:', insertError);
+        toast.error('Erro ao cadastrar cliente');
+        setIsLoading(false);
+        return;
       }
 
-      toast.success('Cliente cadastrado com sucesso!');
+      toast.success('Cliente sintético cadastrado com sucesso!');
       resetForm();
       setOpen(false);
       onSuccess();
@@ -163,7 +139,7 @@ export function CadastroClienteModal({ onSuccess }: CadastroClienteModalProps) {
             Cadastrar Cliente Sintético
           </DialogTitle>
           <DialogDescription>
-            Clientes sintéticos são cadastrados pelo administrador. O e-mail é opcional.
+            Clientes sintéticos são cadastrados pelo administrador sem senha. Quando o cliente se cadastrar, o registro será atualizado.
           </DialogDescription>
         </DialogHeader>
 
@@ -215,20 +191,6 @@ export function CadastroClienteModal({ onSuccess }: CadastroClienteModalProps) {
                 onChange={(e) => handleChange('email', e.target.value)}
               />
             </div>
-          </div>
-
-          {/* Senha */}
-          <div className="space-y-2">
-            <Label htmlFor="senha">Senha *</Label>
-            <Input
-              id="senha"
-              type="password"
-              placeholder="Mínimo 6 caracteres"
-              value={formData.senha}
-              onChange={(e) => handleChange('senha', e.target.value)}
-              required
-              minLength={6}
-            />
           </div>
 
           <div className="border-t pt-4">
