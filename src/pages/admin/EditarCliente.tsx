@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useClientes } from '@/hooks/useClientes';
 import { toast } from 'sonner';
+import EnderecosList from '@/components/EnderecosList';
 
 const EditarCliente = () => {
   const navigate = useNavigate();
@@ -271,6 +272,11 @@ const EditarCliente = () => {
                 )}
               </Button>
             </form>
+
+            {/* Seção de Endereços de Entrega */}
+            <div className="mt-8 pt-6 border-t border-border">
+              <EnderecosList profileId={id} />
+            </div>
           </CardContent>
         </Card>
       </div>

@@ -41,6 +41,53 @@ export type Database = {
         }
         Relationships: []
       }
+      enderecos: {
+        Row: {
+          bairro: string
+          complemento: string | null
+          created_at: string
+          id: string
+          is_default: boolean
+          numero: string
+          profile_id: string
+          referencia: string | null
+          rua: string
+          updated_at: string
+        }
+        Insert: {
+          bairro?: string
+          complemento?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          numero?: string
+          profile_id: string
+          referencia?: string | null
+          rua?: string
+          updated_at?: string
+        }
+        Update: {
+          bairro?: string
+          complemento?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          numero?: string
+          profile_id?: string
+          referencia?: string | null
+          rua?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enderecos_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pedido_item_adicionais: {
         Row: {
           adicional_nome: string
