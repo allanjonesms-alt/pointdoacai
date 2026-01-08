@@ -25,12 +25,12 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 
-type OrdenacaoType = 'nome' | 'total_desc' | 'total_asc';
+type OrdenacaoType = 'nome' | 'total_desc';
 
 export default function AdminClientes() {
   const navigate = useNavigate();
   const { clientes, isLoading, deleteCliente, fetchClientes } = useClientes();
-  const [ordenacao, setOrdenacao] = useState<OrdenacaoType>('nome');
+  const [ordenacao, setOrdenacao] = useState<OrdenacaoType>('total_desc');
   const [busca, setBusca] = useState('');
 
   const clientesFiltrados = useMemo(() => {
@@ -60,13 +60,11 @@ export default function AdminClientes() {
   const clientesOrdenados = useMemo(() => {
     const sorted = [...clientesFiltrados];
     switch (ordenacao) {
-      case 'total_desc':
-        return sorted.sort((a, b) => Number(b.valor_total_compras) - Number(a.valor_total_compras));
-      case 'total_asc':
-        return sorted.sort((a, b) => Number(a.valor_total_compras) - Number(b.valor_total_compras));
       case 'nome':
-      default:
         return sorted.sort((a, b) => a.nome.localeCompare(b.nome));
+      case 'total_desc':
+      default:
+        return sorted.sort((a, b) => Number(b.valor_total_compras) - Number(a.valor_total_compras));
     }
   }, [clientesFiltrados, ordenacao]);
 
@@ -131,9 +129,8 @@ export default function AdminClientes() {
                     <SelectValue placeholder="Ordenar por" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="nome">Nome (A-Z)</SelectItem>
                     <SelectItem value="total_desc">Maior total comprado</SelectItem>
-                    <SelectItem value="total_asc">Menor total comprado</SelectItem>
+                    <SelectItem value="nome">Nome (A-Z)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
