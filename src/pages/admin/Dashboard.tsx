@@ -1,21 +1,24 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePedidos } from '@/contexts/PedidosContext';
 import { Logo } from '@/components/Logo';
 import { StatusProgressBar } from '@/components/StatusProgressBar';
-import { StatusPedido, TAMANHO_LABELS } from '@/types';
+import { StatusPedido, TAMANHO_LABELS, Pedido } from '@/types';
 import { LogOut, Users, Package, Plus, Clock, Loader2, BarChart3, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
+import { PedidoDetalheModal } from '@/components/admin/PedidoDetalheModal';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const { logout } = useAuth();
   const { pedidosHoje, isLoading, atualizarStatus, refetch } = usePedidos();
   const { playNotification } = useNotificationSound();
+  const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
 
   // Atualizar dados ao acessar a página
   useEffect(() => {
@@ -59,6 +62,19 @@ export default function AdminDashboard() {
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handlePedidoClick = (pedido: Pedido) => {
+    setSelectedPedido(pedido);
+    setModalOpen(true);
+  };
+
+  const handleAdvanceStatus = (pedidoId: string, newStatus: StatusPedido) => {
+    atualizarStatus(pedidoId, newStatus);
+    // Atualiza o pedido selecionado no modal
+    if (selectedPedido && selectedPedido.id === pedidoId) {
+      setSelectedPedido({ ...selectedPedido, status: newStatus });
+    }
   };
 
   return (
@@ -156,7 +172,8 @@ export default function AdminDashboard() {
               pedidosHoje.map((pedido) => (
                   <div
                     key={pedido.id}
-                    className="bg-card rounded-xl p-4 shadow-card border border-border/50 animate-fade-in"
+                    className="bg-card rounded-xl p-4 shadow-card border border-border/50 animate-fade-in cursor-pointer hover:shadow-float transition-shadow"
+                    onClick={() => handlePedidoClick(pedido)}
                   >
                     <div className="flex items-start justify-between mb-3 gap-2">
                       <div className="min-w-0 flex-1">
@@ -204,16 +221,26 @@ export default function AdminDashboard() {
                     </p>
 
                     {/* Status Progress Bar */}
-                    <StatusProgressBar
-                      currentStatus={pedido.status}
-                      onAdvanceStatus={(newStatus) => atualizarStatus(pedido.id, newStatus)}
-                    />
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <StatusProgressBar
+                        currentStatus={pedido.status}
+                        onAdvanceStatus={(newStatus) => handleAdvanceStatus(pedido.id, newStatus)}
+                      />
+                    </div>
                   </div>
                 ))
             )}
           </div>
         </div>
       </div>
+
+      {/* Modal de Detalhes do Pedido */}
+      <PedidoDetalheModal
+        pedido={selectedPedido}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        onAdvanceStatus={handleAdvanceStatus}
+      />
     </div>
   );
 }
