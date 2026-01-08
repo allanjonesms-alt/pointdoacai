@@ -68,10 +68,11 @@ export function useImageUpload() {
         throw uploadError;
       }
 
-      // Get public URL
+      // Get public URL with cache busting
       const { data } = supabase.storage.from('produtos').getPublicUrl(filePath);
       
-      return data.publicUrl;
+      // Add timestamp to bust cache when image is updated
+      return `${data.publicUrl}?t=${Date.now()}`;
     } catch (error: any) {
       console.error('Error uploading image:', error);
       toast.error('Erro ao fazer upload da imagem: ' + error.message);
