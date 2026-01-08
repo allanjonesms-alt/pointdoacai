@@ -44,7 +44,10 @@ export function ProductCard({ produto, onSelect, selected }: ProductCardProps) {
       {/* Info */}
       <div className="space-y-1">
         <h3 className="font-display font-bold text-base sm:text-lg text-foreground leading-tight">
-          {TAMANHO_LABELS[produto.tamanho]}
+          {produto.nome}
+          <span className="block text-xs sm:text-sm font-medium text-muted-foreground">
+            {TAMANHO_LABELS[produto.tamanho]}
+          </span>
         </h3>
         <p className="text-xs sm:text-sm text-muted-foreground">{produto.peso}</p>
         <div className="flex items-center justify-between pt-2 gap-2">
