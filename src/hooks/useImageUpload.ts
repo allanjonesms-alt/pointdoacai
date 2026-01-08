@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-const MAX_SIZE = 56; // 56x56 pixels to match the icon size
+const MAX_SIZE = 200; // 200x200 pixels for better quality display
 
 export function useImageUpload() {
   const [isUploading, setIsUploading] = useState(false);
