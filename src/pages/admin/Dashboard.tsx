@@ -97,15 +97,15 @@ export default function AdminDashboard() {
 
       <div className="container max-w-4xl mx-auto px-4 py-6">
         {/* Quick Actions */}
-        {/* Criar Pedido - Full Width */}
-        <Link to="/admin/pedido-direto" className="block mb-4">
-          <div className="bg-card rounded-xl p-4 shadow-card border border-border/50 hover:shadow-float transition-shadow flex items-center gap-4">
-            <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
+        {/* Criar Pedido - Full Width - Destacado */}
+        <Link to="/admin/pedido-direto" className="block mb-4 group">
+          <div className="gradient-hero rounded-xl p-4 shadow-float hover:shadow-xl transition-all duration-300 flex items-center gap-4 hover-scale">
+            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-white/30 transition-colors">
               <Plus className="h-6 w-6 text-primary-foreground" />
             </div>
             <div>
-              <h3 className="font-display font-bold text-base sm:text-lg text-foreground">Criar Pedido</h3>
-              <p className="text-sm text-muted-foreground">Pedidos Diretos</p>
+              <h3 className="font-display font-bold text-base sm:text-lg text-primary-foreground">Criar Pedido</h3>
+              <p className="text-sm text-primary-foreground/80">Pedidos Diretos</p>
             </div>
           </div>
         </Link>
