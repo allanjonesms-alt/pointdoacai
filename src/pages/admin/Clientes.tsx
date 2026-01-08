@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, User, Phone, Mail, MapPin, TrendingUp, Pencil, Trash2, Loader2, Leaf, Sparkles, Shield, ArrowUpDown, Search } from 'lucide-react';
+import { ArrowLeft, User, Phone, Mail, MapPin, TrendingUp, Pencil, Trash2, Loader2, Leaf, Sparkles, Shield, ArrowUpDown, Search, History } from 'lucide-react';
 import { useClientes } from '@/hooks/useClientes';
 import { toast } from 'sonner';
 import { CadastroClienteModal } from '@/components/admin/CadastroClienteModal';
+import { HistoricoPedidosModal } from '@/components/admin/HistoricoPedidosModal';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,6 +33,11 @@ export default function AdminClientes() {
   const { clientes, isLoading, deleteCliente, fetchClientes } = useClientes();
   const [ordenacao, setOrdenacao] = useState<OrdenacaoType>('total_desc');
   const [busca, setBusca] = useState('');
+  const [historicoModal, setHistoricoModal] = useState<{ open: boolean; clienteId: string; clienteNome: string }>({
+    open: false,
+    clienteId: '',
+    clienteNome: '',
+  });
 
   const clientesFiltrados = useMemo(() => {
     const termoOriginal = busca.trim();
@@ -215,7 +221,13 @@ export default function AdminClientes() {
                 </div>
 
                 <div className="flex gap-2 pt-3 sm:pt-4 border-t border-border">
-                  <Button variant="outline" size="sm" className="flex-1 text-xs sm:text-sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1 text-xs sm:text-sm"
+                    onClick={() => setHistoricoModal({ open: true, clienteId: cliente.id, clienteNome: cliente.nome })}
+                  >
+                    <History className="h-4 w-4 sm:mr-1" />
                     <span className="hidden sm:inline">Ver </span>Histórico
                   </Button>
                   <Button 
@@ -259,6 +271,13 @@ export default function AdminClientes() {
           </div>
         )}
       </div>
+
+      <HistoricoPedidosModal
+        clienteId={historicoModal.clienteId}
+        clienteNome={historicoModal.clienteNome}
+        open={historicoModal.open}
+        onOpenChange={(open) => setHistoricoModal(prev => ({ ...prev, open }))}
+      />
     </div>
   );
 }
