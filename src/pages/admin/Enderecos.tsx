@@ -14,14 +14,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -411,40 +403,35 @@ export default function AdminEnderecos() {
                     </p>
                   </div>
                 ) : (
-                  <div className="border rounded-lg overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Nome</TableHead>
-                          <TableHead className="w-24 text-center">Ativo</TableHead>
-                          <TableHead className="w-20 text-center">Ações</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredRuas.map((rua) => (
-                          <TableRow key={rua.id} className={!rua.ativo ? 'opacity-50' : ''}>
-                            <TableCell className="font-medium">{rua.nome}</TableCell>
-                            <TableCell className="text-center">
-                              <div className="flex items-center justify-center">
-                                <Switch
-                                  checked={rua.ativo}
-                                  onCheckedChange={() => handleToggleRuaAtivo(rua)}
-                                />
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => openEditRuaDialog(rua)}
-                              >
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                  <div className="space-y-3">
+                    {filteredRuas.map((rua) => (
+                      <div
+                        key={rua.id}
+                        className={`bg-card rounded-xl p-4 shadow-card border border-border/50 ${!rua.ativo ? 'opacity-50' : ''}`}
+                      >
+                        <p className="font-medium text-foreground">{rua.nome}</p>
+                        <div className="flex items-center justify-end gap-3 mt-3 pt-3 border-t border-border/50">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openEditRuaDialog(rua)}
+                            className="h-8 px-2"
+                          >
+                            <Pencil className="w-4 h-4 mr-1" />
+                            Editar
+                          </Button>
+                          <div className="flex items-center gap-2 pl-2 border-l border-border/50">
+                            <span className="text-xs text-muted-foreground">
+                              {rua.ativo ? 'Ativo' : 'Inativo'}
+                            </span>
+                            <Switch
+                              checked={rua.ativo}
+                              onCheckedChange={() => handleToggleRuaAtivo(rua)}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </TabsContent>
@@ -524,40 +511,35 @@ export default function AdminEnderecos() {
                     </p>
                   </div>
                 ) : (
-                  <div className="border rounded-lg overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Nome</TableHead>
-                          <TableHead className="w-24 text-center">Ativo</TableHead>
-                          <TableHead className="w-20 text-center">Ações</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredBairros.map((bairro) => (
-                          <TableRow key={bairro.id} className={!bairro.ativo ? 'opacity-50' : ''}>
-                            <TableCell className="font-medium">{bairro.nome}</TableCell>
-                            <TableCell className="text-center">
-                              <div className="flex items-center justify-center">
-                                <Switch
-                                  checked={bairro.ativo}
-                                  onCheckedChange={() => handleToggleBairroAtivo(bairro)}
-                                />
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-center">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => openEditBairroDialog(bairro)}
-                              >
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                  <div className="space-y-3">
+                    {filteredBairros.map((bairro) => (
+                      <div
+                        key={bairro.id}
+                        className={`bg-card rounded-xl p-4 shadow-card border border-border/50 ${!bairro.ativo ? 'opacity-50' : ''}`}
+                      >
+                        <p className="font-medium text-foreground">{bairro.nome}</p>
+                        <div className="flex items-center justify-end gap-3 mt-3 pt-3 border-t border-border/50">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openEditBairroDialog(bairro)}
+                            className="h-8 px-2"
+                          >
+                            <Pencil className="w-4 h-4 mr-1" />
+                            Editar
+                          </Button>
+                          <div className="flex items-center gap-2 pl-2 border-l border-border/50">
+                            <span className="text-xs text-muted-foreground">
+                              {bairro.ativo ? 'Ativo' : 'Inativo'}
+                            </span>
+                            <Switch
+                              checked={bairro.ativo}
+                              onCheckedChange={() => handleToggleBairroAtivo(bairro)}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </TabsContent>
