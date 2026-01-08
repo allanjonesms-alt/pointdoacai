@@ -68,11 +68,16 @@ export default function AdminProdutos() {
     categoria: CategoriaProduto;
     adicionais_gratis: number;
     preco_adicional_extra: number;
+    imagem_url?: string | null;
   }) => {
+    const dataToSave = {
+      ...data,
+      imagem_url: data.imagem_url ?? null,
+    };
     if (produtoEditando) {
-      return atualizarProduto(produtoEditando.id, data);
+      return atualizarProduto(produtoEditando.id, dataToSave);
     } else {
-      return criarProduto(data);
+      return criarProduto(dataToSave);
     }
   };
 
@@ -210,8 +215,16 @@ export default function AdminProdutos() {
                           !produto.ativo && 'opacity-60'
                         )}
                       >
-                        <div className="w-14 h-14 bg-gradient-to-br from-acai-light to-muted rounded-xl flex items-center justify-center">
-                          <span className="text-3xl">{categoriaEmoji}</span>
+                        <div className="w-14 h-14 bg-gradient-to-br from-acai-light to-muted rounded-xl flex items-center justify-center overflow-hidden">
+                          {produto.imagem_url ? (
+                            <img 
+                              src={produto.imagem_url} 
+                              alt={produto.nome} 
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-3xl">{categoriaEmoji}</span>
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-display font-bold text-foreground">

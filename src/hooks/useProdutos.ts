@@ -22,6 +22,7 @@ export interface ProdutoDB {
   categoria: CategoriaProduto;
   adicionais_gratis: number;
   preco_adicional_extra: number;
+  imagem_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -90,12 +91,13 @@ export function useProdutos() {
   }, [refetch]);
 
   // Produtos CRUD
-  const criarProduto = async (produto: Omit<ProdutoDB, 'id' | 'created_at' | 'updated_at'>) => {
+  const criarProduto = async (produto: Omit<ProdutoDB, 'id' | 'created_at' | 'updated_at'> & { imagem_url?: string | null }) => {
     const produtoComDefaults = { 
       ...produto, 
       categoria: produto.categoria || 'acai',
       adicionais_gratis: produto.adicionais_gratis || 0,
       preco_adicional_extra: produto.preco_adicional_extra || 0,
+      imagem_url: produto.imagem_url || null,
     };
     try {
       const { error } = await supabase.from('produtos').insert(produtoComDefaults);
