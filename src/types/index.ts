@@ -23,6 +23,7 @@ export interface Produto {
   peso: string;
   preco: number;
   ativo: boolean;
+  imagem_url?: string | null;
 }
 
 export interface Adicional {

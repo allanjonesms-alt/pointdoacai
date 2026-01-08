@@ -28,9 +28,17 @@ export function ProductCard({ produto, onSelect, selected }: ProductCardProps) {
 
       {/* Açaí Bowl Illustration */}
       <div className="w-full aspect-square rounded-xl bg-gradient-to-br from-acai-light to-muted flex items-center justify-center mb-4 overflow-hidden">
-        <div className="text-6xl group-hover:scale-110 transition-transform duration-300 group-hover:animate-bounce-soft">
-          🥣
-        </div>
+        {produto.imagem_url ? (
+          <img 
+            src={produto.imagem_url} 
+            alt={produto.nome} 
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+          />
+        ) : (
+          <div className="text-6xl group-hover:scale-110 transition-transform duration-300 group-hover:animate-bounce-soft">
+            🥣
+          </div>
+        )}
       </div>
 
       {/* Info */}
