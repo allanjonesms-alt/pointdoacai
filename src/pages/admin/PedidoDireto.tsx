@@ -367,7 +367,10 @@ export default function PedidoDireto() {
               </div>
               <div>
                 <h3 className="font-display font-bold text-foreground">
-                  Açaí {TAMANHO_LABELS[produtoSelecionado.tamanho]}
+                  {produtoSelecionado.nome}
+                  <span className="text-sm font-medium text-muted-foreground ml-2">
+                    {TAMANHO_LABELS[produtoSelecionado.tamanho]}
+                  </span>
                 </h3>
                 <p className="text-sm text-muted-foreground">{produtoSelecionado.peso}</p>
               </div>
@@ -424,7 +427,10 @@ export default function PedidoDireto() {
               </div>
               <div>
                 <h3 className="font-display font-bold text-foreground">
-                  Açaí {TAMANHO_LABELS[produtoSelecionado.tamanho]}
+                  {produtoSelecionado.nome}
+                  <span className="text-sm font-medium text-muted-foreground ml-2">
+                    {TAMANHO_LABELS[produtoSelecionado.tamanho]}
+                  </span>
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   {produtoSelecionado.peso} • {EMBALAGEM_LABELS[embalagemSelecionada]}
