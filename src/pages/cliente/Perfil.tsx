@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,25 @@ export default function Perfil() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [totalCompras, setTotalCompras] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchTotalCompras = async () => {
+      if (!user?.id) return;
+      
+      const { data: pedidos, error } = await supabase
+        .from('pedidos')
+        .select('valor_total')
+        .eq('cliente_id', user.id);
+      
+      if (!error && pedidos) {
+        const total = pedidos.reduce((acc, p) => acc + Number(p.valor_total), 0);
+        setTotalCompras(total);
+      }
+    };
+    
+    fetchTotalCompras();
+  }, [user?.id]);
 
   const handleLogout = () => {
     logout();
@@ -106,7 +125,7 @@ export default function Perfil() {
           </div>
           <h2 className="font-display font-bold text-xl text-foreground">{user.nome}</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Total em compras: R$ {user.valorTotalCompras.toFixed(2).replace('.', ',')}
+            Total em compras: R$ {totalCompras.toFixed(2).replace('.', ',')}
           </p>
         </div>
 
