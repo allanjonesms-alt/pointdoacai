@@ -195,6 +195,35 @@ export type Database = {
           },
         ]
       }
+      pedido_status_historico: {
+        Row: {
+          created_at: string
+          id: string
+          pedido_id: string
+          status: Database["public"]["Enums"]["status_pedido"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          pedido_id: string
+          status: Database["public"]["Enums"]["status_pedido"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          pedido_id?: string
+          status?: Database["public"]["Enums"]["status_pedido"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedido_status_historico_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pedidos: {
         Row: {
           cliente_id: string | null

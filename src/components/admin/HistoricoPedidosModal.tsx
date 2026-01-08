@@ -13,8 +13,8 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Package, Calendar, CreditCard, MapPin, ChevronDown, ChevronUp } from 'lucide-react';
-import { format } from 'date-fns';
+import { Loader2, Package, Calendar, CreditCard, MapPin, ChevronDown, ChevronUp, Clock } from 'lucide-react';
+import { format, differenceInMinutes } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { TAMANHO_LABELS, EMBALAGEM_LABELS, TipoEmbalagem } from '@/types';
 
@@ -28,6 +28,12 @@ interface PedidoItem {
   valor_adicionais: number;
   embalagem: TipoEmbalagem;
   adicionais: { adicional_nome: string }[];
+}
+
+interface StatusHistorico {
+  id: string;
+  status: string;
+  created_at: string;
 }
 
 interface Pedido {
@@ -74,6 +80,8 @@ const formaPagamentoLabels: Record<string, string> = {
   debito: 'Débito',
 };
 
+const statusOrder = ['pendente', 'confirmado', 'preparo', 'pronto', 'entrega', 'entregue'];
+
 export function HistoricoPedidosModal({ 
   clienteId, 
   clienteNome, 
@@ -85,12 +93,14 @@ export function HistoricoPedidosModal({
   const [expandedPedido, setExpandedPedido] = useState<string | null>(null);
   const [pedidoItens, setPedidoItens] = useState<Record<string, PedidoItem[]>>({});
   const [loadingItens, setLoadingItens] = useState<string | null>(null);
+  const [statusHistorico, setStatusHistorico] = useState<Record<string, StatusHistorico[]>>({});
 
   useEffect(() => {
     if (open && clienteId) {
       fetchPedidos();
       setExpandedPedido(null);
       setPedidoItens({});
+      setStatusHistorico({});
     }
   }, [open, clienteId]);
 
@@ -143,12 +153,47 @@ export function HistoricoPedidosModal({
     }
   };
 
+  const fetchStatusHistorico = async (pedidoId: string) => {
+    if (statusHistorico[pedidoId]) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('pedido_status_historico')
+        .select('*')
+        .eq('pedido_id', pedidoId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      setStatusHistorico(prev => ({ ...prev, [pedidoId]: data || [] }));
+    } catch (err) {
+      console.error('Erro ao buscar histórico de status:', err);
+    }
+  };
+
+  const calcularTempoStatus = (historico: StatusHistorico[], index: number, pedidoStatus: string): number | null => {
+    if (!historico || historico.length === 0) return null;
+    
+    const statusAtual = historico[index];
+    const proximoStatus = historico[index + 1];
+    
+    if (!proximoStatus) {
+      // Se é o último status e o pedido não está entregue, calcular até agora
+      if (pedidoStatus !== 'entregue') {
+        return differenceInMinutes(new Date(), new Date(statusAtual.created_at));
+      }
+      return null;
+    }
+    
+    return differenceInMinutes(new Date(proximoStatus.created_at), new Date(statusAtual.created_at));
+  };
+
   const handleTogglePedido = (pedidoId: string) => {
     if (expandedPedido === pedidoId) {
       setExpandedPedido(null);
     } else {
       setExpandedPedido(pedidoId);
       fetchPedidoItens(pedidoId);
+      fetchStatusHistorico(pedidoId);
     }
   };
 
@@ -238,7 +283,40 @@ export function HistoricoPedidosModal({
                       </CollapsibleTrigger>
 
                       <CollapsibleContent>
-                        <div className="border-t border-border bg-muted/20 p-3">
+                        <div className="border-t border-border bg-muted/20 p-3 space-y-4">
+                          {/* Status Timeline */}
+                          {statusHistorico[pedido.id]?.length > 0 && (
+                            <div className="space-y-2">
+                              <p className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                Tempo por status:
+                              </p>
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                {statusHistorico[pedido.id].map((status, index) => {
+                                  const tempo = calcularTempoStatus(statusHistorico[pedido.id], index, pedido.status);
+                                  return (
+                                    <div 
+                                      key={status.id} 
+                                      className="bg-background rounded-md p-2 text-xs"
+                                    >
+                                      <Badge className={`${statusColors[status.status]} text-[10px] mb-1`}>
+                                        {statusLabels[status.status] || status.status}
+                                      </Badge>
+                                      <div className="text-muted-foreground">
+                                        {tempo !== null ? (
+                                          <span className="font-medium text-foreground">{tempo} min</span>
+                                        ) : (
+                                          <span className="text-muted-foreground/60">—</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Itens do pedido */}
                           {loadingItens === pedido.id ? (
                             <div className="flex items-center justify-center py-4">
                               <Loader2 className="h-4 w-4 animate-spin text-primary" />
