@@ -211,54 +211,58 @@ export default function AdminProdutos() {
                       <div
                         key={produto.id}
                         className={cn(
-                          'bg-card rounded-xl p-4 shadow-card border border-border/50 flex items-center gap-4 transition-opacity',
+                          'bg-card rounded-xl p-4 shadow-card border border-border/50 transition-opacity',
                           !produto.ativo && 'opacity-60'
                         )}
                       >
-                        <div className="w-14 h-14 bg-gradient-to-br from-acai-light to-muted rounded-xl flex items-center justify-center overflow-hidden">
-                          {produto.imagem_url ? (
-                            <img 
-                              src={produto.imagem_url} 
-                              alt={produto.nome} 
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <span className="text-3xl">{categoriaEmoji}</span>
-                          )}
+                        {/* Top row: Image, Info, Price */}
+                        <div className="flex items-start gap-3">
+                          <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-acai-light to-muted rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0">
+                            {produto.imagem_url ? (
+                              <img 
+                                src={produto.imagem_url} 
+                                alt={produto.nome} 
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-2xl sm:text-3xl">{categoriaEmoji}</span>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-display font-bold text-sm sm:text-base text-foreground truncate">
+                              {produto.nome}
+                            </h3>
+                            <p className="text-xs sm:text-sm text-muted-foreground">
+                              {TAMANHO_LABELS[produto.tamanho] || produto.tamanho} • {produto.peso}
+                            </p>
+                            <p className="font-bold text-base sm:text-lg text-primary mt-1">
+                              R$ {produto.preco.toFixed(2).replace('.', ',')}
+                            </p>
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-display font-bold text-foreground">
-                            {produto.nome}
-                            <span className="text-sm font-medium text-muted-foreground ml-2">
-                              {TAMANHO_LABELS[produto.tamanho] || produto.tamanho}
-                            </span>
-                          </h3>
-                          <p className="text-sm text-muted-foreground">{produto.peso}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold text-lg text-primary">
-                            R$ {produto.preco.toFixed(2).replace('.', ',')}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
+                        
+                        {/* Bottom row: Actions */}
+                        <div className="flex items-center justify-end gap-2 mt-3 pt-3 border-t border-border/50">
                           <button
                             onClick={() => handleEditarProduto(produto)}
-                            className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+                            className="p-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted"
                             title="Editar"
                           >
                             <Pencil className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => handleDeleteClick('produto', produto.id, `${produto.nome} - ${TAMANHO_LABELS[produto.tamanho] || produto.tamanho}`)}
-                            className="p-2 text-destructive hover:text-destructive/80 transition-colors"
+                            className="p-2 text-destructive hover:text-destructive/80 transition-colors rounded-lg hover:bg-destructive/10"
                             title="Excluir"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
-                          <Switch
-                            checked={produto.ativo}
-                            onCheckedChange={(checked) => toggleProdutoAtivo(produto.id, checked)}
-                          />
+                          <div className="ml-2 pl-2 border-l border-border/50">
+                            <Switch
+                              checked={produto.ativo}
+                              onCheckedChange={(checked) => toggleProdutoAtivo(produto.id, checked)}
+                            />
+                          </div>
                         </div>
                       </div>
                     ))}
