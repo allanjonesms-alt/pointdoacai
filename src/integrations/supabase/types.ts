@@ -282,6 +282,7 @@ export type Database = {
           categoria: Database["public"]["Enums"]["categoria_produto"]
           created_at: string
           id: string
+          imagem_url: string | null
           nome: string
           peso: string
           preco: number
@@ -295,6 +296,7 @@ export type Database = {
           categoria?: Database["public"]["Enums"]["categoria_produto"]
           created_at?: string
           id?: string
+          imagem_url?: string | null
           nome: string
           peso: string
           preco: number
@@ -308,6 +310,7 @@ export type Database = {
           categoria?: Database["public"]["Enums"]["categoria_produto"]
           created_at?: string
           id?: string
+          imagem_url?: string | null
           nome?: string
           peso?: string
           preco?: number
