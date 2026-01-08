@@ -228,7 +228,10 @@ export default function AdminProdutos() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-display font-bold text-foreground">
-                            {produto.nome} - {TAMANHO_LABELS[produto.tamanho] || produto.tamanho}
+                            {produto.nome}
+                            <span className="text-sm font-medium text-muted-foreground ml-2">
+                              {TAMANHO_LABELS[produto.tamanho] || produto.tamanho}
+                            </span>
                           </h3>
                           <p className="text-sm text-muted-foreground">{produto.peso}</p>
                         </div>

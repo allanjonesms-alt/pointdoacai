@@ -154,10 +154,19 @@ export default function NovoPedido() {
           <div className="animate-fade-in">
             {/* Selected Product Summary */}
             <div className="bg-card rounded-xl p-4 shadow-card border border-border/50 mb-6 flex items-center gap-3">
-              <span className="text-4xl">🥣</span>
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-acai-light to-muted flex items-center justify-center overflow-hidden">
+                {produtoSelecionado.imagem_url ? (
+                  <img src={produtoSelecionado.imagem_url} alt={produtoSelecionado.nome} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-2xl">🥣</span>
+                )}
+              </div>
               <div>
                 <h3 className="font-display font-bold text-foreground">
-                  Açaí {TAMANHO_LABELS[produtoSelecionado.tamanho]}
+                  {produtoSelecionado.nome}
+                  <span className="text-sm font-medium text-muted-foreground ml-2">
+                    {TAMANHO_LABELS[produtoSelecionado.tamanho]}
+                  </span>
                 </h3>
                 <p className="text-sm text-muted-foreground">{produtoSelecionado.peso}</p>
               </div>
@@ -205,10 +214,19 @@ export default function NovoPedido() {
           <div className="animate-fade-in">
             {/* Selected Product Summary */}
             <div className="bg-card rounded-xl p-4 shadow-card border border-border/50 mb-6 flex items-center gap-3">
-              <span className="text-4xl">🥣</span>
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-acai-light to-muted flex items-center justify-center overflow-hidden">
+                {produtoSelecionado.imagem_url ? (
+                  <img src={produtoSelecionado.imagem_url} alt={produtoSelecionado.nome} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-2xl">🥣</span>
+                )}
+              </div>
               <div>
                 <h3 className="font-display font-bold text-foreground">
-                  Açaí {TAMANHO_LABELS[produtoSelecionado.tamanho]}
+                  {produtoSelecionado.nome}
+                  <span className="text-sm font-medium text-muted-foreground ml-2">
+                    {TAMANHO_LABELS[produtoSelecionado.tamanho]}
+                  </span>
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   {produtoSelecionado.peso} • {EMBALAGEM_LABELS[embalagemSelecionada]}
