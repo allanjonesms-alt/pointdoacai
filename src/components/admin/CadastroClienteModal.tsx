@@ -13,7 +13,8 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Loader2, UserPlus, User, Phone, Mail, MapPin, Home } from 'lucide-react';
-
+import RuaAutocomplete from '@/components/RuaAutocomplete';
+import BairroAutocomplete from '@/components/BairroAutocomplete';
 const formatPhone = (value: string): string => {
   const numbers = value.replace(/\D/g, '').slice(0, 11);
   if (numbers.length <= 2) return numbers.length ? `(${numbers}` : '';
@@ -201,12 +202,11 @@ export function CadastroClienteModal({ onSuccess }: CadastroClienteModalProps) {
 
             {/* Rua */}
             <div className="space-y-2 mb-3">
-              <Label htmlFor="rua">Rua</Label>
-              <Input
-                id="rua"
-                placeholder="Nome da rua"
+              <Label>Rua</Label>
+              <RuaAutocomplete
                 value={formData.rua}
-                onChange={(e) => handleChange('rua', e.target.value)}
+                onChange={(value) => handleChange('rua', value)}
+                placeholder="Selecione a rua..."
               />
             </div>
 
@@ -228,12 +228,11 @@ export function CadastroClienteModal({ onSuccess }: CadastroClienteModalProps) {
 
               {/* Bairro */}
               <div className="space-y-2">
-                <Label htmlFor="bairro">Bairro</Label>
-                <Input
-                  id="bairro"
-                  placeholder="Bairro"
+                <Label>Bairro</Label>
+                <BairroAutocomplete
                   value={formData.bairro}
-                  onChange={(e) => handleChange('bairro', e.target.value)}
+                  onChange={(value) => handleChange('bairro', value)}
+                  placeholder="Selecione o bairro..."
                 />
               </div>
             </div>
