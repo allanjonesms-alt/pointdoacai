@@ -97,6 +97,20 @@ export default function AdminDashboard() {
 
       <div className="container max-w-4xl mx-auto px-4 py-6">
         {/* Quick Actions */}
+        {/* Criar Pedido - Full Width */}
+        <Link to="/admin/pedido-direto" className="block mb-4">
+          <div className="bg-card rounded-xl p-4 shadow-card border border-border/50 hover:shadow-float transition-shadow flex items-center gap-4">
+            <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
+              <Plus className="h-6 w-6 text-primary-foreground" />
+            </div>
+            <div>
+              <h3 className="font-display font-bold text-base sm:text-lg text-foreground">Criar Pedido</h3>
+              <p className="text-sm text-muted-foreground">Pedidos Diretos</p>
+            </div>
+          </div>
+        </Link>
+
+        {/* Other Quick Actions */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-8">
           <Link to="/admin/clientes">
             <div className="bg-card rounded-xl p-3 sm:p-4 shadow-card border border-border/50 hover:shadow-float transition-shadow">
@@ -105,16 +119,6 @@ export default function AdminDashboard() {
               </div>
               <h3 className="font-display font-bold text-sm sm:text-base text-foreground">Clientes</h3>
               <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">Gerenciar clientes</p>
-            </div>
-          </Link>
-
-          <Link to="/admin/pedido-direto">
-            <div className="bg-card rounded-xl p-3 sm:p-4 shadow-card border border-border/50 hover:shadow-float transition-shadow">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary rounded-lg flex items-center justify-center mb-2 sm:mb-3">
-                <Plus className="h-5 w-5 sm:h-6 sm:w-6 text-primary-foreground" />
-              </div>
-              <h3 className="font-display font-bold text-sm sm:text-base text-foreground">Criar Pedido</h3>
-              <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">Pedidos Diretos</p>
             </div>
           </Link>
 
