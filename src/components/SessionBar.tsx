@@ -1,12 +1,18 @@
-import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Loader2, User, LogOut, ShieldCheck } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
-export function SessionBar() {
-  const { user, isLoading, logout } = useAuth();
-  const navigate = useNavigate();
+type SessionBarUser = {
+  nome: string;
+  role: 'cliente' | 'admin';
+};
 
+interface SessionBarProps {
+  isLoading: boolean;
+  user: SessionBarUser | null;
+  onLogout: () => void;
+}
+
+export function SessionBar({ user, isLoading, onLogout }: SessionBarProps) {
   if (isLoading) {
     return (
       <div className="bg-muted/50 border-b px-4 py-2 flex items-center justify-center gap-2 text-sm text-muted-foreground">
@@ -19,11 +25,6 @@ export function SessionBar() {
   if (!user) {
     return null;
   }
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
 
   return (
     <div className="bg-primary/5 border-b px-4 py-2 flex items-center justify-between gap-4 text-sm">
@@ -43,7 +44,7 @@ export function SessionBar() {
       <Button
         variant="ghost"
         size="sm"
-        onClick={handleLogout}
+        onClick={onLogout}
         className="flex-shrink-0 h-7 px-2 text-muted-foreground hover:text-destructive"
       >
         <LogOut className="h-4 w-4" />
