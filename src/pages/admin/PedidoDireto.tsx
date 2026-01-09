@@ -646,33 +646,23 @@ export default function PedidoDireto() {
       {step === 'adicionais' && produtoSelecionado && embalagemSelecionada && (
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 shadow-float">
           <div className="container max-w-md mx-auto">
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">Valor do item</p>
-                  <p className="font-bold text-xl text-foreground">
-                    R$ {(produtoSelecionado.preco + calcularExtras()).toFixed(2).replace('.', ',')}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <Button
-                  size="lg"
-                  onClick={() => handleAddToCart(false)}
-                  className="flex-1 gap-2 bg-violet-400 hover:bg-violet-500 text-white"
-                >
-                  <Plus className="h-5 w-5" />
-                  Continuar Comprando
-                </Button>
-                <Button
-                  size="lg"
-                  onClick={() => handleAddToCart(true)}
-                  className="flex-1 gap-2 bg-violet-600 hover:bg-violet-700 text-white"
-                >
-                  <ShoppingCart className="h-5 w-5" />
-                  Finalizar Compra
-                </Button>
-              </div>
+            <div className="flex gap-3">
+              <Button
+                size="lg"
+                onClick={() => handleAddToCart(false)}
+                className="flex-1 gap-2 bg-violet-400 hover:bg-violet-500 text-white"
+              >
+                <Plus className="h-5 w-5" />
+                Continuar Comprando
+              </Button>
+              <Button
+                size="lg"
+                onClick={() => handleAddToCart(true)}
+                className="flex-1 gap-2 bg-violet-600 hover:bg-violet-700 text-white"
+              >
+                <ShoppingCart className="h-5 w-5" />
+                Finalizar Compra
+              </Button>
             </div>
           </div>
         </div>
