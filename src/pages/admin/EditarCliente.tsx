@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, User, Phone, Mail, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, User, Phone, Mail, Loader2, KeyRound, Shield, Sparkles, Leaf } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useClientes } from '@/hooks/useClientes';
 import { toast } from 'sonner';
 import EnderecosList from '@/components/EnderecosList';
-
+import { CriarUsuarioModal } from '@/components/admin/CriarUsuarioModal';
 const EditarCliente = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -111,6 +111,53 @@ const EditarCliente = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
+            {/* Status do Cliente */}
+            <div className="mb-6 p-4 rounded-lg border bg-muted/30">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div className="flex items-center gap-2">
+                  {cliente.role === 'admin' ? (
+                    <span className="inline-flex items-center gap-1.5 text-sm px-3 py-1 rounded-full bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
+                      <Shield className="h-4 w-4" />
+                      Administrador
+                    </span>
+                  ) : cliente.tipo_cliente === 'organico' ? (
+                    <span className="inline-flex items-center gap-1.5 text-sm px-3 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                      <Leaf className="h-4 w-4" />
+                      Cliente Orgânico (com login)
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 text-sm px-3 py-1 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                      <Sparkles className="h-4 w-4" />
+                      Cliente Sintético (sem login)
+                    </span>
+                  )}
+                </div>
+                
+                {cliente.tipo_cliente === 'sintetico' && cliente.role !== 'admin' && (
+                  <CriarUsuarioModal
+                    onSuccess={() => navigate('/admin/clientes')}
+                    existingProfile={{
+                      id: cliente.id,
+                      nome: cliente.nome,
+                      telefone: cliente.telefone,
+                      email: cliente.email,
+                      rua: cliente.rua,
+                      numero: cliente.numero,
+                      bairro: cliente.bairro,
+                      complemento: cliente.complemento,
+                      referencia: cliente.referencia,
+                    }}
+                    trigger={
+                      <Button variant="outline" size="sm" className="gap-2">
+                        <KeyRound className="h-4 w-4" />
+                        Criar Login
+                      </Button>
+                    }
+                  />
+                )}
+              </div>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Dados Pessoais */}
               <div className="space-y-4">
