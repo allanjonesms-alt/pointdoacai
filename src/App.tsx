@@ -2,8 +2,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { CarrinhoProvider } from "@/contexts/CarrinhoContext";
 import { PedidosProvider } from "@/contexts/PedidosContext";
 import { AdminRoute } from "@/components/AdminRoute";
@@ -35,11 +35,25 @@ const hideSessionBarRoutes = ['/login', '/cadastro', '/esqueci-senha', '/redefin
 
 function AppContent() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, isLoading, logout } = useAuth();
+
   const showSessionBar = !hideSessionBarRoutes.includes(location.pathname);
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
 
   return (
     <>
-      {showSessionBar && <SessionBar />}
+      {showSessionBar && (
+        <SessionBar
+          isLoading={isLoading}
+          user={user ? { nome: user.nome, role: user.role } : null}
+          onLogout={handleLogout}
+        />
+      )}
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/login" element={<Login />} />

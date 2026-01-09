@@ -361,8 +361,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
+
+  // Fail-safe: avoid white screen if a component renders outside the provider.
+  // This should not normally happen, but returning a safe fallback is better UX.
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    console.warn('useAuth was called outside AuthProvider');
+    return {
+      user: null,
+      session: null,
+      isLoading: true,
+      login: async () => ({ success: false, error: 'Sessão não inicializada. Recarregue a página.' }),
+      register: async () => ({ success: false, error: 'Sessão não inicializada. Recarregue a página.' }),
+      logout: async () => {},
+      updateProfile: async () => ({ success: false, error: 'Sessão não inicializada. Recarregue a página.' }),
+    };
   }
+
   return context;
 }
