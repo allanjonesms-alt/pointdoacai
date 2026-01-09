@@ -6,7 +6,7 @@ import { ProductCard } from '@/components/ProductCard';
 import { AdicionalQuantity } from '@/components/AdicionalQuantity';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { useProdutos } from '@/hooks/useProdutos';
+import { useProdutos, TipoAdicional, TIPO_ADICIONAL_LABELS } from '@/hooks/useProdutos';
 import { ArrowLeft, ShoppingCart, ShoppingBag, AlertCircle, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import isoporImage from '@/assets/isopor-acai.png';
@@ -25,6 +25,24 @@ export default function NovoPedido() {
 
   const produtosAtivos = produtos.filter(p => p.ativo);
   const adicionaisAtivos = adicionais.filter(a => a.ativo);
+
+  // Ordenar adicionais por categoria: Frutas primeiro, depois Doces
+  const categoriasOrdenadas: TipoAdicional[] = ['frutas', 'doces', 'cereais'];
+  const adicionaisOrdenados = [...adicionaisAtivos].sort((a, b) => {
+    const indexA = categoriasOrdenadas.indexOf(a.tipo);
+    const indexB = categoriasOrdenadas.indexOf(b.tipo);
+    if (indexA !== indexB) return indexA - indexB;
+    return a.nome.localeCompare(b.nome);
+  });
+
+  // Agrupar por categoria
+  const adicionaisPorCategoria = categoriasOrdenadas
+    .map(tipo => ({
+      tipo,
+      label: TIPO_ADICIONAL_LABELS[tipo],
+      items: adicionaisOrdenados.filter(a => a.tipo === tipo),
+    }))
+    .filter(grupo => grupo.items.length > 0);
 
   const handleSelectProduto = (produto: Produto) => {
     setProdutoSelecionado(produto);
@@ -246,36 +264,44 @@ export default function NovoPedido() {
               </div>
             </div>
 
-            {/* Additionals Grid */}
-            <div className="space-y-3">
+            {/* Additionals by Category */}
+            <div className="space-y-6">
               <h3 className="font-display font-semibold text-foreground">
                 Escolha seus adicionais
                 <span className="text-muted-foreground font-normal ml-2">
                   ({totalAdicionais} selecionados)
                 </span>
               </h3>
-              <div className="grid grid-cols-1 gap-3">
-                {adicionaisAtivos.map((adicional) => {
-                  const quantidade = adicionaisQuantidades[adicional.nome] || 0;
-                  // Calcula quantos gratuitos ainda restam para este adicional
-                  let gratuitosUsados = 0;
-                  for (const [nome, qty] of Object.entries(adicionaisQuantidades)) {
-                    if (nome === adicional.nome) break;
-                    gratuitosUsados += qty;
-                  }
-                  const gratuitosRestantes = Math.max(0, 3 - gratuitosUsados);
+              
+              {adicionaisPorCategoria.map((categoria) => (
+                <div key={categoria.tipo} className="space-y-3">
+                  <h4 className="text-sm font-semibold text-primary uppercase tracking-wide">
+                    {categoria.label}
+                  </h4>
+                  <div className="grid grid-cols-1 gap-3">
+                    {categoria.items.map((adicional) => {
+                      const quantidade = adicionaisQuantidades[adicional.nome] || 0;
+                      // Calcula quantos gratuitos ainda restam para este adicional
+                      let gratuitosUsados = 0;
+                      for (const [nome, qty] of Object.entries(adicionaisQuantidades)) {
+                        if (nome === adicional.nome) break;
+                        gratuitosUsados += qty;
+                      }
+                      const gratuitosRestantes = Math.max(0, 3 - gratuitosUsados);
 
-                  return (
-                    <AdicionalQuantity
-                      key={adicional.id}
-                      nome={adicional.nome}
-                      quantidade={quantidade}
-                      onQuantidadeChange={(qty) => handleQuantidadeChange(adicional.nome, qty)}
-                      gratuitos={gratuitosRestantes}
-                    />
-                  );
-                })}
-              </div>
+                      return (
+                        <AdicionalQuantity
+                          key={adicional.id}
+                          nome={adicional.nome}
+                          quantidade={quantidade}
+                          onQuantidadeChange={(qty) => handleQuantidadeChange(adicional.nome, qty)}
+                          gratuitos={gratuitosRestantes}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
