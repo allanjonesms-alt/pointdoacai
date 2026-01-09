@@ -72,17 +72,17 @@ function AppContent() {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <AuthProvider>
-        <CarrinhoProvider>
-          <PedidosProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
+      <BrowserRouter>
+        <AuthProvider>
+          <CarrinhoProvider>
+            <PedidosProvider>
+              <Toaster />
+              <Sonner />
               <AppContent />
-            </BrowserRouter>
-          </PedidosProvider>
-        </CarrinhoProvider>
-      </AuthProvider>
+            </PedidosProvider>
+          </CarrinhoProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );
