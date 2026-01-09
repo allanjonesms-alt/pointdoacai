@@ -44,6 +44,22 @@ export default function PedidoDireto() {
   const [formaPagamento, setFormaPagamento] = useState<'credito' | 'debito' | 'pix' | 'dinheiro'>('dinheiro');
   const [pedidoPago, setPedidoPago] = useState<boolean>(false);
   const [modoEntrega, setModoEntrega] = useState<ModoEntrega>('entrega');
+  const [valorTroco, setValorTroco] = useState<string>('');
+
+  const formatCurrency = (value: string) => {
+    const numericValue = value.replace(/\D/g, '');
+    if (!numericValue) return '';
+    const numberValue = parseInt(numericValue, 10) / 100;
+    return numberValue.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    });
+  };
+
+  const handleTrocoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatCurrency(e.target.value);
+    setValorTroco(formatted);
+  };
 
   const produtosAtivos = produtos.filter(p => p.ativo);
   const adicionaisAtivos = adicionais.filter(a => a.ativo);
@@ -638,6 +654,24 @@ export default function PedidoDireto() {
                   </button>
                 ))}
               </div>
+
+              {/* Change Value for Cash Payment */}
+              {formaPagamento === 'dinheiro' && (
+                <div className="mt-4 pt-4 border-t border-border">
+                  <label htmlFor="valorTroco" className="block text-sm font-medium text-foreground mb-2">
+                    Valor para troco
+                  </label>
+                  <input
+                    id="valorTroco"
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="R$ 0,00"
+                    value={valorTroco}
+                    onChange={handleTrocoChange}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-border bg-background text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none transition-colors"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Pedido Pago */}
