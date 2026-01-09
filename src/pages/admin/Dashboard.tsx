@@ -11,12 +11,20 @@ import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
 import { PedidoDetalheModal } from '@/components/admin/PedidoDetalheModal';
-
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
-  const { pedidosHoje, isLoading, atualizarStatus, refetch } = usePedidos();
-  const { playNotification } = useNotificationSound();
+  const {
+    logout
+  } = useAuth();
+  const {
+    pedidosHoje,
+    isLoading,
+    atualizarStatus,
+    refetch
+  } = usePedidos();
+  const {
+    playNotification
+  } = useNotificationSound();
   const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -27,68 +35,50 @@ export default function AdminDashboard() {
 
   // Escutar novos pedidos em tempo real
   useEffect(() => {
-    const channel = supabase
-      .channel('admin-pedidos-realtime')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'pedidos',
-        },
-        () => {
-          playNotification();
-          refetch();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'pedidos',
-        },
-        () => {
-          refetch();
-        }
-      )
-      .subscribe();
-
+    const channel = supabase.channel('admin-pedidos-realtime').on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'pedidos'
+    }, () => {
+      playNotification();
+      refetch();
+    }).on('postgres_changes', {
+      event: 'UPDATE',
+      schema: 'public',
+      table: 'pedidos'
+    }, () => {
+      refetch();
+    }).subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
   }, [refetch, playNotification]);
-
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
-
   const handlePedidoClick = (pedido: Pedido) => {
     setSelectedPedido(pedido);
     setModalOpen(true);
   };
-
   const handleAdvanceStatus = (pedidoId: string, newStatus: StatusPedido) => {
     atualizarStatus(pedidoId, newStatus);
     // Atualiza o pedido selecionado no modal
     if (selectedPedido && selectedPedido.id === pedidoId) {
-      setSelectedPedido({ ...selectedPedido, status: newStatus });
+      setSelectedPedido({
+        ...selectedPedido,
+        status: newStatus
+      });
     }
   };
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="gradient-hero py-6 px-4">
         <div className="container max-w-4xl mx-auto flex items-center justify-between">
           <Logo size="sm" />
           <div className="flex items-center gap-4">
             <span className="text-primary-foreground/80 text-sm font-medium">Admin</span>
-            <button
-              onClick={handleLogout}
-              className="text-primary-foreground/80 hover:text-primary-foreground"
-            >
+            <button onClick={handleLogout} className="text-primary-foreground/80 hover:text-primary-foreground">
               <LogOut className="h-5 w-5" />
             </button>
           </div>
@@ -99,7 +89,7 @@ export default function AdminDashboard() {
         {/* Quick Actions */}
         {/* Criar Pedido - Full Width - Destacado */}
         <Link to="/admin/pedido-direto" className="block mb-4 group">
-          <div className="gradient-hero rounded-xl p-4 shadow-float hover:shadow-xl transition-all duration-300 flex items-center gap-4 hover-scale">
+          <div className="gradient-hero rounded-xl p-4 shadow-float hover:shadow-xl transition-all duration-300 gap-4 hover-scale flex items-start justify-center">
             <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-white/30 transition-colors">
               <Plus className="h-6 w-6 text-primary-foreground" />
             </div>
@@ -163,22 +153,12 @@ export default function AdminDashboard() {
           </div>
 
           <div className="space-y-4">
-            {isLoading ? (
-              <div className="bg-card rounded-xl p-8 shadow-card border border-border/50 flex items-center justify-center">
+            {isLoading ? <div className="bg-card rounded-xl p-8 shadow-card border border-border/50 flex items-center justify-center">
                 <Loader2 className="h-6 w-6 animate-spin text-primary mr-2" />
                 <span className="text-muted-foreground">Carregando pedidos...</span>
-              </div>
-            ) : pedidosHoje.length === 0 ? (
-              <div className="bg-card rounded-xl p-8 shadow-card border border-border/50 text-center">
+              </div> : pedidosHoje.length === 0 ? <div className="bg-card rounded-xl p-8 shadow-card border border-border/50 text-center">
                 <p className="text-muted-foreground">Nenhum pedido hoje</p>
-              </div>
-            ) : (
-              pedidosHoje.map((pedido) => (
-                  <div
-                    key={pedido.id}
-                    className="bg-card rounded-xl p-4 shadow-card border border-border/50 animate-fade-in cursor-pointer hover:shadow-float transition-shadow"
-                    onClick={() => handlePedidoClick(pedido)}
-                  >
+              </div> : pedidosHoje.map(pedido => <div key={pedido.id} className="bg-card rounded-xl p-4 shadow-card border border-border/50 animate-fade-in cursor-pointer hover:shadow-float transition-shadow" onClick={() => handlePedidoClick(pedido)}>
                     <div className="flex items-start justify-between mb-3 gap-2">
                       <div className="min-w-0 flex-1">
                         <h3 className="font-display font-bold text-base sm:text-lg text-foreground">
@@ -187,7 +167,9 @@ export default function AdminDashboard() {
                         <p className="text-sm text-foreground mt-1 truncate">{pedido.clienteNome}</p>
                         <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
                           <Clock className="h-3 w-3 flex-shrink-0" />
-                          {format(new Date(pedido.dataHora), "dd/MM 'às' HH:mm", { locale: ptBR })}
+                          {format(new Date(pedido.dataHora), "dd/MM 'às' HH:mm", {
+                    locale: ptBR
+                  })}
                         </div>
                       </div>
                       <div className="text-right flex-shrink-0">
@@ -205,18 +187,14 @@ export default function AdminDashboard() {
 
                     {/* Order Items */}
                     <div className="bg-muted rounded-lg p-3 mb-3">
-                      {pedido.itens.map((item) => (
-                        <div key={item.id} className="text-sm">
+                      {pedido.itens.map(item => <div key={item.id} className="text-sm">
                           <span className="font-medium text-foreground">
                             {item.quantidade}x Açaí {TAMANHO_LABELS[item.produto.tamanho]}
                           </span>
-                          {item.adicionais.length > 0 && (
-                            <p className="text-xs text-muted-foreground">
+                          {item.adicionais.length > 0 && <p className="text-xs text-muted-foreground">
                               + {item.adicionais.join(', ')}
-                            </p>
-                          )}
-                        </div>
-                      ))}
+                            </p>}
+                        </div>)}
                     </div>
 
                     {/* Address */}
@@ -225,26 +203,15 @@ export default function AdminDashboard() {
                     </p>
 
                     {/* Status Progress Bar */}
-                    <div onClick={(e) => e.stopPropagation()}>
-                      <StatusProgressBar
-                        currentStatus={pedido.status}
-                        onAdvanceStatus={(newStatus) => handleAdvanceStatus(pedido.id, newStatus)}
-                      />
+                    <div onClick={e => e.stopPropagation()}>
+                      <StatusProgressBar currentStatus={pedido.status} onAdvanceStatus={newStatus => handleAdvanceStatus(pedido.id, newStatus)} />
                     </div>
-                  </div>
-                ))
-            )}
+                  </div>)}
           </div>
         </div>
       </div>
 
       {/* Modal de Detalhes do Pedido */}
-      <PedidoDetalheModal
-        pedido={selectedPedido}
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        onAdvanceStatus={handleAdvanceStatus}
-      />
-    </div>
-  );
+      <PedidoDetalheModal pedido={selectedPedido} open={modalOpen} onOpenChange={setModalOpen} onAdvanceStatus={handleAdvanceStatus} />
+    </div>;
 }
