@@ -9,18 +9,20 @@ import { AdicionalQuantity } from '@/components/AdicionalQuantity';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Plus, ShoppingCart, Trash2, User, Check, Search, Phone, Truck, Store, UserPlus } from 'lucide-react';
+import { ArrowLeft, Plus, ShoppingCart, Trash2, User, Check, Search, Phone, Truck, Store, UserPlus, CreditCard, Smartphone, QrCode, Banknote } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { CadastroClienteModal } from '@/components/admin/CadastroClienteModal';
 import isoporImage from '@/assets/isopor-acai.png';
 import copoImage from '@/assets/copo-acai.png';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+
+type FormaPagamento = 'credito' | 'debito' | 'pix' | 'dinheiro';
+
+const FORMAS_PAGAMENTO: { id: FormaPagamento; label: string; icon: React.ReactNode }[] = [
+  { id: 'credito', label: 'Crédito', icon: <CreditCard className="h-5 w-5" /> },
+  { id: 'debito', label: 'Débito', icon: <Smartphone className="h-5 w-5" /> },
+  { id: 'pix', label: 'PIX', icon: <QrCode className="h-5 w-5" /> },
+  { id: 'dinheiro', label: 'Dinheiro', icon: <Banknote className="h-5 w-5" /> },
+];
 
 type ModoEntrega = 'entrega' | 'retirada';
 const TAXA_ENTREGA = 1.00;
@@ -606,21 +608,36 @@ export default function PedidoDireto() {
               </div>
             </div>
 
+            {/* Payment Method */}
             <div className="bg-card rounded-xl p-4 shadow-card border border-border/50">
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Forma de Pagamento
-              </label>
-              <Select value={formaPagamento} onValueChange={(v: any) => setFormaPagamento(v)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="dinheiro">Dinheiro</SelectItem>
-                  <SelectItem value="pix">PIX</SelectItem>
-                  <SelectItem value="credito">Cartão de Crédito</SelectItem>
-                  <SelectItem value="debito">Cartão de Débito</SelectItem>
-                </SelectContent>
-              </Select>
+              <h3 className="font-display font-semibold text-foreground mb-4">
+                Forma de pagamento
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                {FORMAS_PAGAMENTO.map((forma) => (
+                  <button
+                    key={forma.id}
+                    onClick={() => setFormaPagamento(forma.id)}
+                    className={cn(
+                      'flex items-center gap-3 p-4 rounded-xl border-2 transition-all',
+                      formaPagamento === forma.id
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/50'
+                    )}
+                  >
+                    <div className={cn(
+                      'w-10 h-10 rounded-lg flex items-center justify-center',
+                      formaPagamento === forma.id ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                    )}>
+                      {forma.icon}
+                    </div>
+                    <span className="font-medium text-foreground">{forma.label}</span>
+                    {formaPagamento === forma.id && (
+                      <Check className="h-5 w-5 text-primary ml-auto" />
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Pedido Pago */}
