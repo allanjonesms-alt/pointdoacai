@@ -11,6 +11,8 @@ import { AdminRoute } from "@/components/AdminRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
+import EsqueciSenha from "./pages/EsqueciSenha";
+import RedefinirSenha from "./pages/RedefinirSenha";
 import ClienteHome from "./pages/cliente/Home";
 import NovoPedido from "./pages/cliente/NovoPedido";
 import Carrinho from "./pages/cliente/Carrinho";
@@ -40,6 +42,8 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/cadastro" element={<Cadastro />} />
+                <Route path="/esqueci-senha" element={<EsqueciSenha />} />
+                <Route path="/redefinir-senha" element={<RedefinirSenha />} />
                 
                 {/* Cliente Routes */}
                 <Route path="/home" element={<ClienteHome />} />
