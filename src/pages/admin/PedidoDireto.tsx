@@ -9,8 +9,9 @@ import { AdicionalQuantity } from '@/components/AdicionalQuantity';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Plus, ShoppingCart, Trash2, User, Check, Search, Phone, Truck, Store } from 'lucide-react';
+import { ArrowLeft, Plus, ShoppingCart, Trash2, User, Check, Search, Phone, Truck, Store, UserPlus } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { CadastroClienteModal } from '@/components/admin/CadastroClienteModal';
 import isoporImage from '@/assets/isopor-acai.png';
 import copoImage from '@/assets/copo-acai.png';
 import {
@@ -27,7 +28,7 @@ const TAXA_ENTREGA = 1.00;
 export default function PedidoDireto() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { clientes, isLoading: loadingClientes } = useClientes();
+  const { clientes, isLoading: loadingClientes, fetchClientes } = useClientes();
   const { criarPedido } = usePedidos();
   const { produtos, adicionais, isLoading: loadingProdutos } = useProdutos();
 
@@ -263,6 +264,9 @@ export default function PedidoDireto() {
                 />
               </div>
             </div>
+
+            {/* Add Client Button */}
+            <CadastroClienteModal onSuccess={fetchClientes} />
 
             {/* Client List */}
             <div className="space-y-2">

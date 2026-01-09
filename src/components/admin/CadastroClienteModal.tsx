@@ -75,16 +75,31 @@ export function CadastroClienteModal({ onSuccess }: CadastroClienteModalProps) {
       const cleanPhone = formData.telefone.replace(/\D/g, '');
 
       // Check if phone already exists
-      const { data: existingProfile } = await supabase
+      const { data: existingPhoneProfile } = await supabase
         .from('profiles')
         .select('id, telefone')
         .eq('telefone', cleanPhone)
         .maybeSingle();
 
-      if (existingProfile) {
+      if (existingPhoneProfile) {
         toast.error('Este telefone já está cadastrado');
         setIsLoading(false);
         return;
+      }
+
+      // Check if email already exists (only if email is provided)
+      if (formData.email.trim()) {
+        const { data: existingEmailProfile } = await supabase
+          .from('profiles')
+          .select('id, email')
+          .eq('email', formData.email.trim().toLowerCase())
+          .maybeSingle();
+
+        if (existingEmailProfile) {
+          toast.error('Este e-mail já está cadastrado');
+          setIsLoading(false);
+          return;
+        }
       }
 
       // Generate a unique ID for the synthetic client (no auth user)
