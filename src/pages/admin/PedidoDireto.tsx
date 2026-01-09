@@ -207,7 +207,7 @@ export default function PedidoDireto() {
   return (
     <div className={cn(
       "min-h-screen bg-background",
-      (step === 'adicionais' || step === 'resumo') ? "pb-64" : "pb-32"
+      step === 'resumo' ? "pb-64" : "pb-8"
     )}>
       {/* Header */}
       <div className="gradient-hero py-6 px-4 sticky top-0 z-10">
@@ -477,6 +477,19 @@ export default function PedidoDireto() {
                 );
               })}
             </div>
+
+            {/* Add to Cart Button */}
+            <div className="pt-4">
+              <Button
+                variant="acai"
+                size="lg"
+                className="w-full gap-2"
+                onClick={() => handleAddToCart(true)}
+              >
+                <ShoppingCart className="h-5 w-5" />
+                Adicionar ao Pedido
+              </Button>
+            </div>
           </div>
         )}
 
@@ -641,32 +654,6 @@ export default function PedidoDireto() {
           </div>
         )}
       </div>
-
-      {/* Bottom Action Bar - Adicionais */}
-      {step === 'adicionais' && produtoSelecionado && embalagemSelecionada && (
-        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 shadow-float">
-          <div className="container max-w-md mx-auto">
-            <div className="flex gap-3">
-              <Button
-                size="lg"
-                onClick={() => handleAddToCart(false)}
-                className="flex-1 gap-2 bg-violet-400 hover:bg-violet-500 text-white"
-              >
-                <Plus className="h-5 w-5" />
-                Continuar Comprando
-              </Button>
-              <Button
-                size="lg"
-                onClick={() => handleAddToCart(true)}
-                className="flex-1 gap-2 bg-violet-600 hover:bg-violet-700 text-white"
-              >
-                <ShoppingCart className="h-5 w-5" />
-                Finalizar Compra
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Bottom Action Bar - Resumo */}
       {step === 'resumo' && itensCarrinho.length > 0 && (
