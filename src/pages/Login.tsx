@@ -122,6 +122,15 @@ export default function Login() {
               </Button>
             </form>
 
+            <div className="mt-4 text-center">
+              <Link 
+                to="/esqueci-senha" 
+                className="text-sm text-primary hover:underline"
+              >
+                Esqueci minha senha
+              </Link>
+            </div>
+
             <div className="mt-6 text-center">
               <p className="text-muted-foreground">
                 Não tem uma conta?{' '}
