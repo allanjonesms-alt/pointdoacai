@@ -185,7 +185,7 @@ export default function Carrinho() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-48">
+    <div className="min-h-screen bg-background pb-6">
       {/* Header */}
       <div className="gradient-hero py-6 px-4 sticky top-0 z-10">
         <div className="container max-w-md mx-auto flex items-center gap-4">
@@ -450,9 +450,8 @@ export default function Carrinho() {
         </div>
       </div>
 
-      {/* Bottom Summary & Checkout */}
-      <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border p-4 shadow-float">
-        <div className="container max-w-md mx-auto">
+        {/* Summary & Checkout */}
+        <div className="bg-card rounded-xl p-4 shadow-card border border-border/50">
           <div className="space-y-2 mb-4">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Subtotal</span>
@@ -483,7 +482,7 @@ export default function Carrinho() {
             onClick={handleFinalizarPedido}
             disabled={isLoading || !formaPagamento}
           >
-          {isLoading ? 'Finalizando...' : 'Finalizar Pedido'}
+            {isLoading ? 'Finalizando...' : 'Finalizar Pedido'}
           </Button>
         </div>
       </div>
