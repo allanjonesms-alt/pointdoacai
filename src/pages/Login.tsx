@@ -5,6 +5,7 @@ import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { Phone, Lock, Loader2 } from 'lucide-react';
 
@@ -20,6 +21,9 @@ export default function Login() {
   const { login } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [lembrarMe, setLembrarMe] = useState(() => {
+    return localStorage.getItem('lembrar_me') === 'true';
+  });
   const [formData, setFormData] = useState({
     telefone: '',
     senha: '',
@@ -29,7 +33,14 @@ export default function Login() {
     e.preventDefault();
     setIsLoading(true);
 
-    const result = await login(formData.telefone, formData.senha);
+    // Salva preferência de lembrar-me
+    if (lembrarMe) {
+      localStorage.setItem('lembrar_me', 'true');
+    } else {
+      localStorage.removeItem('lembrar_me');
+    }
+
+    const result = await login(formData.telefone, formData.senha, lembrarMe);
 
     if (result.success) {
       toast({
@@ -102,6 +113,20 @@ export default function Login() {
                     required
                   />
                 </div>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="lembrar-me"
+                  checked={lembrarMe}
+                  onCheckedChange={(checked) => setLembrarMe(checked === true)}
+                />
+                <Label
+                  htmlFor="lembrar-me"
+                  className="text-sm font-normal cursor-pointer"
+                >
+                  Lembrar-me neste dispositivo
+                </Label>
               </div>
 
               <Button

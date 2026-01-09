@@ -41,7 +41,7 @@ interface AuthContextType {
   user: UserWithProfile | null;
   session: Session | null;
   isLoading: boolean;
-  login: (identificador: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (identificador: string, password: string, lembrarMe?: boolean) => Promise<{ success: boolean; error?: string }>;
   register: (userData: RegisterData) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<Profile>) => Promise<{ success: boolean; error?: string }>;
@@ -116,6 +116,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    // Check if we should clear session (user chose not to remember)
+    const shouldClearSession = sessionStorage.getItem('clear_session_on_close') === 'true';
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -134,6 +137,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      // If shouldClearSession was set but browser was closed, clear session now
+      // Note: This only works if we detect a fresh browser session
+      if (shouldClearSession && !sessionStorage.getItem('session_verified')) {
+        // First load after browser restart - check if we should keep session
+        const lembrarMe = localStorage.getItem('lembrar_me') === 'true';
+        if (!lembrarMe && session) {
+          // Clear the session since user didn't want to be remembered
+          supabase.auth.signOut().then(() => {
+            setSession(null);
+            setUser(null);
+            setIsLoading(false);
+          });
+          return;
+        }
+      }
+      sessionStorage.setItem('session_verified', 'true');
+      
       setSession(session);
       if (session?.user) {
         fetchUserProfile(session.user.id).then(profile => {
@@ -148,8 +168,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const login = async (identificador: string, password: string): Promise<{ success: boolean; error?: string }> => {
+  const login = async (identificador: string, password: string, lembrarMe = true): Promise<{ success: boolean; error?: string }> => {
     try {
+      // Se NÃO lembrar, limpa sessão ao fechar o navegador
+      if (!lembrarMe) {
+        sessionStorage.setItem('clear_session_on_close', 'true');
+      } else {
+        sessionStorage.removeItem('clear_session_on_close');
+      }
+
       const raw = identificador.trim();
       const isEmail = raw.includes('@');
       
