@@ -205,7 +205,10 @@ export default function PedidoDireto() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-32">
+    <div className={cn(
+      "min-h-screen bg-background",
+      (step === 'adicionais' || step === 'resumo') ? "pb-64" : "pb-32"
+    )}>
       {/* Header */}
       <div className="gradient-hero py-6 px-4 sticky top-0 z-10">
         <div className="container max-w-md mx-auto flex items-center justify-between">
