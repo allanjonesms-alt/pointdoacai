@@ -46,6 +46,22 @@ export default function Carrinho() {
   const [numeroPedidoAtual, setNumeroPedidoAtual] = useState<string | null>(null);
   const [enderecoSelecionado, setEnderecoSelecionado] = useState<Endereco | null>(null);
   const [showEnderecoSheet, setShowEnderecoSheet] = useState(false);
+  const [valorTroco, setValorTroco] = useState<string>('');
+
+  const formatCurrency = (value: string) => {
+    const numericValue = value.replace(/\D/g, '');
+    if (!numericValue) return '';
+    const numberValue = parseInt(numericValue, 10) / 100;
+    return numberValue.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    });
+  };
+
+  const handleTrocoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatCurrency(e.target.value);
+    setValorTroco(formatted);
+  };
 
   // Define o endereço padrão quando os endereços carregam
   useEffect(() => {
@@ -413,6 +429,24 @@ export default function Carrinho() {
               </button>
             ))}
           </div>
+
+          {/* Change Value for Cash Payment */}
+          {formaPagamento === 'dinheiro' && (
+            <div className="mt-4 pt-4 border-t border-border">
+              <label htmlFor="valorTroco" className="block text-sm font-medium text-foreground mb-2">
+                Valor para troco
+              </label>
+              <input
+                id="valorTroco"
+                type="text"
+                inputMode="numeric"
+                placeholder="R$ 0,00"
+                value={valorTroco}
+                onChange={handleTrocoChange}
+                className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+            </div>
+          )}
         </div>
       </div>
 
