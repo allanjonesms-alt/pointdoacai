@@ -448,7 +448,6 @@ export default function Carrinho() {
             </div>
           )}
         </div>
-      </div>
 
         {/* Summary & Checkout */}
         <div className="bg-card rounded-xl p-4 shadow-card border border-border/50">
