@@ -284,7 +284,10 @@ export default function PedidoDireto() {
                 clientesFiltrados.map(cliente => (
                   <button
                     key={cliente.id}
-                    onClick={() => setClienteSelecionado(cliente.id)}
+                    onClick={() => {
+                      setClienteSelecionado(cliente.id);
+                      setStep('tamanho');
+                    }}
                     className={`w-full text-left bg-card rounded-xl p-4 shadow-card border transition-all ${
                       clienteSelecionado === cliente.id
                         ? 'border-primary ring-2 ring-primary/20'
@@ -303,43 +306,17 @@ export default function PedidoDireto() {
                           <Phone className="h-3 w-3" />
                           <span>{cliente.telefone}</span>
                         </div>
+                        {cliente.rua && (
+                          <p className="text-xs text-muted-foreground truncate">
+                            {cliente.rua}, {cliente.numero} - {cliente.bairro}
+                          </p>
+                        )}
                       </div>
-                      {clienteSelecionado === cliente.id && (
-                        <Check className="h-5 w-5 text-primary" />
-                      )}
                     </div>
                   </button>
                 ))
               )}
             </div>
-
-            {/* Selected Client Address */}
-            {clienteInfo && (
-              <div className="bg-muted rounded-xl p-4">
-                <h3 className="font-semibold text-foreground mb-2">Endereço de entrega</h3>
-                <p className="text-sm text-muted-foreground">
-                  {clienteInfo.rua}, {clienteInfo.numero}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {clienteInfo.bairro}
-                </p>
-                {clienteInfo.complemento && (
-                  <p className="text-sm text-muted-foreground">
-                    {clienteInfo.complemento}
-                  </p>
-                )}
-              </div>
-            )}
-
-            <Button
-              variant="acai"
-              size="lg"
-              className="w-full"
-              disabled={!clienteSelecionado}
-              onClick={() => setStep('tamanho')}
-            >
-              Continuar
-            </Button>
           </div>
         )}
 
