@@ -178,58 +178,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: true };
       }
 
-      // It's a phone number - try both email formats
+      // It's a phone number - use backend function to resolve & authenticate
       const cleanPhone = raw.replace(/\D/g, '');
-      const phoneEmail = phoneToEmail(raw); // Format: {phone}@acai.app
 
-      // First, try with the phone-based email (for users registered via app)
-      const { data: phoneData, error: phoneError } = await supabase.auth.signInWithPassword({
-        email: phoneEmail,
-        password,
+      const { data: fnData, error: fnError } = await supabase.functions.invoke('login-telefone', {
+        body: {
+          telefone: cleanPhone,
+          password,
+        },
       });
 
-      if (!phoneError && phoneData.user) {
-        const profile = await fetchUserProfile(phoneData.user.id);
+      if (fnError || !fnData?.session?.access_token || !fnData?.session?.refresh_token) {
+        return {
+          success: false,
+          error: 'Telefone ou senha incorretos',
+        };
+      }
+
+      const { error: setSessionError } = await supabase.auth.setSession({
+        access_token: fnData.session.access_token,
+        refresh_token: fnData.session.refresh_token,
+      });
+
+      if (setSessionError) {
+        return { success: false, error: 'Erro ao fazer login. Tente novamente.' };
+      }
+
+      if (fnData.session.user?.id) {
+        const profile = await fetchUserProfile(fnData.session.user.id);
         setUser(profile);
-        return { success: true };
       }
 
-      // If that fails, try to find a profile with this phone and use their real email
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('id, email')
-        .eq('telefone', cleanPhone)
-        .maybeSingle();
-
-      if (profileData?.email) {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: profileData.email,
-          password,
-        });
-
-        if (error) {
-          return {
-            success: false,
-            error:
-              error.message === 'Invalid login credentials'
-                ? 'Telefone ou senha incorretos'
-                : error.message,
-          };
-        }
-
-        if (data.user) {
-          const profile = await fetchUserProfile(data.user.id);
-          setUser(profile);
-        }
-
-        return { success: true };
-      }
-
-      // No profile found or no real email, return error from first attempt
-      return {
-        success: false,
-        error: 'Telefone ou senha incorretos',
-      };
+      return { success: true };
     } catch (error) {
       return { success: false, error: 'Erro ao fazer login. Tente novamente.' };
     }
