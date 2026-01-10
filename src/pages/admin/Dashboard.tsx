@@ -138,7 +138,7 @@ export default function AdminDashboard() {
               </div>
             </div>
             {/* Toggle Loja - Segunda linha no mobile */}
-            <div className="flex justify-center">
+            <div className="flex justify-end">
               <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
                 <Store className={`h-4 w-4 ${lojaAberta ? 'text-green-300' : 'text-red-300'}`} />
                 <span className="text-xs font-medium text-primary-foreground/90">
