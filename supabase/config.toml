@@ -2,3 +2,12 @@ project_id = "xleotnpiheyylvchfyhg"
 
 [functions.gerar-pix]
 verify_jwt = false
+
+[functions.criar-usuario]
+verify_jwt = false
+
+[functions.login-telefone]
+verify_jwt = false
+
+[functions.auto-loja]
+verify_jwt = false
