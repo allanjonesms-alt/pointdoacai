@@ -5,12 +5,16 @@ import { usePedidos } from '@/contexts/PedidosContext';
 import { Logo } from '@/components/Logo';
 import { StatusProgressBar } from '@/components/StatusProgressBar';
 import { StatusPedido, TAMANHO_LABELS, Pedido } from '@/types';
-import { LogOut, Users, Package, Plus, Clock, Loader2, BarChart3, MapPin } from 'lucide-react';
+import { LogOut, Users, Package, Plus, Clock, Loader2, BarChart3, MapPin, Store, StoreIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
 import { PedidoDetalheModal } from '@/components/admin/PedidoDetalheModal';
+import { useLojaStatus } from '@/hooks/useLojaStatus';
+import { Switch } from '@/components/ui/switch';
+import { toast } from 'sonner';
+
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const {
@@ -27,6 +31,16 @@ export default function AdminDashboard() {
   } = useNotificationSound();
   const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const { lojaAberta, isLoading: isLoadingLoja, toggleLoja } = useLojaStatus();
+
+  const handleToggleLoja = async () => {
+    try {
+      await toggleLoja();
+      toast.success(lojaAberta ? 'Loja fechada!' : 'Loja aberta!');
+    } catch {
+      toast.error('Erro ao alterar status da loja');
+    }
+  };
 
   // Atualizar dados ao acessar a página
   useEffect(() => {
@@ -76,8 +90,20 @@ export default function AdminDashboard() {
       <div className="gradient-hero py-6 px-4">
         <div className="container max-w-4xl mx-auto flex items-center justify-between">
           <Logo size="sm" />
-          <div className="flex items-center gap-4">
-            <span className="text-primary-foreground/80 text-sm font-medium">Admin</span>
+          <div className="flex items-center gap-3">
+            {/* Toggle Loja */}
+            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-3 py-1.5">
+              <Store className={`h-4 w-4 ${lojaAberta ? 'text-green-300' : 'text-red-300'}`} />
+              <span className="text-xs font-medium text-primary-foreground/90 hidden sm:inline">
+                {lojaAberta ? 'Aberta' : 'Fechada'}
+              </span>
+              <Switch 
+                checked={lojaAberta}
+                onCheckedChange={handleToggleLoja}
+                disabled={isLoadingLoja}
+                className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-red-500"
+              />
+            </div>
             <button onClick={handleLogout} className="text-primary-foreground/80 hover:text-primary-foreground">
               <LogOut className="h-5 w-5" />
             </button>
