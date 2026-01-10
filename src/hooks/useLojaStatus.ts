@@ -1,15 +1,39 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
-interface LojaStatus {
+export type DiaSemana = 'domingo' | 'segunda' | 'terca' | 'quarta' | 'quinta' | 'sexta' | 'sabado';
+
+export interface ConfiguracoesLoja {
   lojaAberta: boolean;
+  horarioAbertura: string;
+  horarioFechamento: string;
+  diasFuncionamento: DiaSemana[];
+}
+
+interface LojaStatus extends ConfiguracoesLoja {
   isLoading: boolean;
   toggleLoja: () => Promise<void>;
+  atualizarConfiguracoes: (config: Partial<Omit<ConfiguracoesLoja, 'lojaAberta'>>) => Promise<void>;
   refetch: () => void;
 }
 
+const DIAS_MAP: Record<number, DiaSemana> = {
+  0: 'domingo',
+  1: 'segunda',
+  2: 'terca',
+  3: 'quarta',
+  4: 'quinta',
+  5: 'sexta',
+  6: 'sabado'
+};
+
 export function useLojaStatus(): LojaStatus {
-  const [lojaAberta, setLojaAberta] = useState(true);
+  const [config, setConfig] = useState<ConfiguracoesLoja>({
+    lojaAberta: true,
+    horarioAbertura: '13:30',
+    horarioFechamento: '22:00',
+    diasFuncionamento: ['domingo', 'segunda', 'terca', 'quarta', 'sexta', 'sabado']
+  });
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchStatus = async () => {
@@ -17,14 +41,21 @@ export function useLojaStatus(): LojaStatus {
     try {
       const { data, error } = await supabase
         .from('configuracoes_loja')
-        .select('loja_aberta')
-        .single();
+        .select('*')
+        .maybeSingle();
       
       if (error) throw error;
-      setLojaAberta(data?.loja_aberta ?? true);
+      
+      if (data) {
+        setConfig({
+          lojaAberta: data.loja_aberta,
+          horarioAbertura: data.horario_abertura?.slice(0, 5) ?? '13:30',
+          horarioFechamento: data.horario_fechamento?.slice(0, 5) ?? '22:00',
+          diasFuncionamento: (data.dias_funcionamento as DiaSemana[]) ?? ['domingo', 'segunda', 'terca', 'quarta', 'sexta', 'sabado']
+        });
+      }
     } catch (error) {
       console.error('Erro ao buscar status da loja:', error);
-      setLojaAberta(true);
     } finally {
       setIsLoading(false);
     }
@@ -32,16 +63,46 @@ export function useLojaStatus(): LojaStatus {
 
   const toggleLoja = async () => {
     try {
-      const newStatus = !lojaAberta;
+      const newStatus = !config.lojaAberta;
       const { error } = await supabase
         .from('configuracoes_loja')
         .update({ loja_aberta: newStatus, updated_at: new Date().toISOString() })
         .neq('id', '00000000-0000-0000-0000-000000000000');
       
       if (error) throw error;
-      setLojaAberta(newStatus);
+      setConfig(prev => ({ ...prev, lojaAberta: newStatus }));
     } catch (error) {
       console.error('Erro ao atualizar status da loja:', error);
+      throw error;
+    }
+  };
+
+  const atualizarConfiguracoes = async (novaConfig: Partial<Omit<ConfiguracoesLoja, 'lojaAberta'>>) => {
+    try {
+      const updateData: Record<string, unknown> = {
+        updated_at: new Date().toISOString()
+      };
+
+      if (novaConfig.horarioAbertura) {
+        updateData.horario_abertura = novaConfig.horarioAbertura + ':00';
+      }
+      if (novaConfig.horarioFechamento) {
+        updateData.horario_fechamento = novaConfig.horarioFechamento + ':00';
+      }
+      if (novaConfig.diasFuncionamento) {
+        updateData.dias_funcionamento = novaConfig.diasFuncionamento;
+      }
+
+      const { error } = await supabase
+        .from('configuracoes_loja')
+        .update(updateData)
+        .neq('id', '00000000-0000-0000-0000-000000000000');
+      
+      if (error) throw error;
+      
+      setConfig(prev => ({ ...prev, ...novaConfig }));
+    } catch (error) {
+      console.error('Erro ao atualizar configurações:', error);
       throw error;
     }
   };
@@ -60,7 +121,18 @@ export function useLojaStatus(): LojaStatus {
           table: 'configuracoes_loja'
         },
         (payload) => {
-          setLojaAberta(payload.new.loja_aberta);
+          const data = payload.new as {
+            loja_aberta: boolean;
+            horario_abertura: string;
+            horario_fechamento: string;
+            dias_funcionamento: DiaSemana[];
+          };
+          setConfig({
+            lojaAberta: data.loja_aberta,
+            horarioAbertura: data.horario_abertura?.slice(0, 5) ?? '13:30',
+            horarioFechamento: data.horario_fechamento?.slice(0, 5) ?? '22:00',
+            diasFuncionamento: data.dias_funcionamento ?? ['domingo', 'segunda', 'terca', 'quarta', 'sexta', 'sabado']
+          });
         }
       )
       .subscribe();
@@ -71,9 +143,38 @@ export function useLojaStatus(): LojaStatus {
   }, []);
 
   return {
-    lojaAberta,
+    ...config,
     isLoading,
     toggleLoja,
+    atualizarConfiguracoes,
     refetch: fetchStatus
   };
+}
+
+// Utility function to check if store should be open based on schedule
+export function verificarHorarioFuncionamento(
+  horarioAbertura: string,
+  horarioFechamento: string,
+  diasFuncionamento: DiaSemana[]
+): boolean {
+  const agora = new Date();
+  const diaAtual = DIAS_MAP[agora.getDay()];
+  
+  // Check if today is a working day
+  if (!diasFuncionamento.includes(diaAtual)) {
+    return false;
+  }
+
+  // Check if current time is within working hours
+  const [horaAbertura, minAbertura] = horarioAbertura.split(':').map(Number);
+  const [horaFechamento, minFechamento] = horarioFechamento.split(':').map(Number);
+  
+  const horaAtual = agora.getHours();
+  const minAtual = agora.getMinutes();
+  
+  const minutosAbertura = horaAbertura * 60 + minAbertura;
+  const minutosFechamento = horaFechamento * 60 + minFechamento;
+  const minutosAtual = horaAtual * 60 + minAtual;
+
+  return minutosAtual >= minutosAbertura && minutosAtual < minutosFechamento;
 }

@@ -8,24 +8,35 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { DiaSemana } from '@/hooks/useLojaStatus';
 
 interface LojaFechadaModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  horarioAbertura: string;
+  horarioFechamento: string;
+  diasFuncionamento: DiaSemana[];
 }
 
-const HORARIO_ABERTURA = 13.5; // 13:30
-const HORARIO_FECHAMENTO = 22; // 22:00
+const DIAS_LABELS: Record<DiaSemana, string> = {
+  domingo: 'Domingo',
+  segunda: 'Segunda-feira',
+  terca: 'Terça-feira',
+  quarta: 'Quarta-feira',
+  quinta: 'Quinta-feira',
+  sexta: 'Sexta-feira',
+  sabado: 'Sábado',
+};
 
-const DIAS_FUNCIONAMENTO = [
-  { nome: 'Segunda-Feira', abre: true },
-  { nome: 'Terça-Feira', abre: true },
-  { nome: 'Quarta-Feira', abre: true },
-  { nome: 'Quinta-Feira', abre: false },
-  { nome: 'Sexta-Feira', abre: true },
-  { nome: 'Sábado', abre: true },
-  { nome: 'Domingo', abre: true },
-];
+const DIAS_MAP: Record<number, DiaSemana> = {
+  0: 'domingo',
+  1: 'segunda',
+  2: 'terca',
+  3: 'quarta',
+  4: 'quinta',
+  5: 'sexta',
+  6: 'sabado'
+};
 
 const MENSAGENS_CRIATIVAS = [
   "🍇 O açaí está descansando para ficar ainda mais gostoso!",
@@ -35,7 +46,13 @@ const MENSAGENS_CRIATIVAS = [
   "🍃 O açaí mais fresco da cidade volta já já!",
 ];
 
-export function LojaFechadaModal({ open, onOpenChange }: LojaFechadaModalProps) {
+export function LojaFechadaModal({ 
+  open, 
+  onOpenChange,
+  horarioAbertura,
+  horarioFechamento,
+  diasFuncionamento
+}: LojaFechadaModalProps) {
   const [tempoRestante, setTempoRestante] = useState('');
   const [mensagem] = useState(() => 
     MENSAGENS_CRIATIVAS[Math.floor(Math.random() * MENSAGENS_CRIATIVAS.length)]
@@ -44,35 +61,53 @@ export function LojaFechadaModal({ open, onOpenChange }: LojaFechadaModalProps) 
   useEffect(() => {
     const calcularTempoRestante = () => {
       const agora = new Date();
-      const diaAtual = agora.getDay(); // 0 = Domingo, 1 = Segunda...
-      const horaAtual = agora.getHours() + agora.getMinutes() / 60;
+      const diaAtualIndex = agora.getDay();
+      const diaAtual = DIAS_MAP[diaAtualIndex];
+      
+      const [horaAbertura, minAbertura] = horarioAbertura.split(':').map(Number);
+      const horaAtual = agora.getHours();
+      const minAtual = agora.getMinutes();
 
-      // Mapear dias da semana (JS usa 0=Dom, precisamos ajustar para nosso array)
-      const diasMap = [6, 0, 1, 2, 3, 4, 5]; // Dom=6, Seg=0, Ter=1...
-      const diaIndex = diasMap[diaAtual];
-
-      // Encontrar próximo horário de abertura
+      // Order days starting from current day
+      const diasOrdem: DiaSemana[] = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
+      
       let diasAteAbrir = 0;
-      let proximoDiaIndex = diaIndex;
+      let encontrou = false;
 
-      // Se estamos antes do horário de abertura hoje e a loja abre hoje
-      if (horaAtual < HORARIO_ABERTURA && DIAS_FUNCIONAMENTO[diaIndex].abre) {
-        diasAteAbrir = 0;
-      } else {
-        // Procurar próximo dia que abre
+      // If today is a working day and we're before opening time
+      if (diasFuncionamento.includes(diaAtual)) {
+        const minutosAbertura = horaAbertura * 60 + minAbertura;
+        const minutosAtual = horaAtual * 60 + minAtual;
+        
+        if (minutosAtual < minutosAbertura) {
+          diasAteAbrir = 0;
+          encontrou = true;
+        }
+      }
+
+      // Find next working day
+      if (!encontrou) {
         for (let i = 1; i <= 7; i++) {
-          proximoDiaIndex = (diaIndex + i) % 7;
-          if (DIAS_FUNCIONAMENTO[proximoDiaIndex].abre) {
+          const proximoDiaIndex = (diaAtualIndex + i) % 7;
+          const proximoDia = diasOrdem[proximoDiaIndex];
+          
+          if (diasFuncionamento.includes(proximoDia)) {
             diasAteAbrir = i;
+            encontrou = true;
             break;
           }
         }
       }
 
-      // Calcular tempo restante
+      if (!encontrou) {
+        setTempoRestante('Indisponível');
+        return;
+      }
+
+      // Calculate time until next opening
       const proximaAbertura = new Date(agora);
       proximaAbertura.setDate(proximaAbertura.getDate() + diasAteAbrir);
-      proximaAbertura.setHours(Math.floor(HORARIO_ABERTURA), (HORARIO_ABERTURA % 1) * 60, 0, 0);
+      proximaAbertura.setHours(horaAbertura, minAbertura, 0, 0);
 
       const diff = proximaAbertura.getTime() - agora.getTime();
       
@@ -96,10 +131,14 @@ export function LojaFechadaModal({ open, onOpenChange }: LojaFechadaModalProps) 
     };
 
     calcularTempoRestante();
-    const interval = setInterval(calcularTempoRestante, 60000); // Atualizar a cada minuto
+    const interval = setInterval(calcularTempoRestante, 60000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [horarioAbertura, diasFuncionamento]);
+
+  // Get days that are NOT working days
+  const diasFolga = (['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'] as DiaSemana[])
+    .filter(d => !diasFuncionamento.includes(d));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -128,7 +167,7 @@ export function LojaFechadaModal({ open, onOpenChange }: LojaFechadaModalProps) 
               <span className="font-semibold text-foreground">Horário de Atendimento</span>
             </div>
             <p className="text-center text-lg font-bold text-primary mb-4">
-              13:30 às 22:00
+              {horarioAbertura} às {horarioFechamento}
             </p>
 
             <div className="flex items-center gap-2 mb-3">
@@ -136,18 +175,20 @@ export function LojaFechadaModal({ open, onOpenChange }: LojaFechadaModalProps) 
               <span className="font-semibold text-foreground">Dias de Funcionamento</span>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              {DIAS_FUNCIONAMENTO.filter(d => d.abre).map((dia) => (
+              {diasFuncionamento.map((dia) => (
                 <div 
-                  key={dia.nome}
+                  key={dia}
                   className="bg-background rounded-lg px-3 py-2 text-center text-sm font-medium text-foreground"
                 >
-                  {dia.nome}
+                  {DIAS_LABELS[dia]}
                 </div>
               ))}
             </div>
-            <p className="text-xs text-muted-foreground text-center mt-3">
-              * Fechado às Quintas-Feiras
-            </p>
+            {diasFolga.length > 0 && (
+              <p className="text-xs text-muted-foreground text-center mt-3">
+                * Fechado: {diasFolga.map(d => DIAS_LABELS[d]).join(', ')}
+              </p>
+            )}
           </div>
         </div>
 
