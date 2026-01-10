@@ -3,8 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCarrinho } from '@/contexts/CarrinhoContext';
 import { usePedidoFavorito } from '@/hooks/usePedidoFavorito';
+import { useLojaStatus } from '@/hooks/useLojaStatus';
 import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
+import { LojaFechadaModal } from '@/components/LojaFechadaModal';
 import { ShoppingBag, ClipboardList, User, LogOut, ShoppingCart, Heart, RefreshCw, Loader2, Package } from 'lucide-react';
 import { TAMANHO_LABELS, EMBALAGEM_LABELS } from '@/types';
 import {
@@ -20,8 +22,17 @@ export default function ClienteHome() {
   const { user, logout } = useAuth();
   const { quantidadeTotal, adicionarItem } = useCarrinho();
   const { pedidoFavorito, isLoading: isLoadingFavorito } = usePedidoFavorito(user?.id);
+  const { lojaAberta, isLoading: isLoadingLoja } = useLojaStatus();
   const navigate = useNavigate();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showLojaFechadaModal, setShowLojaFechadaModal] = useState(false);
+
+  const handleNovoPedidoClick = (e: React.MouseEvent) => {
+    if (!lojaAberta) {
+      e.preventDefault();
+      setShowLojaFechadaModal(true);
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -29,6 +40,10 @@ export default function ClienteHome() {
   };
 
   const handleRepetirCompra = () => {
+    if (!lojaAberta) {
+      setShowLojaFechadaModal(true);
+      return;
+    }
     setShowConfirmModal(true);
   };
 
@@ -78,22 +93,29 @@ export default function ClienteHome() {
       <div className="container max-w-md mx-auto px-4 -mt-12">
         <div className="space-y-4 animate-fade-in-up">
           {/* Novo Pedido */}
-          <Link to="/novo-pedido">
-            <div className="bg-card rounded-2xl p-4 sm:p-6 shadow-float border border-border/50 flex items-center gap-3 sm:gap-4 hover:scale-[1.02] transition-transform">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 gradient-acai rounded-xl flex items-center justify-center shadow-button flex-shrink-0">
-                <ShoppingBag className="h-6 w-6 sm:h-7 sm:w-7 text-primary-foreground" />
+          <Link to={lojaAberta ? "/novo-pedido" : "#"} onClick={handleNovoPedidoClick}>
+            <div className={`bg-card rounded-2xl p-4 sm:p-6 shadow-float border border-border/50 flex items-center gap-3 sm:gap-4 hover:scale-[1.02] transition-transform ${!lojaAberta ? 'opacity-75' : ''}`}>
+              <div className={`w-12 h-12 sm:w-14 sm:h-14 ${lojaAberta ? 'gradient-acai' : 'bg-muted'} rounded-xl flex items-center justify-center shadow-button flex-shrink-0`}>
+                <ShoppingBag className={`h-6 w-6 sm:h-7 sm:w-7 ${lojaAberta ? 'text-primary-foreground' : 'text-muted-foreground'}`} />
               </div>
               <div className="flex-1 min-w-0">
                 <h2 className="font-display font-bold text-base sm:text-lg text-foreground">Novo Pedido</h2>
-                <p className="text-xs sm:text-sm text-muted-foreground">Monte seu açaí personalizado</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  {lojaAberta ? 'Monte seu açaí personalizado' : 'Loja fechada no momento'}
+                </p>
               </div>
-              {quantidadeTotal > 0 && (
+              {quantidadeTotal > 0 && lojaAberta && (
                 <div className="relative flex-shrink-0">
                   <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                   <span className="absolute -top-2 -right-2 bg-accent text-accent-foreground text-xs font-bold w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center">
                     {quantidadeTotal}
                   </span>
                 </div>
+              )}
+              {!lojaAberta && (
+                <span className="text-xs bg-destructive/10 text-destructive px-2 py-1 rounded-full font-medium flex-shrink-0">
+                  Fechada
+                </span>
               )}
             </div>
           </Link>
@@ -263,6 +285,12 @@ export default function ClienteHome() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal Loja Fechada */}
+      <LojaFechadaModal 
+        open={showLojaFechadaModal} 
+        onOpenChange={setShowLojaFechadaModal} 
+      />
     </div>
   );
 }

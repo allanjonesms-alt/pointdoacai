@@ -62,6 +62,27 @@ export type Database = {
         }
         Relationships: []
       }
+      configuracoes_loja: {
+        Row: {
+          created_at: string
+          id: string
+          loja_aberta: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          loja_aberta?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          loja_aberta?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       enderecos: {
         Row: {
           bairro: string
