@@ -151,13 +151,17 @@ export function useLojaStatus(): LojaStatus {
   };
 }
 
-// Utility function to check if store should be open based on schedule
+// Utility function to check if store should be open based on schedule (using UTC-4)
 export function verificarHorarioFuncionamento(
   horarioAbertura: string,
   horarioFechamento: string,
   diasFuncionamento: DiaSemana[]
 ): boolean {
-  const agora = new Date();
+  // Usar UTC-4 (horário de Manaus/Amazonas)
+  const agoraUTC = new Date();
+  const offsetUTC4 = -4 * 60; // UTC-4 em minutos
+  const agora = new Date(agoraUTC.getTime() + (agoraUTC.getTimezoneOffset() + offsetUTC4) * 60000);
+  
   const diaAtual = DIAS_MAP[agora.getDay()];
   
   // Check if today is a working day

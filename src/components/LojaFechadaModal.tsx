@@ -60,7 +60,11 @@ export function LojaFechadaModal({
 
   useEffect(() => {
     const calcularTempoRestante = () => {
-      const agora = new Date();
+      // Usar UTC-4 (horário de Manaus/Amazonas)
+      const agoraUTC = new Date();
+      const offsetUTC4 = -4 * 60; // UTC-4 em minutos
+      const agora = new Date(agoraUTC.getTime() + (agoraUTC.getTimezoneOffset() + offsetUTC4) * 60000);
+      
       const diaAtualIndex = agora.getDay();
       const diaAtual = DIAS_MAP[diaAtualIndex];
       
@@ -104,7 +108,7 @@ export function LojaFechadaModal({
         return;
       }
 
-      // Calculate time until next opening
+      // Calculate time until next opening (in UTC-4)
       const proximaAbertura = new Date(agora);
       proximaAbertura.setDate(proximaAbertura.getDate() + diasAteAbrir);
       proximaAbertura.setHours(horaAbertura, minAbertura, 0, 0);
