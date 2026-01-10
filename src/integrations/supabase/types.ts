@@ -65,18 +65,27 @@ export type Database = {
       configuracoes_loja: {
         Row: {
           created_at: string
+          dias_funcionamento: Json
+          horario_abertura: string
+          horario_fechamento: string
           id: string
           loja_aberta: boolean
           updated_at: string
         }
         Insert: {
           created_at?: string
+          dias_funcionamento?: Json
+          horario_abertura?: string
+          horario_fechamento?: string
           id?: string
           loja_aberta?: boolean
           updated_at?: string
         }
         Update: {
           created_at?: string
+          dias_funcionamento?: Json
+          horario_abertura?: string
+          horario_fechamento?: string
           id?: string
           loja_aberta?: boolean
           updated_at?: string

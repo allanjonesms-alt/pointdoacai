@@ -5,7 +5,7 @@ import { usePedidos } from '@/contexts/PedidosContext';
 import { Logo } from '@/components/Logo';
 import { StatusProgressBar } from '@/components/StatusProgressBar';
 import { StatusPedido, TAMANHO_LABELS, Pedido } from '@/types';
-import { LogOut, Users, Package, Plus, Clock, Loader2, BarChart3, MapPin, Store, StoreIcon } from 'lucide-react';
+import { LogOut, Users, Package, Plus, Clock, Loader2, BarChart3, MapPin, Store, Settings } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +14,7 @@ import { PedidoDetalheModal } from '@/components/admin/PedidoDetalheModal';
 import { useLojaStatus } from '@/hooks/useLojaStatus';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
+import { ConfiguracaoLojaModal } from '@/components/admin/ConfiguracaoLojaModal';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -31,7 +32,8 @@ export default function AdminDashboard() {
   } = useNotificationSound();
   const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const { lojaAberta, isLoading: isLoadingLoja, toggleLoja } = useLojaStatus();
+  const [showConfigModal, setShowConfigModal] = useState(false);
+  const { lojaAberta, horarioAbertura, horarioFechamento, diasFuncionamento, isLoading: isLoadingLoja, toggleLoja, atualizarConfiguracoes } = useLojaStatus();
 
   const handleToggleLoja = async () => {
     try {
@@ -90,7 +92,7 @@ export default function AdminDashboard() {
       <div className="gradient-hero py-6 px-4">
         <div className="container max-w-4xl mx-auto flex items-center justify-between">
           <Logo size="sm" />
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {/* Toggle Loja */}
             <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-3 py-1.5">
               <Store className={`h-4 w-4 ${lojaAberta ? 'text-green-300' : 'text-red-300'}`} />
@@ -104,6 +106,13 @@ export default function AdminDashboard() {
                 className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-red-500"
               />
             </div>
+            {/* Config Button */}
+            <button 
+              onClick={() => setShowConfigModal(true)}
+              className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-primary-foreground/80 hover:text-primary-foreground hover:bg-white/20 transition-colors"
+            >
+              <Settings className="h-4 w-4" />
+            </button>
             <button onClick={handleLogout} className="text-primary-foreground/80 hover:text-primary-foreground">
               <LogOut className="h-5 w-5" />
             </button>
@@ -239,5 +248,13 @@ export default function AdminDashboard() {
 
       {/* Modal de Detalhes do Pedido */}
       <PedidoDetalheModal pedido={selectedPedido} open={modalOpen} onOpenChange={setModalOpen} onAdvanceStatus={handleAdvanceStatus} />
+
+      {/* Modal de Configuração */}
+      <ConfiguracaoLojaModal 
+        open={showConfigModal} 
+        onOpenChange={setShowConfigModal}
+        config={{ horarioAbertura, horarioFechamento, diasFuncionamento }}
+        onSave={atualizarConfiguracoes}
+      />
     </div>;
 }

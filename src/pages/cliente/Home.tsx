@@ -22,7 +22,7 @@ export default function ClienteHome() {
   const { user, logout } = useAuth();
   const { quantidadeTotal, adicionarItem } = useCarrinho();
   const { pedidoFavorito, isLoading: isLoadingFavorito } = usePedidoFavorito(user?.id);
-  const { lojaAberta, isLoading: isLoadingLoja } = useLojaStatus();
+  const { lojaAberta, horarioAbertura, horarioFechamento, diasFuncionamento, isLoading: isLoadingLoja } = useLojaStatus();
   const navigate = useNavigate();
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showLojaFechadaModal, setShowLojaFechadaModal] = useState(false);
@@ -289,7 +289,10 @@ export default function ClienteHome() {
       {/* Modal Loja Fechada */}
       <LojaFechadaModal 
         open={showLojaFechadaModal} 
-        onOpenChange={setShowLojaFechadaModal} 
+        onOpenChange={setShowLojaFechadaModal}
+        horarioAbertura={horarioAbertura}
+        horarioFechamento={horarioFechamento}
+        diasFuncionamento={diasFuncionamento}
       />
     </div>
   );
