@@ -89,33 +89,69 @@ export default function AdminDashboard() {
   };
   return <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="gradient-hero py-6 px-4">
-        <div className="container max-w-4xl mx-auto flex items-center justify-between">
-          <Logo size="sm" />
-          <div className="flex items-center gap-2">
-            {/* Toggle Loja */}
-            <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-3 py-1.5">
-              <Store className={`h-4 w-4 ${lojaAberta ? 'text-green-300' : 'text-red-300'}`} />
-              <span className="text-xs font-medium text-primary-foreground/90 hidden sm:inline">
-                {lojaAberta ? 'Aberta' : 'Fechada'}
-              </span>
-              <Switch 
-                checked={lojaAberta}
-                onCheckedChange={handleToggleLoja}
-                disabled={isLoadingLoja}
-                className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-red-500"
-              />
+      <div className="gradient-hero py-4 sm:py-6 px-4">
+        <div className="container max-w-4xl mx-auto">
+          {/* Desktop Layout */}
+          <div className="hidden sm:flex items-center justify-between">
+            <Logo size="sm" />
+            <div className="flex items-center gap-2">
+              {/* Toggle Loja */}
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-3 py-1.5">
+                <Store className={`h-4 w-4 ${lojaAberta ? 'text-green-300' : 'text-red-300'}`} />
+                <span className="text-xs font-medium text-primary-foreground/90">
+                  {lojaAberta ? 'Aberta' : 'Fechada'}
+                </span>
+                <Switch 
+                  checked={lojaAberta}
+                  onCheckedChange={handleToggleLoja}
+                  disabled={isLoadingLoja}
+                  className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-red-500"
+                />
+              </div>
+              {/* Config Button */}
+              <button 
+                onClick={() => setShowConfigModal(true)}
+                className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-primary-foreground/80 hover:text-primary-foreground hover:bg-white/20 transition-colors"
+              >
+                <Settings className="h-4 w-4" />
+              </button>
+              <button onClick={handleLogout} className="text-primary-foreground/80 hover:text-primary-foreground">
+                <LogOut className="h-5 w-5" />
+              </button>
             </div>
-            {/* Config Button */}
-            <button 
-              onClick={() => setShowConfigModal(true)}
-              className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-primary-foreground/80 hover:text-primary-foreground hover:bg-white/20 transition-colors"
-            >
-              <Settings className="h-4 w-4" />
-            </button>
-            <button onClick={handleLogout} className="text-primary-foreground/80 hover:text-primary-foreground">
-              <LogOut className="h-5 w-5" />
-            </button>
+          </div>
+
+          {/* Mobile Layout */}
+          <div className="sm:hidden">
+            <div className="flex items-center justify-between mb-3">
+              <Logo size="sm" />
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => setShowConfigModal(true)}
+                  className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-primary-foreground/80 hover:text-primary-foreground hover:bg-white/20 transition-colors"
+                >
+                  <Settings className="h-4 w-4" />
+                </button>
+                <button onClick={handleLogout} className="text-primary-foreground/80 hover:text-primary-foreground">
+                  <LogOut className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+            {/* Toggle Loja - Segunda linha no mobile */}
+            <div className="flex justify-center">
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2">
+                <Store className={`h-4 w-4 ${lojaAberta ? 'text-green-300' : 'text-red-300'}`} />
+                <span className="text-xs font-medium text-primary-foreground/90">
+                  {lojaAberta ? 'Loja Aberta' : 'Loja Fechada'}
+                </span>
+                <Switch 
+                  checked={lojaAberta}
+                  onCheckedChange={handleToggleLoja}
+                  disabled={isLoadingLoja}
+                  className="data-[state=checked]:bg-green-500 data-[state=unchecked]:bg-red-500"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
