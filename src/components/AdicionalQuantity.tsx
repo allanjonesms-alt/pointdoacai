@@ -30,35 +30,35 @@ export function AdicionalQuantity({ nome, quantidade, onQuantidadeChange, gratui
   return (
     <div
       className={cn(
-        'relative flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all duration-200',
+        'relative flex flex-col px-3 py-2 rounded-xl border-2 transition-all duration-200',
         isSelected
           ? 'border-primary bg-primary/10'
           : 'border-border bg-card hover:border-primary/50 hover:bg-muted'
       )}
     >
       <span className={cn(
-        'font-medium text-sm',
+        'font-medium text-sm truncate',
         isSelected ? 'text-primary' : 'text-foreground'
       )}>
         {nome}
       </span>
       
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-center gap-2 mt-2">
         <button
           onClick={handleDecrease}
           disabled={quantidade === 0}
           className={cn(
-            'w-8 h-8 rounded-full flex items-center justify-center transition-all',
+            'w-7 h-7 rounded-full flex items-center justify-center transition-all',
             quantidade === 0
               ? 'bg-muted text-muted-foreground cursor-not-allowed'
               : 'bg-violet-500 hover:bg-violet-600 text-white'
           )}
         >
-          <Minus className="w-4 h-4" />
+          <Minus className="w-3 h-3" />
         </button>
         
         <span className={cn(
-          'w-8 text-center font-bold text-lg',
+          'w-6 text-center font-bold text-base',
           isSelected ? 'text-primary' : 'text-muted-foreground'
         )}>
           {quantidade}
@@ -66,9 +66,9 @@ export function AdicionalQuantity({ nome, quantidade, onQuantidadeChange, gratui
         
         <button
           onClick={handleIncrease}
-          className="w-8 h-8 rounded-full bg-violet-600 hover:bg-violet-700 text-white flex items-center justify-center transition-all"
+          className="w-7 h-7 rounded-full bg-violet-600 hover:bg-violet-700 text-white flex items-center justify-center transition-all"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-3 h-3" />
         </button>
       </div>
 
