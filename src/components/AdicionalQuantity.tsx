@@ -2,6 +2,41 @@ import React from 'react';
 import { Minus, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+// Mapeamento de adicionais para emojis
+const ADICIONAL_EMOJIS: Record<string, string> = {
+  'Leite em Pó': '🥛',
+  'Leite Condensado': '🍼',
+  'Granola': '🥣',
+  'Banana': '🍌',
+  'Morango': '🍓',
+  'Kiwi': '🥝',
+  'Paçoca': '🥜',
+  'Mel': '🍯',
+  'Nutella': '🍫',
+  'Amendoim': '🥜',
+  'Coco Ralado': '🥥',
+  'Chocolate Granulado': '🍫',
+  'Uva': '🍇',
+  'Manga': '🥭',
+  'Maçã': '🍎',
+  'Abacaxi': '🍍',
+  'Laranja': '🍊',
+  'Limão': '🍋',
+  'Cereja': '🍒',
+  'Pêssego': '🍑',
+  'Aveia': '🌾',
+  'Castanha': '🌰',
+  'Confete': '🎊',
+  'Biscoito': '🍪',
+  'Doce de Leite': '🥄',
+  'Caramelo': '🍬',
+  'Açúcar': '🧂',
+};
+
+const getAdicionalEmoji = (nome: string): string => {
+  return ADICIONAL_EMOJIS[nome] || '✨';
+};
+
 interface AdicionalQuantityProps {
   nome: string;
   quantidade: number;
@@ -11,6 +46,7 @@ interface AdicionalQuantityProps {
 
 export function AdicionalQuantity({ nome, quantidade, onQuantidadeChange, gratuitos }: AdicionalQuantityProps) {
   const isSelected = quantidade > 0;
+  const emoji = getAdicionalEmoji(nome);
   
   // Calcular quantos são pagos (acima do limite gratuito)
   const quantidadePaga = Math.max(0, quantidade - gratuitos);
@@ -36,12 +72,15 @@ export function AdicionalQuantity({ nome, quantidade, onQuantidadeChange, gratui
           : 'border-border bg-card hover:border-primary/50 hover:bg-muted'
       )}
     >
-      <span className={cn(
-        'font-medium text-sm truncate',
-        isSelected ? 'text-primary' : 'text-foreground'
-      )}>
-        {nome}
-      </span>
+      <div className="flex items-center gap-1.5">
+        <span className="text-base">{emoji}</span>
+        <span className={cn(
+          'font-medium text-sm truncate',
+          isSelected ? 'text-primary' : 'text-foreground'
+        )}>
+          {nome}
+        </span>
+      </div>
       
       <div className="flex items-center justify-center gap-2 mt-2">
         <button
