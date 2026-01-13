@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Produto, TAMANHO_LABELS, TipoEmbalagem, EMBALAGEM_LABELS } from '@/types';
+import { TAMANHO_LABELS, TipoEmbalagem, EMBALAGEM_LABELS } from '@/types';
 import { useCarrinho } from '@/contexts/CarrinhoContext';
-import { ProductCard } from '@/components/ProductCard';
+import { ProductCardCompact } from '@/components/ProductCardCompact';
 import { AdicionalQuantity } from '@/components/AdicionalQuantity';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { useProdutos, TipoAdicional, TIPO_ADICIONAL_LABELS } from '@/hooks/useProdutos';
+import { useProdutos, TipoAdicional, TIPO_ADICIONAL_LABELS, CategoriaProduto, CATEGORIA_LABELS, ProdutoDB } from '@/hooks/useProdutos';
 import { ArrowLeft, ShoppingCart, ShoppingBag, AlertCircle, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import isoporImage from '@/assets/isopor-acai.png';
@@ -17,7 +17,7 @@ export default function NovoPedido() {
   const { adicionarItem, quantidadeTotal } = useCarrinho();
   const { toast } = useToast();
   const [step, setStep] = useState<'tamanho' | 'embalagem' | 'adicionais'>('tamanho');
-  const [produtoSelecionado, setProdutoSelecionado] = useState<Produto | null>(null);
+  const [produtoSelecionado, setProdutoSelecionado] = useState<ProdutoDB | null>(null);
   const [embalagemSelecionada, setEmbalagemSelecionada] = useState<TipoEmbalagem | null>(null);
   const [adicionaisQuantidades, setAdicionaisQuantidades] = useState<Record<string, number>>({});
 
@@ -26,17 +26,29 @@ export default function NovoPedido() {
   const produtosAtivos = produtos.filter(p => p.ativo);
   const adicionaisAtivos = adicionais.filter(a => a.ativo);
 
+  // Agrupar produtos por categoria
+  const categoriasOrdem: CategoriaProduto[] = ['acai', 'barcas', 'sorvetes', 'picoles', 'bebidas'];
+  const produtosPorCategoria = useMemo(() => {
+    return categoriasOrdem
+      .map(cat => ({
+        categoria: cat,
+        label: CATEGORIA_LABELS[cat],
+        items: produtosAtivos.filter(p => p.categoria === cat),
+      }))
+      .filter(grupo => grupo.items.length > 0);
+  }, [produtosAtivos]);
+
   // Ordenar adicionais por categoria: Frutas primeiro, depois Doces
-  const categoriasOrdenadas: TipoAdicional[] = ['frutas', 'doces', 'cereais'];
+  const categoriasAdicionaisOrdenadas: TipoAdicional[] = ['frutas', 'doces', 'cereais'];
   const adicionaisOrdenados = [...adicionaisAtivos].sort((a, b) => {
-    const indexA = categoriasOrdenadas.indexOf(a.tipo);
-    const indexB = categoriasOrdenadas.indexOf(b.tipo);
+    const indexA = categoriasAdicionaisOrdenadas.indexOf(a.tipo);
+    const indexB = categoriasAdicionaisOrdenadas.indexOf(b.tipo);
     if (indexA !== indexB) return indexA - indexB;
     return a.nome.localeCompare(b.nome);
   });
 
   // Agrupar por categoria
-  const adicionaisPorCategoria = categoriasOrdenadas
+  const adicionaisPorCategoria = categoriasAdicionaisOrdenadas
     .map(tipo => ({
       tipo,
       label: TIPO_ADICIONAL_LABELS[tipo],
@@ -44,7 +56,7 @@ export default function NovoPedido() {
     }))
     .filter(grupo => grupo.items.length > 0);
 
-  const handleSelectProduto = (produto: Produto) => {
+  const handleSelectProduto = (produto: ProdutoDB) => {
     setProdutoSelecionado(produto);
     setStep('embalagem');
     setEmbalagemSelecionada(null);
@@ -88,7 +100,18 @@ export default function NovoPedido() {
   const handleAddToCart = (goToCart: boolean = false) => {
     if (!produtoSelecionado || !embalagemSelecionada) return;
 
-    adicionarItem(produtoSelecionado, getAdicionaisArray(), embalagemSelecionada);
+    // Converter ProdutoDB para Produto
+    const produtoParaCarrinho = {
+      id: produtoSelecionado.id,
+      nome: produtoSelecionado.nome,
+      tamanho: produtoSelecionado.tamanho,
+      peso: produtoSelecionado.peso,
+      preco: produtoSelecionado.preco,
+      ativo: produtoSelecionado.ativo,
+      imagem_url: produtoSelecionado.imagem_url,
+    };
+
+    adicionarItem(produtoParaCarrinho, getAdicionaisArray(), embalagemSelecionada);
     toast({
       title: 'Adicionado ao carrinho!',
       description: `Açaí ${TAMANHO_LABELS[produtoSelecionado.tamanho]} (${EMBALAGEM_LABELS[embalagemSelecionada]}) adicionado.`,
@@ -118,7 +141,7 @@ export default function NovoPedido() {
 
   const getTitle = () => {
     switch (step) {
-      case 'tamanho': return 'Escolha o Tamanho';
+      case 'tamanho': return 'Escolha o Produto';
       case 'embalagem': return 'Escolha a Embalagem';
       case 'adicionais': return 'Adicionais';
     }
@@ -135,7 +158,7 @@ export default function NovoPedido() {
           >
             <ArrowLeft className="h-5 w-5" />
             <span className="font-medium">
-              {step === 'adicionais' ? 'Embalagem' : step === 'embalagem' ? 'Tamanhos' : 'Voltar'}
+              {step === 'adicionais' ? 'Embalagem' : step === 'embalagem' ? 'Produtos' : 'Voltar'}
             </span>
           </button>
 
@@ -156,14 +179,23 @@ export default function NovoPedido() {
 
       <div className="container max-w-md mx-auto px-4 py-6">
         {step === 'tamanho' && (
-          <div className="grid grid-cols-2 gap-4 animate-fade-in">
-            {produtosAtivos.map((produto) => (
-              <ProductCard
-                key={produto.id}
-                produto={produto}
-                onSelect={handleSelectProduto}
-                selected={produtoSelecionado?.id === produto.id}
-              />
+          <div className="animate-fade-in space-y-6">
+            {produtosPorCategoria.map((grupo) => (
+              <div key={grupo.categoria}>
+                <h3 className="text-sm font-semibold text-primary uppercase tracking-wide mb-3">
+                  {grupo.label}
+                </h3>
+                <div className="grid grid-cols-3 gap-2">
+                  {grupo.items.map((produto) => (
+                    <ProductCardCompact
+                      key={produto.id}
+                      produto={produto}
+                      onSelect={handleSelectProduto}
+                      selected={produtoSelecionado?.id === produto.id}
+                    />
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         )}
