@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Minus, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -47,35 +47,59 @@ interface AdicionalQuantityProps {
 export function AdicionalQuantity({ nome, quantidade, onQuantidadeChange, gratuitos }: AdicionalQuantityProps) {
   const isSelected = quantidade > 0;
   const emoji = getAdicionalEmoji(nome);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [quantityBounce, setQuantityBounce] = useState(false);
   
   // Calcular quantos são pagos (acima do limite gratuito)
   const quantidadePaga = Math.max(0, quantidade - gratuitos);
 
+  // Trigger bounce animation on quantity change
+  useEffect(() => {
+    if (quantidade > 0) {
+      setQuantityBounce(true);
+      const timer = setTimeout(() => setQuantityBounce(false), 200);
+      return () => clearTimeout(timer);
+    }
+  }, [quantidade]);
+
   const handleDecrease = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (quantidade > 0) {
+      setIsAnimating(true);
       onQuantidadeChange(quantidade - 1);
+      setTimeout(() => setIsAnimating(false), 200);
     }
   };
 
   const handleIncrease = (e: React.MouseEvent) => {
     e.stopPropagation();
+    setIsAnimating(true);
     onQuantidadeChange(quantidade + 1);
+    setTimeout(() => setIsAnimating(false), 200);
   };
 
   return (
     <div
       className={cn(
-        'relative flex flex-col px-3 py-2 rounded-xl border-2 transition-all duration-200',
+        'relative flex flex-col px-3 py-2 rounded-xl border-2 transition-all duration-300 ease-out',
         isSelected
-          ? 'border-primary bg-primary/10'
-          : 'border-border bg-card hover:border-primary/50 hover:bg-muted'
+          ? 'border-primary bg-primary/10 scale-[1.02] shadow-md'
+          : 'border-border bg-card hover:border-primary/50 hover:bg-muted hover:scale-[1.01]',
+        isAnimating && 'scale-[1.05]'
       )}
     >
-      <div className="flex items-center gap-1.5">
-        <span className="text-base">{emoji}</span>
+      <div className={cn(
+        "flex items-center gap-1.5 transition-transform duration-200",
+        isSelected && "translate-x-0.5"
+      )}>
         <span className={cn(
-          'font-medium text-sm truncate',
+          "text-base transition-transform duration-300",
+          isSelected && "scale-110"
+        )}>
+          {emoji}
+        </span>
+        <span className={cn(
+          'font-medium text-sm truncate transition-colors duration-200',
           isSelected ? 'text-primary' : 'text-foreground'
         )}>
           {nome}
@@ -87,32 +111,36 @@ export function AdicionalQuantity({ nome, quantidade, onQuantidadeChange, gratui
           onClick={handleDecrease}
           disabled={quantidade === 0}
           className={cn(
-            'w-7 h-7 rounded-full flex items-center justify-center transition-all',
+            'w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200 active:scale-90',
             quantidade === 0
               ? 'bg-muted text-muted-foreground cursor-not-allowed'
-              : 'bg-violet-500 hover:bg-violet-600 text-white'
+              : 'bg-violet-500 hover:bg-violet-600 hover:scale-110 text-white shadow-sm'
           )}
         >
           <Minus className="w-3 h-3" />
         </button>
         
         <span className={cn(
-          'w-6 text-center font-bold text-base',
-          isSelected ? 'text-primary' : 'text-muted-foreground'
+          'w-6 text-center font-bold text-base transition-all duration-200',
+          isSelected ? 'text-primary' : 'text-muted-foreground',
+          quantityBounce && 'scale-125'
         )}>
           {quantidade}
         </span>
         
         <button
           onClick={handleIncrease}
-          className="w-7 h-7 rounded-full bg-violet-600 hover:bg-violet-700 text-white flex items-center justify-center transition-all"
+          className="w-7 h-7 rounded-full bg-violet-600 hover:bg-violet-700 hover:scale-110 active:scale-90 text-white flex items-center justify-center transition-all duration-200 shadow-sm"
         >
           <Plus className="w-3 h-3" />
         </button>
       </div>
 
       {quantidadePaga > 0 && (
-        <span className="absolute -top-2 -right-2 bg-accent text-accent-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+        <span className={cn(
+          "absolute -top-2 -right-2 bg-accent text-accent-foreground text-[10px] font-bold px-1.5 py-0.5 rounded-full",
+          "animate-scale-in shadow-sm"
+        )}>
           +R${(quantidadePaga * 2).toFixed(0)}
         </span>
       )}
