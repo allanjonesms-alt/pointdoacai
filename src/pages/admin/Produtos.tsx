@@ -294,7 +294,7 @@ export default function AdminProdutos() {
                   </span>
                   {TIPO_ADICIONAL_LABELS[tipo]}
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   {(adicionaisByType[tipo] || []).map((adicional) => (
                     <div
                       key={adicional.id}
