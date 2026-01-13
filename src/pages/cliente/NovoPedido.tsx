@@ -278,7 +278,7 @@ export default function NovoPedido() {
                   <h4 className="text-sm font-semibold text-primary uppercase tracking-wide">
                     {categoria.label}
                   </h4>
-                  <div className="grid grid-cols-1 gap-3">
+                  <div className="grid grid-cols-2 gap-3">
                     {categoria.items.map((adicional) => {
                       const quantidade = adicionaisQuantidades[adicional.nome] || 0;
                       // Calcula quantos gratuitos ainda restam para este adicional
