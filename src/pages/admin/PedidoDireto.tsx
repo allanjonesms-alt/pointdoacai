@@ -469,7 +469,7 @@ export default function PedidoDireto() {
                       <span>{emoji}</span>
                       {TIPO_ADICIONAL_LABELS[tipo]}
                     </h4>
-                    <div className="grid grid-cols-1 gap-3">
+                    <div className="grid grid-cols-2 gap-3">
                       {adicionaisDoTipo.map((adicional) => {
                         const quantidade = adicionaisQuantidades[adicional.nome] || 0;
                         const adicionaisAnteriores = Object.entries(adicionaisQuantidades)
