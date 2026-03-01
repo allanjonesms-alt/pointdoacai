@@ -9,6 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { Pedido, StatusPedido } from '@/types';
+import { PedidoDetalheModal } from '@/components/admin/PedidoDetalheModal';
+import { toast } from 'sonner';
 
 interface PedidoData {
   id: string;
@@ -47,6 +50,88 @@ export default function AdminRelatorios() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [pedidosDia, setPedidosDia] = useState<PedidoDiaDetalhado[]>([]);
   const [isLoadingDia, setIsLoadingDia] = useState(false);
+  const [pedidoDetalhe, setPedidoDetalhe] = useState<Pedido | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [isLoadingDetalhe, setIsLoadingDetalhe] = useState(false);
+
+  const handlePedidoClick = async (pedidoId: string) => {
+    setIsLoadingDetalhe(true);
+    try {
+      const { data, error } = await supabase
+        .from('pedidos')
+        .select(`
+          *,
+          pedido_itens (
+            *,
+            pedido_item_adicionais (*)
+          )
+        `)
+        .eq('id', pedidoId)
+        .single();
+
+      if (error) throw error;
+
+      const pedidoFormatado: Pedido = {
+        id: data.id,
+        numeroPedido: data.numero_pedido,
+        clienteId: data.cliente_id || '',
+        clienteNome: data.cliente_nome,
+        enderecoEntrega: {
+          rua: data.endereco_rua,
+          numero: data.endereco_numero,
+          bairro: data.endereco_bairro,
+          complemento: data.endereco_complemento || undefined,
+          referencia: data.endereco_referencia || undefined,
+        },
+        formaPagamento: data.forma_pagamento,
+        status: data.status,
+        valorTotal: Number(data.valor_total),
+        dataHora: new Date(data.created_at),
+        itens: (data.pedido_itens || []).map((item: any) => ({
+          id: item.id,
+          produto: {
+            id: item.produto_id || '',
+            nome: item.produto_nome,
+            tamanho: item.tamanho,
+            peso: item.peso,
+            preco: Number(item.valor_unitario),
+            ativo: true,
+          },
+          quantidade: item.quantidade,
+          adicionais: (item.pedido_item_adicionais || []).map((a: any) => a.adicional_nome),
+          embalagem: item.embalagem || 'copo',
+          valorUnitario: Number(item.valor_unitario),
+          valorAdicionais: Number(item.valor_adicionais),
+        })),
+      };
+
+      setPedidoDetalhe(pedidoFormatado);
+      setModalOpen(true);
+    } catch (err) {
+      console.error('Erro ao buscar detalhes do pedido:', err);
+      toast.error('Erro ao carregar detalhes do pedido');
+    } finally {
+      setIsLoadingDetalhe(false);
+    }
+  };
+
+  const handleAdvanceStatus = async (pedidoId: string, newStatus: StatusPedido) => {
+    try {
+      const { error } = await supabase
+        .from('pedidos')
+        .update({ status: newStatus })
+        .eq('id', pedidoId);
+
+      if (error) throw error;
+
+      setPedidoDetalhe(prev => prev ? { ...prev, status: newStatus } : null);
+      setPedidosDia(prev => prev.map(p => p.id === pedidoId ? { ...p, status: newStatus } : p));
+      toast.success('Status atualizado!');
+    } catch (err) {
+      console.error('Erro ao atualizar status:', err);
+      toast.error('Erro ao atualizar status');
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -366,7 +451,8 @@ export default function AdminRelatorios() {
                       {pedidosDia.map((pedido) => (
                         <div
                           key={pedido.id}
-                          className="flex items-center justify-between bg-muted/30 rounded-lg p-3 text-sm"
+                          className="flex items-center justify-between bg-muted/30 rounded-lg p-3 text-sm cursor-pointer hover:bg-muted/60 transition-colors"
+                          onClick={() => handlePedidoClick(pedido.id)}
                         >
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
@@ -596,6 +682,13 @@ export default function AdminRelatorios() {
           </div>
         </div>
       </div>
+
+      <PedidoDetalheModal
+        pedido={pedidoDetalhe}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        onAdvanceStatus={handleAdvanceStatus}
+      />
     </div>
   );
 }
