@@ -682,6 +682,13 @@ export default function AdminRelatorios() {
           </div>
         </div>
       </div>
+
+      <PedidoDetalheModal
+        pedido={pedidoDetalhe}
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        onAdvanceStatus={handleAdvanceStatus}
+      />
     </div>
   );
 }
