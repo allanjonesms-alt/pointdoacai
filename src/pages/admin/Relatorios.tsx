@@ -87,6 +87,9 @@ export default function AdminRelatorios() {
         status: data.status,
         valorTotal: Number(data.valor_total),
         dataHora: new Date(data.created_at),
+        pixPaymentId: (data as any).pix_payment_id || null,
+        pixPagoEm: (data as any).pix_pago_em || null,
+        pixConfirmacao: (data as any).pix_confirmacao || null,
         itens: (data.pedido_itens || []).map((item: any) => ({
           id: item.id,
           produto: {
