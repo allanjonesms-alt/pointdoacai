@@ -190,10 +190,10 @@ export default function PedidoDireto() {
   const taxaEntrega = itensCarrinho.length > 0 && modoEntrega === 'entrega' ? TAXA_ENTREGA : 0;
   const calcularTotal = () => calcularSubtotal() + taxaEntrega;
 
-  const handleFinalizarPedido = () => {
+  const handleFinalizarPedido = async () => {
     if (!clienteInfo) return;
 
-    const numeroPedido = criarPedido(
+    const result = await criarPedido(
       clienteInfo.id,
       clienteInfo.nome,
       {
