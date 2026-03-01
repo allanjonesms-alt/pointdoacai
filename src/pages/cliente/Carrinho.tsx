@@ -497,6 +497,7 @@ export default function Carrinho() {
           <PixQRCode
             valor={total}
             descricao={`Pedido #${numeroPedidoAtual}`}
+            pedidoId={pedidoIdAtual || undefined}
             onSuccess={handlePixSuccess}
             onCancel={handlePixCancel}
           />
