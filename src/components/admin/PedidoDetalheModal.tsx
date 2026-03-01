@@ -2,7 +2,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Pedido, TAMANHO_LABELS, EMBALAGEM_LABELS } from '@/types';
 import { StatusProgressBar } from '@/components/StatusProgressBar';
-import { Clock, MapPin, CreditCard, User, Package } from 'lucide-react';
+import { Clock, MapPin, CreditCard, User, Package, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { StatusPedido } from '@/types';
@@ -22,6 +22,14 @@ export function PedidoDetalheModal({ pedido, open, onOpenChange, onAdvanceStatus
     debito: 'Cartão de Débito',
     pix: 'PIX',
     dinheiro: 'Dinheiro',
+  };
+
+  const handleAdvanceStatus = (newStatus: StatusPedido) => {
+    // Block advancing to "confirmado" if PIX and not paid
+    if (pedido.formaPagamento === 'pix' && newStatus === 'confirmado' && !pedido.pixPagoEm) {
+      return;
+    }
+    onAdvanceStatus(pedido.id, newStatus);
   };
 
   return (
@@ -126,13 +134,45 @@ export function PedidoDetalheModal({ pedido, open, onOpenChange, onAdvanceStatus
                 R$ {pedido.valorTotal.toFixed(2).replace('.', ',')}
               </span>
             </div>
+
+            {/* PIX Payment Details */}
+            {pedido.formaPagamento === 'pix' && (
+              <div className="mt-3 pt-3 border-t border-border/50 space-y-2">
+                {pedido.pixPagoEm ? (
+                  <>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      <span className="text-sm font-medium text-green-600">PIX Confirmado</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Pago em: {format(new Date(pedido.pixPagoEm), "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })}
+                    </p>
+                    {pedido.pixConfirmacao && (
+                      <p className="text-xs text-muted-foreground">
+                        Código de confirmação: <span className="font-mono font-medium text-foreground">{pedido.pixConfirmacao}</span>
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                    <span className="text-sm text-amber-600 font-medium">Aguardando pagamento PIX</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Status */}
           <div className="pt-2">
+            {pedido.formaPagamento === 'pix' && !pedido.pixPagoEm && pedido.status === 'pendente' && (
+              <p className="text-xs text-amber-600 text-center mb-2">
+                ⚠ Status só pode avançar após confirmação do pagamento PIX
+              </p>
+            )}
             <StatusProgressBar
               currentStatus={pedido.status}
-              onAdvanceStatus={(newStatus) => onAdvanceStatus(pedido.id, newStatus)}
+              onAdvanceStatus={handleAdvanceStatus}
             />
           </div>
         </div>

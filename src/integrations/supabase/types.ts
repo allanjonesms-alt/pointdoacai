@@ -267,6 +267,9 @@ export type Database = {
           forma_pagamento: Database["public"]["Enums"]["forma_pagamento"]
           id: string
           numero_pedido: string
+          pix_confirmacao: string | null
+          pix_pago_em: string | null
+          pix_payment_id: string | null
           status: Database["public"]["Enums"]["status_pedido"]
           updated_at: string
           valor_total: number
@@ -283,6 +286,9 @@ export type Database = {
           forma_pagamento: Database["public"]["Enums"]["forma_pagamento"]
           id?: string
           numero_pedido: string
+          pix_confirmacao?: string | null
+          pix_pago_em?: string | null
+          pix_payment_id?: string | null
           status?: Database["public"]["Enums"]["status_pedido"]
           updated_at?: string
           valor_total: number
@@ -299,6 +305,9 @@ export type Database = {
           forma_pagamento?: Database["public"]["Enums"]["forma_pagamento"]
           id?: string
           numero_pedido?: string
+          pix_confirmacao?: string | null
+          pix_pago_em?: string | null
+          pix_payment_id?: string | null
           status?: Database["public"]["Enums"]["status_pedido"]
           updated_at?: string
           valor_total?: number

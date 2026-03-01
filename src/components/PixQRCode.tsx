@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Copy, Check, Loader2, AlertCircle } from 'lucide-react';
+import { Copy, Check, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 interface PixQRCodeProps {
   valor: number;
   descricao: string;
+  pedidoId?: string;
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -14,14 +15,18 @@ interface PixQRCodeProps {
 interface PixData {
   qr_code: string;
   qr_code_base64: string;
+  payment_id: number;
 }
 
-export function PixQRCode({ valor, descricao, onSuccess, onCancel }: PixQRCodeProps) {
+export function PixQRCode({ valor, descricao, pedidoId, onSuccess, onCancel }: PixQRCodeProps) {
   const [pixData, setPixData] = useState<PixData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [isPago, setIsPago] = useState(false);
+  const [checking, setChecking] = useState(false);
   const { toast } = useToast();
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const gerarPix = async () => {
@@ -42,6 +47,14 @@ export function PixQRCode({ valor, descricao, onSuccess, onCancel }: PixQRCodePr
         }
 
         setPixData(data);
+
+        // Save payment_id to the order
+        if (pedidoId && data.payment_id) {
+          await supabase
+            .from('pedidos')
+            .update({ pix_payment_id: String(data.payment_id) } as any)
+            .eq('id', pedidoId);
+        }
       } catch (err) {
         console.error('Erro ao gerar PIX:', err);
         setError(err instanceof Error ? err.message : 'Erro ao gerar código PIX');
@@ -51,7 +64,55 @@ export function PixQRCode({ valor, descricao, onSuccess, onCancel }: PixQRCodePr
     };
 
     gerarPix();
-  }, [valor, descricao]);
+  }, [valor, descricao, pedidoId]);
+
+  // Auto-check payment status every 5 seconds
+  useEffect(() => {
+    if (!pixData?.payment_id || isPago) return;
+
+    const checkStatus = async () => {
+      try {
+        setChecking(true);
+        const { data, error: fnError } = await supabase.functions.invoke('verificar-pix', {
+          body: { payment_id: pixData.payment_id, pedido_id: pedidoId },
+        });
+
+        if (fnError) return;
+
+        if (data?.is_pago) {
+          setIsPago(true);
+          toast({
+            title: 'Pagamento confirmado!',
+            description: 'Seu PIX foi aprovado com sucesso.',
+          });
+          // Clear interval
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+          }
+          // Auto-advance after 2 seconds
+          setTimeout(() => {
+            onSuccess();
+          }, 2000);
+        }
+      } catch (err) {
+        console.error('Erro ao verificar PIX:', err);
+      } finally {
+        setChecking(false);
+      }
+    };
+
+    // Check immediately
+    const timer = setTimeout(checkStatus, 3000);
+    // Then every 5 seconds
+    intervalRef.current = setInterval(checkStatus, 5000);
+
+    return () => {
+      clearTimeout(timer);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [pixData?.payment_id, isPago, pedidoId, onSuccess, toast]);
 
   const handleCopy = async () => {
     if (!pixData?.qr_code) return;
@@ -96,6 +157,18 @@ export function PixQRCode({ valor, descricao, onSuccess, onCancel }: PixQRCodePr
     );
   }
 
+  if (isPago) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8 space-y-4">
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+          <CheckCircle2 className="h-8 w-8 text-green-600" />
+        </div>
+        <p className="text-lg font-bold text-green-600">Pagamento Confirmado!</p>
+        <p className="text-sm text-muted-foreground">Redirecionando...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center space-y-6 py-4">
       {/* Valor */}
@@ -116,6 +189,12 @@ export function PixQRCode({ valor, descricao, onSuccess, onCancel }: PixQRCodePr
           />
         </div>
       )}
+
+      {/* Status check indicator */}
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        <span>Aguardando pagamento...</span>
+      </div>
 
       {/* Código Copia e Cola */}
       {pixData?.qr_code && (
@@ -150,9 +229,6 @@ export function PixQRCode({ valor, descricao, onSuccess, onCancel }: PixQRCodePr
 
       {/* Ações */}
       <div className="w-full space-y-3 pt-4 border-t border-border">
-        <Button variant="acai" className="w-full" onClick={onSuccess}>
-          Já realizei o pagamento
-        </Button>
         <Button variant="ghost" className="w-full" onClick={onCancel}>
           Cancelar
         </Button>
