@@ -44,6 +44,7 @@ export default function Carrinho() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPixModal, setShowPixModal] = useState(false);
   const [numeroPedidoAtual, setNumeroPedidoAtual] = useState<string | null>(null);
+  const [pedidoIdAtual, setPedidoIdAtual] = useState<string | null>(null);
   const [enderecoSelecionado, setEnderecoSelecionado] = useState<Endereco | null>(null);
   const [showEnderecoSheet, setShowEnderecoSheet] = useState(false);
   const [valorTroco, setValorTroco] = useState<string>('');
@@ -98,7 +99,7 @@ export default function Carrinho() {
 
     setIsLoading(true);
 
-    const numeroPedido = await criarPedido(
+    const result = await criarPedido(
       user.id,
       user.nome,
       enderecoEntrega,
@@ -107,12 +108,13 @@ export default function Carrinho() {
       total
     );
 
-    if (!numeroPedido) {
+    if (!result) {
       setIsLoading(false);
       return;
     }
 
-    setNumeroPedidoAtual(numeroPedido);
+    setNumeroPedidoAtual(result.numeroPedido);
+    setPedidoIdAtual(result.pedidoId);
 
     // Se for PIX, mostrar modal com QR Code
     if (formaPagamento === 'pix') {
@@ -126,7 +128,7 @@ export default function Carrinho() {
 
     toast({
       title: 'Pedido realizado!',
-      description: `Pedido #${numeroPedido} criado com sucesso.`,
+      description: `Pedido #${result.numeroPedido} criado com sucesso.`,
     });
 
     navigate('/meus-pedidos');
