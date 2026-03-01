@@ -9,6 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { Pedido, StatusPedido } from '@/types';
+import { PedidoDetalheModal } from '@/components/admin/PedidoDetalheModal';
+import { toast } from 'sonner';
 
 interface PedidoData {
   id: string;
