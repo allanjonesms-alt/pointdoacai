@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { User, Phone, Lock, MapPin, Home, Loader2, ArrowLeft } from 'lucide-react';
+import RuaAutocomplete from '@/components/RuaAutocomplete';
+import BairroAutocomplete from '@/components/BairroAutocomplete';
 
 const formatPhone = (value: string): string => {
   const numbers = value.replace(/\D/g, '').slice(0, 11);
