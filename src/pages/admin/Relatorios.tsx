@@ -451,7 +451,8 @@ export default function AdminRelatorios() {
                       {pedidosDia.map((pedido) => (
                         <div
                           key={pedido.id}
-                          className="flex items-center justify-between bg-muted/30 rounded-lg p-3 text-sm"
+                          className="flex items-center justify-between bg-muted/30 rounded-lg p-3 text-sm cursor-pointer hover:bg-muted/60 transition-colors"
+                          onClick={() => handlePedidoClick(pedido.id)}
                         >
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
