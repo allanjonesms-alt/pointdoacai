@@ -60,6 +60,9 @@ export interface Pedido {
   valorTotal: number;
   dataHora: Date;
   itens: CarrinhoItem[];
+  pixPaymentId?: string | null;
+  pixPagoEm?: string | null;
+  pixConfirmacao?: string | null;
 }
 
 export type StatusPedido = 'pendente' | 'confirmado' | 'preparo' | 'pronto' | 'entrega' | 'entregue';

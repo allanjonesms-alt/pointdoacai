@@ -61,6 +61,9 @@ export function PedidosProvider({ children }: { children: ReactNode }) {
         status: p.status,
         valorTotal: Number(p.valor_total),
         dataHora: new Date(p.created_at),
+        pixPaymentId: p.pix_payment_id || null,
+        pixPagoEm: p.pix_pago_em || null,
+        pixConfirmacao: p.pix_confirmacao || null,
         itens: (p.pedido_itens || []).map((item: any) => ({
           id: item.id,
           produto: {
