@@ -14,7 +14,7 @@ interface PedidosContextType {
     formaPagamento: 'credito' | 'debito' | 'pix' | 'dinheiro',
     itens: CarrinhoItem[],
     valorTotal: number
-  ) => Promise<string | null>;
+  ) => Promise<{ numeroPedido: string; pedidoId: string } | null>;
   atualizarStatus: (pedidoId: string, status: StatusPedido) => Promise<void>;
   getPedidosCliente: (clienteId: string) => Pedido[];
   refetch: () => Promise<void>;
@@ -113,7 +113,7 @@ export function PedidosProvider({ children }: { children: ReactNode }) {
     formaPagamento: 'credito' | 'debito' | 'pix' | 'dinheiro',
     itens: CarrinhoItem[],
     valorTotal: number
-  ): Promise<string | null> => {
+  ): Promise<{ numeroPedido: string; pedidoId: string } | null> => {
     try {
       // 1. Criar o pedido - usar string vazia para que o trigger do banco gere o número
       const { data: pedidoData, error: pedidoError } = await supabase
@@ -177,7 +177,7 @@ export function PedidosProvider({ children }: { children: ReactNode }) {
       await fetchPedidos();
 
       toast.success(`Pedido #${numeroPedido} criado com sucesso!`);
-      return numeroPedido;
+      return { numeroPedido, pedidoId: pedidoData.id };
     } catch (error: any) {
       console.error('Erro ao criar pedido:', error);
       toast.error('Erro ao criar pedido: ' + error.message);
