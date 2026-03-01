@@ -214,17 +214,12 @@ export default function Cadastro() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-3 gap-3">
                   <div className="col-span-2 space-y-2">
-                    <Label htmlFor="rua">Rua *</Label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                      <Input
-                        id="rua"
-                        placeholder="Nome da rua"
-                        className="pl-10"
-                        value={formData.rua}
-                        onChange={(e) => setFormData({ ...formData, rua: e.target.value })}
-                      />
-                    </div>
+                    <Label>Rua *</Label>
+                    <RuaAutocomplete
+                      value={formData.rua}
+                      onChange={(value) => setFormData({ ...formData, rua: value })}
+                      placeholder="Selecione a rua..."
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="numero">Nº *</Label>
@@ -238,17 +233,12 @@ export default function Cadastro() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="bairro">Bairro *</Label>
-                  <div className="relative">
-                    <Home className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      id="bairro"
-                      placeholder="Seu bairro"
-                      className="pl-10"
-                      value={formData.bairro}
-                      onChange={(e) => setFormData({ ...formData, bairro: e.target.value })}
-                    />
-                  </div>
+                  <Label>Bairro *</Label>
+                  <BairroAutocomplete
+                    value={formData.bairro}
+                    onChange={(value) => setFormData({ ...formData, bairro: value })}
+                    placeholder="Selecione o bairro..."
+                  />
                 </div>
 
                 <div className="space-y-2">
