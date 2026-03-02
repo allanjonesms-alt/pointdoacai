@@ -33,7 +33,7 @@ export default function AdminDashboard() {
   const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [showConfigModal, setShowConfigModal] = useState(false);
-  const { lojaAberta, horarioAbertura, horarioFechamento, diasFuncionamento, isLoading: isLoadingLoja, toggleLoja, atualizarConfiguracoes } = useLojaStatus();
+  const { lojaAberta, horarioAbertura, horarioFechamento, diasFuncionamento, printConfig, isLoading: isLoadingLoja, toggleLoja, atualizarConfiguracoes } = useLojaStatus();
 
   const handleToggleLoja = async () => {
     try {
@@ -289,7 +289,7 @@ export default function AdminDashboard() {
       <ConfiguracaoLojaModal 
         open={showConfigModal} 
         onOpenChange={setShowConfigModal}
-        config={{ horarioAbertura, horarioFechamento, diasFuncionamento }}
+        config={{ horarioAbertura, horarioFechamento, diasFuncionamento, printConfig }}
         onSave={atualizarConfiguracoes}
       />
     </div>;

@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { Pedido, TAMANHO_LABELS, EMBALAGEM_LABELS } from '@/types';
 import { StatusProgressBar } from '@/components/StatusProgressBar';
-import { Clock, MapPin, CreditCard, User, Package, CheckCircle2, Banknote } from 'lucide-react';
+import { Clock, MapPin, CreditCard, User, Package, CheckCircle2, Banknote, Printer } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { StatusPedido } from '@/types';
+import { useLojaStatus } from '@/hooks/useLojaStatus';
 
 interface PedidoDetalheModalProps {
   pedido: Pedido | null;
@@ -15,6 +17,9 @@ interface PedidoDetalheModalProps {
 }
 
 export function PedidoDetalheModal({ pedido, open, onOpenChange, onAdvanceStatus }: PedidoDetalheModalProps) {
+  const printRef = useRef<HTMLDivElement>(null);
+  const { printConfig } = useLojaStatus();
+
   if (!pedido) return null;
 
   const formaPagamentoLabel = {
@@ -25,21 +30,136 @@ export function PedidoDetalheModal({ pedido, open, onOpenChange, onAdvanceStatus
   };
 
   const handleAdvanceStatus = (newStatus: StatusPedido) => {
-    // Block advancing to "confirmado" if PIX and not paid
     if (pedido.formaPagamento === 'pix' && newStatus === 'confirmado' && !pedido.pixPagoEm) {
       return;
     }
     onAdvanceStatus(pedido.id, newStatus);
   };
 
+  const handlePrint = () => {
+    if (!printRef.current) return;
+
+    const printContent = printRef.current.innerHTML;
+    const { largura, altura, fonteTamanho, fonteTipo } = printConfig;
+
+    const pageSize = altura > 0
+      ? `@page { size: ${largura}mm ${altura}mm; margin: 2mm; }`
+      : `@page { size: ${largura}mm auto; margin: 2mm; }`;
+
+    const printWindow = window.open('', '_blank', 'width=400,height=600');
+    if (!printWindow) return;
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Pedido #${pedido.numeroPedido}</title>
+          <style>
+            ${pageSize}
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body {
+              font-family: '${fonteTipo}', sans-serif;
+              font-size: ${fonteTamanho}px;
+              color: #000;
+              padding: 4px;
+            }
+            .print-header { text-align: center; font-weight: bold; font-size: ${fonteTamanho + 4}px; margin-bottom: 8px; border-bottom: 1px dashed #000; padding-bottom: 6px; }
+            .section { margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px dashed #ccc; }
+            .section-title { font-weight: bold; font-size: ${fonteTamanho + 1}px; margin-bottom: 4px; }
+            .item { margin-bottom: 4px; }
+            .item-name { font-weight: bold; }
+            .item-details { font-size: ${fonteTamanho - 1}px; color: #444; }
+            .adicionais { font-size: ${fonteTamanho - 2}px; color: #666; margin-top: 2px; }
+            .total { font-weight: bold; font-size: ${fonteTamanho + 2}px; text-align: right; }
+            .info-row { display: flex; justify-content: space-between; margin-bottom: 2px; }
+            .troco { font-weight: bold; color: #333; }
+          </style>
+        </head>
+        <body>
+          ${printContent}
+          <script>window.onload = function() { window.print(); window.close(); }<\/script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="font-display text-xl">
-            DETALHES DO PEDIDO #{pedido.numeroPedido}
-          </DialogTitle>
+          <div className="flex items-center justify-between pr-8">
+            <DialogTitle className="font-display text-xl">
+              DETALHES DO PEDIDO #{pedido.numeroPedido}
+            </DialogTitle>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handlePrint}
+              title="Imprimir pedido"
+            >
+              <Printer className="h-4 w-4" />
+            </Button>
+          </div>
         </DialogHeader>
+
+        {/* Hidden print content */}
+        <div ref={printRef} className="hidden">
+          <div className="print-header">PEDIDO #{pedido.numeroPedido}</div>
+          
+          <div className="section">
+            <div className="info-row">
+              <span>Cliente: {pedido.clienteNome}</span>
+            </div>
+            <div className="info-row">
+              <span>{format(new Date(pedido.dataHora), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
+            </div>
+          </div>
+
+          <div className="section">
+            <div className="section-title">ITENS</div>
+            {pedido.itens.map((item) => (
+              <div key={item.id} className="item">
+                <div className="item-name">
+                  {item.quantidade}x Açaí {TAMANHO_LABELS[item.produto.tamanho]} - {EMBALAGEM_LABELS[item.embalagem]}
+                </div>
+                <div className="item-details">{item.produto.peso} - R$ {(item.valorUnitario * item.quantidade).toFixed(2).replace('.', ',')}</div>
+                {item.adicionais.length > 0 && (
+                  <div className="adicionais">+ {item.adicionais.join(', ')}</div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="section">
+            <div className="section-title">ENTREGA</div>
+            <div>{pedido.enderecoEntrega.rua}, {pedido.enderecoEntrega.numero}</div>
+            <div>{pedido.enderecoEntrega.bairro}</div>
+            {pedido.enderecoEntrega.complemento && <div>Comp: {pedido.enderecoEntrega.complemento}</div>}
+            {pedido.enderecoEntrega.referencia && <div>Ref: {pedido.enderecoEntrega.referencia}</div>}
+          </div>
+
+          <div className="section">
+            <div className="info-row">
+              <span>Pagamento:</span>
+              <span>{formaPagamentoLabel[pedido.formaPagamento]}</span>
+            </div>
+            {pedido.formaPagamento === 'dinheiro' && pedido.valorTroco && (
+              <div className="info-row troco">
+                <span>Troco para:</span>
+                <span>{pedido.valorTroco}</span>
+              </div>
+            )}
+            {pedido.formaPagamento === 'pix' && pedido.pixPagoEm && (
+              <div className="info-row">
+                <span>PIX Confirmado</span>
+              </div>
+            )}
+          </div>
+
+          <div className="total">
+            TOTAL: R$ {pedido.valorTotal.toFixed(2).replace('.', ',')}
+          </div>
+        </div>
 
         <div className="space-y-4">
           {/* Cliente e Data */}
@@ -61,7 +181,7 @@ export function PedidoDetalheModal({ pedido, open, onOpenChange, onAdvanceStatus
               <span className="font-display font-bold text-foreground">Itens do Pedido</span>
             </div>
             
-            {pedido.itens.map((item, index) => (
+            {pedido.itens.map((item) => (
               <div key={item.id} className="bg-background rounded-lg p-3 border border-border/50">
                 <div className="flex justify-between items-start mb-2">
                   <div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Calendar, Save, X } from 'lucide-react';
+import { Clock, Calendar, Save, X, Printer } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -11,8 +11,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { DiaSemana, ConfiguracoesLoja } from '@/hooks/useLojaStatus';
+import { DiaSemana, ConfiguracoesLoja, PrintConfig } from '@/hooks/useLojaStatus';
 
 interface ConfiguracaoLojaModalProps {
   open: boolean;
@@ -31,6 +32,17 @@ const DIAS_SEMANA: { id: DiaSemana; label: string }[] = [
   { id: 'sabado', label: 'Sábado' },
 ];
 
+const FONTES_DISPONIVEIS = [
+  'Arial',
+  'Courier New',
+  'Times New Roman',
+  'Verdana',
+  'Georgia',
+  'Tahoma',
+  'Trebuchet MS',
+  'monospace',
+];
+
 export function ConfiguracaoLojaModal({ 
   open, 
   onOpenChange, 
@@ -40,12 +52,14 @@ export function ConfiguracaoLojaModal({
   const [horarioAbertura, setHorarioAbertura] = useState(config.horarioAbertura);
   const [horarioFechamento, setHorarioFechamento] = useState(config.horarioFechamento);
   const [diasFuncionamento, setDiasFuncionamento] = useState<DiaSemana[]>(config.diasFuncionamento);
+  const [printConfig, setPrintConfig] = useState<PrintConfig>(config.printConfig);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     setHorarioAbertura(config.horarioAbertura);
     setHorarioFechamento(config.horarioFechamento);
     setDiasFuncionamento(config.diasFuncionamento);
+    setPrintConfig(config.printConfig);
   }, [config]);
 
   const handleDiaToggle = (dia: DiaSemana) => {
@@ -72,7 +86,8 @@ export function ConfiguracaoLojaModal({
       await onSave({
         horarioAbertura,
         horarioFechamento,
-        diasFuncionamento
+        diasFuncionamento,
+        printConfig,
       });
       toast.success('Configurações salvas com sucesso!');
       onOpenChange(false);
@@ -85,14 +100,14 @@ export function ConfiguracaoLojaModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-primary" />
-            Configurar Horários
+            Configurações da Loja
           </DialogTitle>
           <DialogDescription>
-            Defina os dias e horários de funcionamento da loja
+            Defina os horários de funcionamento e configurações de impressão
           </DialogDescription>
         </DialogHeader>
 
@@ -151,6 +166,72 @@ export function ConfiguracaoLojaModal({
                   </span>
                 </label>
               ))}
+            </div>
+          </div>
+
+          {/* Configurações de Impressão */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <Printer className="h-4 w-4 text-primary" />
+              Configurações de Impressão
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="print-largura">Largura (mm)</Label>
+                <Input
+                  id="print-largura"
+                  type="number"
+                  min={40}
+                  max={300}
+                  value={printConfig.largura}
+                  onChange={(e) => setPrintConfig(prev => ({ ...prev, largura: Number(e.target.value) }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="print-altura">Altura (mm)</Label>
+                <Input
+                  id="print-altura"
+                  type="number"
+                  min={0}
+                  max={500}
+                  value={printConfig.altura}
+                  onChange={(e) => setPrintConfig(prev => ({ ...prev, altura: Number(e.target.value) }))}
+                />
+                <p className="text-xs text-muted-foreground">0 = automático</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="print-fonte-tamanho">Tamanho da Fonte</Label>
+                <Input
+                  id="print-fonte-tamanho"
+                  type="number"
+                  min={6}
+                  max={24}
+                  value={printConfig.fonteTamanho}
+                  onChange={(e) => setPrintConfig(prev => ({ ...prev, fonteTamanho: Number(e.target.value) }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Tipo de Fonte</Label>
+                <Select
+                  value={printConfig.fonteTipo}
+                  onValueChange={(value) => setPrintConfig(prev => ({ ...prev, fonteTipo: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {FONTES_DISPONIVEIS.map((fonte) => (
+                      <SelectItem key={fonte} value={fonte}>
+                        <span style={{ fontFamily: fonte }}>{fonte}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
         </div>
