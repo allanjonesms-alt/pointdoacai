@@ -70,6 +70,10 @@ export type Database = {
           horario_fechamento: string
           id: string
           loja_aberta: boolean
+          print_altura: number
+          print_fonte_tamanho: number
+          print_fonte_tipo: string
+          print_largura: number
           updated_at: string
         }
         Insert: {
@@ -79,6 +83,10 @@ export type Database = {
           horario_fechamento?: string
           id?: string
           loja_aberta?: boolean
+          print_altura?: number
+          print_fonte_tamanho?: number
+          print_fonte_tipo?: string
+          print_largura?: number
           updated_at?: string
         }
         Update: {
@@ -88,6 +96,10 @@ export type Database = {
           horario_fechamento?: string
           id?: string
           loja_aberta?: boolean
+          print_altura?: number
+          print_fonte_tamanho?: number
+          print_fonte_tipo?: string
+          print_largura?: number
           updated_at?: string
         }
         Relationships: []
