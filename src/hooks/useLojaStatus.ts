@@ -142,17 +142,18 @@ export function useLojaStatus(): LojaStatus {
           table: 'configuracoes_loja'
         },
         (payload) => {
-          const data = payload.new as {
-            loja_aberta: boolean;
-            horario_abertura: string;
-            horario_fechamento: string;
-            dias_funcionamento: DiaSemana[];
-          };
+          const data = payload.new as any;
           setConfig({
             lojaAberta: data.loja_aberta,
             horarioAbertura: data.horario_abertura?.slice(0, 5) ?? '13:30',
             horarioFechamento: data.horario_fechamento?.slice(0, 5) ?? '22:00',
-            diasFuncionamento: data.dias_funcionamento ?? ['domingo', 'segunda', 'terca', 'quarta', 'sexta', 'sabado']
+            diasFuncionamento: data.dias_funcionamento ?? ['domingo', 'segunda', 'terca', 'quarta', 'sexta', 'sabado'],
+            printConfig: {
+              largura: data.print_largura ?? 80,
+              altura: data.print_altura ?? 0,
+              fonteTamanho: data.print_fonte_tamanho ?? 12,
+              fonteTipo: data.print_fonte_tipo ?? 'Arial',
+            }
           });
         }
       )
