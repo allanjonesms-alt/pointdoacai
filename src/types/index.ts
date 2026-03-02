@@ -63,6 +63,7 @@ export interface Pedido {
   pixPaymentId?: string | null;
   pixPagoEm?: string | null;
   pixConfirmacao?: string | null;
+  valorTroco?: string | null;
 }
 
 export type StatusPedido = 'pendente' | 'confirmado' | 'preparo' | 'pronto' | 'entrega' | 'entregue';
