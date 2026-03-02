@@ -1,0 +1,1 @@
+ALTER TABLE public.pedidos ADD COLUMN valor_troco text DEFAULT NULL;

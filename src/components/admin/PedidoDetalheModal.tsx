@@ -2,7 +2,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Pedido, TAMANHO_LABELS, EMBALAGEM_LABELS } from '@/types';
 import { StatusProgressBar } from '@/components/StatusProgressBar';
-import { Clock, MapPin, CreditCard, User, Package, CheckCircle2 } from 'lucide-react';
+import { Clock, MapPin, CreditCard, User, Package, CheckCircle2, Banknote } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { StatusPedido } from '@/types';
@@ -37,7 +37,7 @@ export function PedidoDetalheModal({ pedido, open, onOpenChange, onAdvanceStatus
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display text-xl">
-            Pedido #{pedido.numeroPedido}
+            DETALHES DO PEDIDO #{pedido.numeroPedido}
           </DialogTitle>
         </DialogHeader>
 
@@ -134,6 +134,20 @@ export function PedidoDetalheModal({ pedido, open, onOpenChange, onAdvanceStatus
                 R$ {pedido.valorTotal.toFixed(2).replace('.', ',')}
               </span>
             </div>
+
+            {/* Troco for cash payments */}
+            {pedido.formaPagamento === 'dinheiro' && pedido.valorTroco && (
+              <div className="mt-3 pt-3 border-t border-border/50">
+                <div className="flex items-center gap-2 mb-1">
+                  <Banknote className="h-4 w-4 text-amber-600" />
+                  <span className="text-sm font-medium text-foreground">Troco</span>
+                </div>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted-foreground">Levar troco para:</span>
+                  <span className="font-bold text-foreground">{pedido.valorTroco}</span>
+                </div>
+              </div>
+            )}
 
             {/* PIX Payment Details */}
             {pedido.formaPagamento === 'pix' && (
