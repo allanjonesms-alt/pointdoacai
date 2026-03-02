@@ -148,7 +148,6 @@ export function PedidoDetalheModal({ pedido, open, onOpenChange, onAdvanceStatus
                 </div>
               </div>
             )}
-            </div>
 
             {/* PIX Payment Details */}
             {pedido.formaPagamento === 'pix' && (
