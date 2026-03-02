@@ -105,7 +105,8 @@ export default function Carrinho() {
       enderecoEntrega,
       formaPagamento,
       itens,
-      total
+      total,
+      formaPagamento === 'dinheiro' ? valorTroco : null
     );
 
     if (!result) {

@@ -205,7 +205,8 @@ export default function PedidoDireto() {
       },
       formaPagamento,
       itensCarrinho,
-      calcularTotal()
+      calcularTotal(),
+      formaPagamento === 'dinheiro' ? valorTroco : null
     );
 
     toast({
