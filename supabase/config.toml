@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.auto-loja]
 verify_jwt = false
+
+[functions.verificar-pix]
+verify_jwt = false
+
+[functions.mercadopago-webhook]
+verify_jwt = false
