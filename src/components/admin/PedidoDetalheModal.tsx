@@ -377,7 +377,7 @@ export function PedidoDetalheModal({ pedido, open, onOpenChange, onAdvanceStatus
 
           {/* Status */}
           <div className="pt-2">
-            {pedido.formaPagamento === 'pix' && !pedido.pixPagoEm && pedido.status === 'pendente' && (
+            {pedido.formaPagamento === 'pix' && !pedido.pixPagoEm && !pixConfirmadoLocal && pedido.status === 'pendente' && (
               <p className="text-xs text-amber-600 text-center mb-2">
                 ⚠ Status só pode avançar após confirmação do pagamento PIX
               </p>
