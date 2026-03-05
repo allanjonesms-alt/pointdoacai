@@ -1,13 +1,15 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Pedido, TAMANHO_LABELS, EMBALAGEM_LABELS } from '@/types';
 import { StatusProgressBar } from '@/components/StatusProgressBar';
-import { Clock, MapPin, CreditCard, User, Package, CheckCircle2, Banknote, Printer } from 'lucide-react';
+import { Clock, MapPin, CreditCard, User, Package, CheckCircle2, Banknote, Printer, RefreshCw, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { StatusPedido } from '@/types';
 import { useLojaStatus } from '@/hooks/useLojaStatus';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface PedidoDetalheModalProps {
   pedido: Pedido | null;
@@ -19,6 +21,9 @@ interface PedidoDetalheModalProps {
 export function PedidoDetalheModal({ pedido, open, onOpenChange, onAdvanceStatus }: PedidoDetalheModalProps) {
   const printRef = useRef<HTMLDivElement>(null);
   const { printConfig } = useLojaStatus();
+  const { toast } = useToast();
+  const [verificandoPix, setVerificandoPix] = useState(false);
+  const [pixConfirmadoLocal, setPixConfirmadoLocal] = useState(false);
 
   if (!pedido) return null;
 
@@ -30,10 +35,50 @@ export function PedidoDetalheModal({ pedido, open, onOpenChange, onAdvanceStatus
   };
 
   const handleAdvanceStatus = (newStatus: StatusPedido) => {
-    if (pedido.formaPagamento === 'pix' && newStatus === 'confirmado' && !pedido.pixPagoEm) {
+    if (pedido.formaPagamento === 'pix' && newStatus === 'confirmado' && !pedido.pixPagoEm && !pixConfirmadoLocal) {
       return;
     }
     onAdvanceStatus(pedido.id, newStatus);
+  };
+
+  const handleVerificarPix = async () => {
+    if (!pedido.pixPaymentId) {
+      toast({ title: 'ID do pagamento não encontrado', description: 'Este pedido não possui um ID de pagamento PIX associado.', variant: 'destructive' });
+      return;
+    }
+    setVerificandoPix(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('verificar-pix', {
+        body: { payment_id: Number(pedido.pixPaymentId), pedido_id: pedido.id },
+      });
+      if (error) throw error;
+      if (data?.is_pago) {
+        setPixConfirmadoLocal(true);
+        toast({ title: 'PIX Confirmado!', description: `Pago em ${data.date_approved ? format(new Date(data.date_approved), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : 'agora'}.` });
+      } else {
+        toast({ title: 'PIX não confirmado', description: `Status: ${data?.status_detail || data?.status || 'pendente'}`, variant: 'destructive' });
+      }
+    } catch (err) {
+      toast({ title: 'Erro ao verificar PIX', variant: 'destructive' });
+    } finally {
+      setVerificandoPix(false);
+    }
+  };
+
+  const handleConfirmarPixManual = async () => {
+    setVerificandoPix(true);
+    try {
+      await supabase.from('pedidos').update({
+        pix_pago_em: new Date().toISOString(),
+        pix_confirmacao: 'CONFIRMADO_MANUALMENTE',
+      } as any).eq('id', pedido.id);
+      setPixConfirmadoLocal(true);
+      toast({ title: 'PIX confirmado manualmente!' });
+    } catch {
+      toast({ title: 'Erro ao confirmar PIX', variant: 'destructive' });
+    } finally {
+      setVerificandoPix(false);
+    }
   };
 
   const handlePrint = () => {
@@ -272,25 +317,58 @@ export function PedidoDetalheModal({ pedido, open, onOpenChange, onAdvanceStatus
             {/* PIX Payment Details */}
             {pedido.formaPagamento === 'pix' && (
               <div className="mt-3 pt-3 border-t border-border/50 space-y-2">
-                {pedido.pixPagoEm ? (
+                {(pedido.pixPagoEm || pixConfirmadoLocal) ? (
                   <>
                     <div className="flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4 text-green-600" />
                       <span className="text-sm font-medium text-green-600">PIX Confirmado</span>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Pago em: {format(new Date(pedido.pixPagoEm), "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })}
-                    </p>
+                    {pedido.pixPagoEm && (
+                      <p className="text-xs text-muted-foreground">
+                        Pago em: {format(new Date(pedido.pixPagoEm), "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })}
+                      </p>
+                    )}
                     {pedido.pixConfirmacao && (
                       <p className="text-xs text-muted-foreground">
-                        Código de confirmação: <span className="font-mono font-medium text-foreground">{pedido.pixConfirmacao}</span>
+                        Código: <span className="font-mono font-medium text-foreground">{pedido.pixConfirmacao}</span>
                       </p>
                     )}
                   </>
                 ) : (
-                  <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                    <span className="text-sm text-amber-600 font-medium">Aguardando pagamento PIX</span>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                      <span className="text-sm text-amber-600 font-medium">Aguardando pagamento PIX</span>
+                    </div>
+                    {pedido.pixPaymentId ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full gap-2"
+                        onClick={handleVerificarPix}
+                        disabled={verificandoPix}
+                      >
+                        <RefreshCw className={`h-3 w-3 ${verificandoPix ? 'animate-spin' : ''}`} />
+                        {verificandoPix ? 'Verificando...' : 'Verificar PIX na API'}
+                      </Button>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <AlertCircle className="h-3 w-3" />
+                          <span>ID do pagamento não encontrado</span>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full gap-2 border-amber-300 text-amber-700 hover:bg-amber-50"
+                          onClick={handleConfirmarPixManual}
+                          disabled={verificandoPix}
+                        >
+                          <CheckCircle2 className="h-3 w-3" />
+                          Confirmar PIX Manualmente
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -299,7 +377,7 @@ export function PedidoDetalheModal({ pedido, open, onOpenChange, onAdvanceStatus
 
           {/* Status */}
           <div className="pt-2">
-            {pedido.formaPagamento === 'pix' && !pedido.pixPagoEm && pedido.status === 'pendente' && (
+            {pedido.formaPagamento === 'pix' && !pedido.pixPagoEm && !pixConfirmadoLocal && pedido.status === 'pendente' && (
               <p className="text-xs text-amber-600 text-center mb-2">
                 ⚠ Status só pode avançar após confirmação do pagamento PIX
               </p>
