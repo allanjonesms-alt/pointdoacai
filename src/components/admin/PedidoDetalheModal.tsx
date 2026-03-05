@@ -317,25 +317,58 @@ export function PedidoDetalheModal({ pedido, open, onOpenChange, onAdvanceStatus
             {/* PIX Payment Details */}
             {pedido.formaPagamento === 'pix' && (
               <div className="mt-3 pt-3 border-t border-border/50 space-y-2">
-                {pedido.pixPagoEm ? (
+                {(pedido.pixPagoEm || pixConfirmadoLocal) ? (
                   <>
                     <div className="flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4 text-green-600" />
                       <span className="text-sm font-medium text-green-600">PIX Confirmado</span>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Pago em: {format(new Date(pedido.pixPagoEm), "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })}
-                    </p>
+                    {pedido.pixPagoEm && (
+                      <p className="text-xs text-muted-foreground">
+                        Pago em: {format(new Date(pedido.pixPagoEm), "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR })}
+                      </p>
+                    )}
                     {pedido.pixConfirmacao && (
                       <p className="text-xs text-muted-foreground">
-                        Código de confirmação: <span className="font-mono font-medium text-foreground">{pedido.pixConfirmacao}</span>
+                        Código: <span className="font-mono font-medium text-foreground">{pedido.pixConfirmacao}</span>
                       </p>
                     )}
                   </>
                 ) : (
-                  <div className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-                    <span className="text-sm text-amber-600 font-medium">Aguardando pagamento PIX</span>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                      <span className="text-sm text-amber-600 font-medium">Aguardando pagamento PIX</span>
+                    </div>
+                    {pedido.pixPaymentId ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full gap-2"
+                        onClick={handleVerificarPix}
+                        disabled={verificandoPix}
+                      >
+                        <RefreshCw className={`h-3 w-3 ${verificandoPix ? 'animate-spin' : ''}`} />
+                        {verificandoPix ? 'Verificando...' : 'Verificar PIX na API'}
+                      </Button>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <AlertCircle className="h-3 w-3" />
+                          <span>ID do pagamento não encontrado</span>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full gap-2 border-amber-300 text-amber-700 hover:bg-amber-50"
+                          onClick={handleConfirmarPixManual}
+                          disabled={verificandoPix}
+                        >
+                          <CheckCircle2 className="h-3 w-3" />
+                          Confirmar PIX Manualmente
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
