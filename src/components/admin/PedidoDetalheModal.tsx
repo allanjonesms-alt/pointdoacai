@@ -21,6 +21,9 @@ interface PedidoDetalheModalProps {
 export function PedidoDetalheModal({ pedido, open, onOpenChange, onAdvanceStatus }: PedidoDetalheModalProps) {
   const printRef = useRef<HTMLDivElement>(null);
   const { printConfig } = useLojaStatus();
+  const { toast } = useToast();
+  const [verificandoPix, setVerificandoPix] = useState(false);
+  const [pixConfirmadoLocal, setPixConfirmadoLocal] = useState(false);
 
   if (!pedido) return null;
 
