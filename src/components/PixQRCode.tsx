@@ -24,10 +24,9 @@ export function PixQRCode({ valor, descricao, pedidoId, onSuccess, onCancel }: P
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [isPago, setIsPago] = useState(false);
-  const [checking, setChecking] = useState(false);
   const { toast } = useToast();
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Generate PIX and save payment_id before showing QR Code
   useEffect(() => {
     const gerarPix = async () => {
       try {
@@ -38,13 +37,8 @@ export function PixQRCode({ valor, descricao, pedidoId, onSuccess, onCancel }: P
           body: { valor, descricao },
         });
 
-        if (fnError) {
-          throw new Error(fnError.message || 'Erro ao gerar PIX');
-        }
-
-        if (data.error) {
-          throw new Error(data.error);
-        }
+        if (fnError) throw new Error(fnError.message || 'Erro ao gerar PIX');
+        if (data.error) throw new Error(data.error);
 
         // Save payment_id BEFORE showing QR Code to avoid race condition
         if (pedidoId && data.payment_id) {
@@ -66,57 +60,67 @@ export function PixQRCode({ valor, descricao, pedidoId, onSuccess, onCancel }: P
     gerarPix();
   }, [valor, descricao, pedidoId]);
 
-  // Auto-check payment status every 5 seconds
+  // Subscribe to Realtime changes on the pedido row — fires when webhook updates pix_pago_em
+  useEffect(() => {
+    if (!pedidoId || isPago) return;
+
+    const channel = supabase
+      .channel(`pix-pago-${pedidoId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'pedidos',
+          filter: `id=eq.${pedidoId}`,
+        },
+        (payload) => {
+          const updated = payload.new as { pix_pago_em?: string | null };
+          if (updated?.pix_pago_em) {
+            setIsPago(true);
+            toast({
+              title: 'Pagamento confirmado!',
+              description: 'Seu PIX foi aprovado com sucesso.',
+            });
+            setTimeout(() => onSuccess(), 2000);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [pedidoId, isPago, onSuccess, toast]);
+
+  // Fallback polling every 5s in case realtime misses the event
   useEffect(() => {
     if (!pixData?.payment_id || isPago) return;
 
-    const checkStatus = async () => {
+    const interval = setInterval(async () => {
       try {
-        setChecking(true);
-        const { data, error: fnError } = await supabase.functions.invoke('verificar-pix', {
+        const { data } = await supabase.functions.invoke('verificar-pix', {
           body: { payment_id: pixData.payment_id, pedido_id: pedidoId },
         });
-
-        if (fnError) return;
-
         if (data?.is_pago) {
           setIsPago(true);
           toast({
             title: 'Pagamento confirmado!',
             description: 'Seu PIX foi aprovado com sucesso.',
           });
-          // Clear interval
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-          }
-          // Auto-advance after 2 seconds
-          setTimeout(() => {
-            onSuccess();
-          }, 2000);
+          clearInterval(interval);
+          setTimeout(() => onSuccess(), 2000);
         }
-      } catch (err) {
-        console.error('Erro ao verificar PIX:', err);
-      } finally {
-        setChecking(false);
+      } catch {
+        // silent
       }
-    };
+    }, 5000);
 
-    // Check immediately
-    const timer = setTimeout(checkStatus, 3000);
-    // Then every 5 seconds
-    intervalRef.current = setInterval(checkStatus, 5000);
-
-    return () => {
-      clearTimeout(timer);
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
+    return () => clearInterval(interval);
   }, [pixData?.payment_id, isPago, pedidoId, onSuccess, toast]);
 
   const handleCopy = async () => {
     if (!pixData?.qr_code) return;
-
     try {
       await navigator.clipboard.writeText(pixData.qr_code);
       setCopied(true);
@@ -125,12 +129,8 @@ export function PixQRCode({ valor, descricao, pedidoId, onSuccess, onCancel }: P
         description: 'Cole no app do seu banco para pagar.',
       });
       setTimeout(() => setCopied(false), 3000);
-    } catch (err) {
-      toast({
-        title: 'Erro ao copiar',
-        description: 'Tente copiar manualmente.',
-        variant: 'destructive',
-      });
+    } catch {
+      toast({ title: 'Erro ao copiar', description: 'Tente copiar manualmente.', variant: 'destructive' });
     }
   };
 
@@ -150,9 +150,7 @@ export function PixQRCode({ valor, descricao, pedidoId, onSuccess, onCancel }: P
           <AlertCircle className="h-8 w-8 text-destructive" />
         </div>
         <p className="text-destructive text-center">{error}</p>
-        <Button variant="outline" onClick={onCancel}>
-          Voltar
-        </Button>
+        <Button variant="outline" onClick={onCancel}>Voltar</Button>
       </div>
     );
   }
@@ -190,48 +188,33 @@ export function PixQRCode({ valor, descricao, pedidoId, onSuccess, onCancel }: P
         </div>
       )}
 
-      {/* Status check indicator */}
+      {/* Status indicator */}
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" />
-        <span>Aguardando pagamento...</span>
+        <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+        <span>Aguardando pagamento em tempo real...</span>
       </div>
 
       {/* Código Copia e Cola */}
       {pixData?.qr_code && (
         <div className="w-full space-y-3">
-          <p className="text-sm text-muted-foreground text-center">
-            Ou copie o código abaixo:
-          </p>
+          <p className="text-sm text-muted-foreground text-center">Ou copie o código abaixo:</p>
           <div className="bg-muted p-3 rounded-lg">
             <p className="text-xs font-mono break-all text-foreground/80 line-clamp-3">
               {pixData.qr_code}
             </p>
           </div>
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={handleCopy}
-          >
+          <Button variant="outline" className="w-full" onClick={handleCopy}>
             {copied ? (
-              <>
-                <Check className="h-4 w-4 mr-2" />
-                Copiado!
-              </>
+              <><Check className="h-4 w-4 mr-2" />Copiado!</>
             ) : (
-              <>
-                <Copy className="h-4 w-4 mr-2" />
-                Copiar código PIX
-              </>
+              <><Copy className="h-4 w-4 mr-2" />Copiar código PIX</>
             )}
           </Button>
         </div>
       )}
 
-      {/* Ações */}
       <div className="w-full space-y-3 pt-4 border-t border-border">
-        <Button variant="ghost" className="w-full" onClick={onCancel}>
-          Cancelar
-        </Button>
+        <Button variant="ghost" className="w-full" onClick={onCancel}>Cancelar</Button>
       </div>
     </div>
   );
