@@ -1,13 +1,15 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Pedido, TAMANHO_LABELS, EMBALAGEM_LABELS } from '@/types';
 import { StatusProgressBar } from '@/components/StatusProgressBar';
-import { Clock, MapPin, CreditCard, User, Package, CheckCircle2, Banknote, Printer } from 'lucide-react';
+import { Clock, MapPin, CreditCard, User, Package, CheckCircle2, Banknote, Printer, RefreshCw, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { StatusPedido } from '@/types';
 import { useLojaStatus } from '@/hooks/useLojaStatus';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface PedidoDetalheModalProps {
   pedido: Pedido | null;

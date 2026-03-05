@@ -46,15 +46,15 @@ export function PixQRCode({ valor, descricao, pedidoId, onSuccess, onCancel }: P
           throw new Error(data.error);
         }
 
-        setPixData(data);
-
-        // Save payment_id to the order
+        // Save payment_id BEFORE showing QR Code to avoid race condition
         if (pedidoId && data.payment_id) {
           await supabase
             .from('pedidos')
             .update({ pix_payment_id: String(data.payment_id) } as any)
             .eq('id', pedidoId);
         }
+
+        setPixData(data);
       } catch (err) {
         console.error('Erro ao gerar PIX:', err);
         setError(err instanceof Error ? err.message : 'Erro ao gerar código PIX');
