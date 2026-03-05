@@ -35,10 +35,50 @@ export function PedidoDetalheModal({ pedido, open, onOpenChange, onAdvanceStatus
   };
 
   const handleAdvanceStatus = (newStatus: StatusPedido) => {
-    if (pedido.formaPagamento === 'pix' && newStatus === 'confirmado' && !pedido.pixPagoEm) {
+    if (pedido.formaPagamento === 'pix' && newStatus === 'confirmado' && !pedido.pixPagoEm && !pixConfirmadoLocal) {
       return;
     }
     onAdvanceStatus(pedido.id, newStatus);
+  };
+
+  const handleVerificarPix = async () => {
+    if (!pedido.pixPaymentId) {
+      toast({ title: 'ID do pagamento não encontrado', description: 'Este pedido não possui um ID de pagamento PIX associado.', variant: 'destructive' });
+      return;
+    }
+    setVerificandoPix(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('verificar-pix', {
+        body: { payment_id: Number(pedido.pixPaymentId), pedido_id: pedido.id },
+      });
+      if (error) throw error;
+      if (data?.is_pago) {
+        setPixConfirmadoLocal(true);
+        toast({ title: 'PIX Confirmado!', description: `Pago em ${data.date_approved ? format(new Date(data.date_approved), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : 'agora'}.` });
+      } else {
+        toast({ title: 'PIX não confirmado', description: `Status: ${data?.status_detail || data?.status || 'pendente'}`, variant: 'destructive' });
+      }
+    } catch (err) {
+      toast({ title: 'Erro ao verificar PIX', variant: 'destructive' });
+    } finally {
+      setVerificandoPix(false);
+    }
+  };
+
+  const handleConfirmarPixManual = async () => {
+    setVerificandoPix(true);
+    try {
+      await supabase.from('pedidos').update({
+        pix_pago_em: new Date().toISOString(),
+        pix_confirmacao: 'CONFIRMADO_MANUALMENTE',
+      } as any).eq('id', pedido.id);
+      setPixConfirmadoLocal(true);
+      toast({ title: 'PIX confirmado manualmente!' });
+    } catch {
+      toast({ title: 'Erro ao confirmar PIX', variant: 'destructive' });
+    } finally {
+      setVerificandoPix(false);
+    }
   };
 
   const handlePrint = () => {
