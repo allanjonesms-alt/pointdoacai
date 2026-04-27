@@ -79,9 +79,16 @@ export function useLojaStatus(): LojaStatus {
   const toggleLoja = async () => {
     try {
       const newStatus = !config.lojaAberta;
+      const nowIso = new Date().toISOString();
       const { error } = await supabase
         .from('configuracoes_loja')
-        .update({ loja_aberta: newStatus, updated_at: new Date().toISOString() })
+        .update({
+          loja_aberta: newStatus,
+          updated_at: nowIso,
+          // Registra override manual para a função automática respeitar até a próxima transição
+          override_manual_em: nowIso,
+          override_manual_status: newStatus,
+        } as any)
         .neq('id', '00000000-0000-0000-0000-000000000000');
       
       if (error) throw error;
