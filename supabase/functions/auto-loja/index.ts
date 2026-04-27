@@ -114,17 +114,14 @@ Deno.serve(async (req) => {
     let motivo: string;
 
     if (overrideEm && ultima) {
-      const overrideDate = new Date(overrideEm);
-      // Override no horário UTC do banco já é absoluto; comparamos com instante absoluto.
-      // Convertemos a transição (que está em UTC-4 "naïve") de volta para UTC adicionando 4h.
-      const ultimaUTC = new Date(ultima.instante.getTime() - (-4 * 60) * 60000 - new Date().getTimezoneOffset() * 60000);
+      // Converter override (UTC absoluto do banco) para o mesmo "frame UTC-4 naïve" usado em `ultima.instante`
+      const overrideUTC = new Date(overrideEm);
+      const overrideUTC4 = new Date(overrideUTC.getTime() + (overrideUTC.getTimezoneOffset() + (-4 * 60)) * 60000);
 
-      if (overrideDate > ultimaUTC) {
-        // Override foi feito DEPOIS da última transição programada -> respeitar
+      if (overrideUTC4 > ultima.instante) {
         statusDesejado = overrideStatus ?? ultima.statusApos;
         motivo = 'override manual ainda válido (após última transição programada)';
       } else {
-        // Override é antigo; aplicar estado programado
         statusDesejado = ultima.statusApos;
         motivo = 'override manual expirado, aplicando programação';
       }
@@ -132,7 +129,6 @@ Deno.serve(async (req) => {
       statusDesejado = ultima.statusApos;
       motivo = 'sem override, aplicando programação';
     } else {
-      // Nenhuma transição encontrada (nenhum dia configurado nos últimos 8 dias)
       statusDesejado = false;
       motivo = 'nenhuma transição encontrada — fechada por padrão';
     }
