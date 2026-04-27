@@ -17,41 +17,60 @@ const DIAS_MAP: Record<number, DiaSemana> = {
   6: 'sabado'
 };
 
-function getDataUTC4(): Date {
+// Retorna a data "agora" deslocada para UTC-4 (Manaus)
+function getAgoraUTC4(): Date {
   const agoraUTC = new Date();
-  const offsetUTC4 = -4 * 60; // UTC-4 em minutos
-  return new Date(agoraUTC.getTime() + (agoraUTC.getTimezoneOffset() + offsetUTC4) * 60000);
+  return new Date(agoraUTC.getTime() + (agoraUTC.getTimezoneOffset() + (-4 * 60)) * 60000);
 }
 
-function verificarSeDeveEstarAberta(
+function parseHora(hhmm: string): { h: number; m: number } {
+  const [h, m] = hhmm.split(':').map(Number);
+  return { h, m };
+}
+
+/**
+ * Encontra a transição programada (abertura ou fechamento) mais recente
+ * anterior ou igual a `agora`, considerando os dias de funcionamento.
+ *
+ * Retorna { instante, statusApos } — o status da loja imediatamente após
+ * essa transição (true = abriu, false = fechou).
+ *
+ * Varre até 8 dias para trás para garantir cobertura mesmo com dias fechados.
+ */
+function ultimaTransicaoProgramada(
+  agora: Date,
   horarioAbertura: string,
   horarioFechamento: string,
   diasFuncionamento: DiaSemana[]
-): boolean {
-  const agora = getDataUTC4();
-  const diaAtual = DIAS_MAP[agora.getDay()];
-  
-  // Verificar se hoje é dia de funcionamento
-  if (!diasFuncionamento.includes(diaAtual)) {
-    return false;
+): { instante: Date; statusApos: boolean } | null {
+  const { h: hA, m: mA } = parseHora(horarioAbertura);
+  const { h: hF, m: mF } = parseHora(horarioFechamento);
+
+  const eventos: { instante: Date; statusApos: boolean }[] = [];
+
+  for (let i = 0; i < 8; i++) {
+    const d = new Date(agora);
+    d.setDate(d.getDate() - i);
+    const dia = DIAS_MAP[d.getDay()];
+    if (!diasFuncionamento.includes(dia)) continue;
+
+    const abertura = new Date(d);
+    abertura.setHours(hA, mA, 0, 0);
+    const fechamento = new Date(d);
+    fechamento.setHours(hF, mF, 0, 0);
+
+    if (abertura <= agora) eventos.push({ instante: abertura, statusApos: true });
+    if (fechamento <= agora) eventos.push({ instante: fechamento, statusApos: false });
   }
 
-  // Verificar se está dentro do horário de funcionamento
-  const [horaAbertura, minAbertura] = horarioAbertura.split(':').map(Number);
-  const [horaFechamento, minFechamento] = horarioFechamento.split(':').map(Number);
-  
-  const horaAtual = agora.getHours();
-  const minAtual = agora.getMinutes();
-  
-  const minutosAbertura = horaAbertura * 60 + minAbertura;
-  const minutosFechamento = horaFechamento * 60 + minFechamento;
-  const minutosAtual = horaAtual * 60 + minAtual;
+  if (eventos.length === 0) return null;
 
-  return minutosAtual >= minutosAbertura && minutosAtual < minutosFechamento;
+  // A transição efetiva é a mais recente
+  eventos.sort((a, b) => b.instante.getTime() - a.instante.getTime());
+  return eventos[0];
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -59,15 +78,13 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Buscar configurações atuais
     const { data: config, error: configError } = await supabase
       .from('configuracoes_loja')
       .select('*')
       .single();
-    
+
     if (configError) {
       console.error('Erro ao buscar configurações:', configError);
       return new Response(
@@ -76,37 +93,65 @@ Deno.serve(async (req) => {
       );
     }
 
-    const agora = getDataUTC4();
+    const agora = getAgoraUTC4();
     const horarioAbertura = config.horario_abertura?.slice(0, 5) ?? '13:30';
     const horarioFechamento = config.horario_fechamento?.slice(0, 5) ?? '22:00';
     const diasFuncionamento = (config.dias_funcionamento as DiaSemana[]) ?? ['domingo', 'segunda', 'terca', 'quarta', 'sexta', 'sabado'];
+    const statusAtual: boolean = config.loja_aberta;
+    const overrideEm: string | null = (config as any).override_manual_em ?? null;
+    const overrideStatus: boolean | null = (config as any).override_manual_status ?? null;
 
-    // Verificar se deveria estar aberta
-    const deveriaEstarAberta = verificarSeDeveEstarAberta(
-      horarioAbertura,
-      horarioFechamento,
-      diasFuncionamento
-    );
+    const ultima = ultimaTransicaoProgramada(agora, horarioAbertura, horarioFechamento, diasFuncionamento);
 
-    const statusAtual = config.loja_aberta;
-    
-    console.log(`[AUTO-LOJA] Horário UTC-4: ${agora.toISOString()}`);
-    console.log(`[AUTO-LOJA] Dia: ${DIAS_MAP[agora.getDay()]}, Hora: ${agora.getHours()}:${agora.getMinutes()}`);
-    console.log(`[AUTO-LOJA] Horário funcionamento: ${horarioAbertura} - ${horarioFechamento}`);
-    console.log(`[AUTO-LOJA] Dias funcionamento: ${diasFuncionamento.join(', ')}`);
+    console.log(`[AUTO-LOJA] Agora UTC-4: ${agora.toISOString()} (${DIAS_MAP[agora.getDay()]})`);
+    console.log(`[AUTO-LOJA] Horário: ${horarioAbertura} - ${horarioFechamento} | Dias: ${diasFuncionamento.join(',')}`);
+    console.log(`[AUTO-LOJA] Última transição programada: ${ultima ? `${ultima.instante.toISOString()} -> ${ultima.statusApos ? 'ABERTA' : 'FECHADA'}` : 'nenhuma'}`);
+    console.log(`[AUTO-LOJA] Override manual: ${overrideEm ?? 'nenhum'} -> ${overrideStatus}`);
     console.log(`[AUTO-LOJA] Status atual: ${statusAtual ? 'ABERTA' : 'FECHADA'}`);
-    console.log(`[AUTO-LOJA] Deveria estar: ${deveriaEstarAberta ? 'ABERTA' : 'FECHADA'}`);
 
-    // Só atualiza se o status precisar mudar
-    if (statusAtual !== deveriaEstarAberta) {
+    // Determinar status desejado
+    let statusDesejado: boolean;
+    let motivo: string;
+
+    if (overrideEm && ultima) {
+      // Converter override (UTC absoluto do banco) para o mesmo "frame UTC-4 naïve" usado em `ultima.instante`
+      const overrideUTC = new Date(overrideEm);
+      const overrideUTC4 = new Date(overrideUTC.getTime() + (overrideUTC.getTimezoneOffset() + (-4 * 60)) * 60000);
+
+      if (overrideUTC4 > ultima.instante) {
+        statusDesejado = overrideStatus ?? ultima.statusApos;
+        motivo = 'override manual ainda válido (após última transição programada)';
+      } else {
+        statusDesejado = ultima.statusApos;
+        motivo = 'override manual expirado, aplicando programação';
+      }
+    } else if (ultima) {
+      statusDesejado = ultima.statusApos;
+      motivo = 'sem override, aplicando programação';
+    } else {
+      statusDesejado = false;
+      motivo = 'nenhuma transição encontrada — fechada por padrão';
+    }
+
+    console.log(`[AUTO-LOJA] Status desejado: ${statusDesejado ? 'ABERTA' : 'FECHADA'} (${motivo})`);
+
+    if (statusAtual !== statusDesejado) {
+      const updateData: Record<string, unknown> = {
+        loja_aberta: statusDesejado,
+        updated_at: new Date().toISOString(),
+      };
+
+      // Se a aplicação programada sobrescreveu o override, limpamos o override
+      if (motivo.startsWith('override manual expirado') || motivo.startsWith('sem override')) {
+        updateData.override_manual_em = null;
+        updateData.override_manual_status = null;
+      }
+
       const { error: updateError } = await supabase
         .from('configuracoes_loja')
-        .update({ 
-          loja_aberta: deveriaEstarAberta,
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .neq('id', '00000000-0000-0000-0000-000000000000');
-      
+
       if (updateError) {
         console.error('Erro ao atualizar status:', updateError);
         return new Response(
@@ -115,33 +160,29 @@ Deno.serve(async (req) => {
         );
       }
 
-      console.log(`[AUTO-LOJA] ✅ Status alterado para: ${deveriaEstarAberta ? 'ABERTA' : 'FECHADA'}`);
-      
+      console.log(`[AUTO-LOJA] ✅ Status alterado para: ${statusDesejado ? 'ABERTA' : 'FECHADA'}`);
       return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: `Loja ${deveriaEstarAberta ? 'ABERTA' : 'FECHADA'} automaticamente`,
+        JSON.stringify({
+          success: true,
+          message: `Loja ${statusDesejado ? 'ABERTA' : 'FECHADA'} automaticamente`,
+          motivo,
           statusAnterior: statusAtual,
-          novoStatus: deveriaEstarAberta,
-          horarioUTC4: agora.toISOString()
+          novoStatus: statusDesejado,
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`[AUTO-LOJA] ℹ️ Nenhuma alteração necessária`);
-    
+    console.log(`[AUTO-LOJA] ℹ️ Nenhuma alteração necessária (${motivo})`);
     return new Response(
-      JSON.stringify({ 
-        success: true, 
+      JSON.stringify({
+        success: true,
         message: 'Nenhuma alteração necessária',
-        statusAtual: statusAtual,
-        deveriaEstar: deveriaEstarAberta,
-        horarioUTC4: agora.toISOString()
+        motivo,
+        statusAtual,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
-
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
     console.error('Erro na função auto-loja:', error);

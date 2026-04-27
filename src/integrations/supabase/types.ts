@@ -70,6 +70,8 @@ export type Database = {
           horario_fechamento: string
           id: string
           loja_aberta: boolean
+          override_manual_em: string | null
+          override_manual_status: boolean | null
           print_altura: number
           print_fonte_tamanho: number
           print_fonte_tipo: string
@@ -83,6 +85,8 @@ export type Database = {
           horario_fechamento?: string
           id?: string
           loja_aberta?: boolean
+          override_manual_em?: string | null
+          override_manual_status?: boolean | null
           print_altura?: number
           print_fonte_tamanho?: number
           print_fonte_tipo?: string
@@ -96,6 +100,8 @@ export type Database = {
           horario_fechamento?: string
           id?: string
           loja_aberta?: boolean
+          override_manual_em?: string | null
+          override_manual_status?: boolean | null
           print_altura?: number
           print_fonte_tamanho?: number
           print_fonte_tipo?: string
